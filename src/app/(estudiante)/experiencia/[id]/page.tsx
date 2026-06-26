@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GlowOrb } from "@/components/brand/glow-orb";
 import { CompleteToggle } from "@/components/ruta/complete-toggle";
+import { VimeoPlayer } from "@/components/player/vimeo-player";
+import { extractVimeoId } from "@/lib/lessons/vimeo";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +54,7 @@ export default async function ExperienciaPage({
       .eq("lesson_id", id),
     supabase
       .from("lesson_progress")
-      .select("completed_at")
+      .select("completed_at,last_position_seconds")
       .eq("student_id", profile.id)
       .eq("lesson_id", id)
       .maybeSingle(),
@@ -60,6 +62,8 @@ export default async function ExperienciaPage({
 
   const completed = Boolean(prog?.completed_at);
   const typeLabel = TYPE_LABEL[lesson.content_type] ?? lesson.content_type;
+  const vimeoId = extractVimeoId(lesson.video_url);
+  const lastPosition = prog?.last_position_seconds ?? 0;
 
   return (
     <div className="space-y-6">
@@ -71,17 +75,25 @@ export default async function ExperienciaPage({
       </Link>
 
       {/* Reproductor / contenido principal */}
-      <div className="glass relative aspect-video w-full overflow-hidden rounded-2xl">
-        <GlowOrb className="absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2" />
-        <div className="relative flex h-full flex-col items-center justify-center gap-3 text-center">
-          <div className="grid size-16 place-items-center rounded-full bg-ocean-cyan/15 text-ocean-cyan ring-1 ring-ocean-cyan/30">
-            <Play className="size-7" />
+      {vimeoId ? (
+        <VimeoPlayer
+          lessonId={lesson.id}
+          vimeoId={vimeoId}
+          startSeconds={lastPosition}
+        />
+      ) : (
+        <div className="glass relative aspect-video w-full overflow-hidden rounded-2xl">
+          <GlowOrb className="absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2" />
+          <div className="relative flex h-full flex-col items-center justify-center gap-3 text-center">
+            <div className="grid size-16 place-items-center rounded-full bg-ocean-cyan/15 text-ocean-cyan ring-1 ring-ocean-cyan/30">
+              <Play className="size-7" />
+            </div>
+            <p className="text-sm text-muted">
+              {typeLabel} · Tu mentora añadirá el video pronto
+            </p>
           </div>
-          <p className="text-sm text-muted">
-            {typeLabel} · Reproductor premium (Vimeo) en el Sprint 5
-          </p>
         </div>
-      </div>
+      )}
 
       {/* Encabezado */}
       <div className="flex flex-wrap items-start justify-between gap-4">
