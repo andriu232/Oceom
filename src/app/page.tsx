@@ -79,7 +79,7 @@ export default async function LandingPage() {
 
   return (
     <div className="relative">
-      <SacredOceanBackdrop />
+      <SacredOceanBackdrop fullWidth />
 
       {/* Header */}
       <header className="sticky top-0 z-40">

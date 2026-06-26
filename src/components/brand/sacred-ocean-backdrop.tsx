@@ -2,15 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { SacredScene } from "./sacred-scene";
+import { cn } from "@/lib/utils";
 
 /**
  * SacredOceanBackdrop — fondo insignia de OCEOM: geometría sagrada
- * (Cubo de Metatrón, Flor de la Vida, sólidos platónicos) flotando en un
- * océano luminoso. Escena 3D WebGL + gradación de luz/profundidad por CSS.
+ * (Cubo de Metatrón, Flor de la Vida) flotando en un océano luminoso.
+ *
+ * - `fullWidth`: centra la escena en toda la pantalla (landing/login, sin
+ *   sidebar). Por defecto la alinea al área de contenido (admin con sidebar).
+ * - `showGlow`: resplandor central detrás del mandala. Apagable.
  *
  * La escena 3D solo se monta en cliente (evita SSR de WebGL).
  */
-export function SacredOceanBackdrop() {
+export function SacredOceanBackdrop({
+  fullWidth = false,
+  showGlow = true,
+}: {
+  fullWidth?: boolean;
+  showGlow?: boolean;
+} = {}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -25,17 +35,18 @@ export function SacredOceanBackdrop() {
         }}
       />
 
-      {/* Capa alineada al área de contenido: centra el mandala en desktop
-          (descontando el ancho de la sidebar). En móvil ocupa todo. */}
-      <div className="absolute inset-0 lg:left-[19rem]">
-        {/* Resplandor central detrás del mandala */}
-        <div
-          className="absolute left-1/2 top-1/2 size-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px] [animation:pulse-glow_7s_ease-in-out_infinite]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(34,211,238,0.16) 0%, rgba(129,140,248,0.09) 45%, transparent 72%)",
-          }}
-        />
+      {/* Capa de la escena. En admin se descuenta la sidebar; en landing/login
+          (fullWidth) se centra en toda la pantalla. */}
+      <div className={cn("absolute inset-0", !fullWidth && "lg:left-[19rem]")}>
+        {showGlow && (
+          <div
+            className="absolute left-1/2 top-1/2 size-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px] [animation:pulse-glow_7s_ease-in-out_infinite]"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(34,211,238,0.16) 0%, rgba(129,140,248,0.09) 45%, transparent 72%)",
+            }}
+          />
+        )}
         {/* Escena 3D (solo cliente) */}
         {mounted && <SacredScene />}
       </div>

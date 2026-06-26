@@ -11,7 +11,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative grid min-h-dvh lg:grid-cols-2">
-      <SacredOceanBackdrop />
+      <SacredOceanBackdrop fullWidth showGlow={false} />
 
       {/* Panel emocional (izquierda en desktop) */}
       <div className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
