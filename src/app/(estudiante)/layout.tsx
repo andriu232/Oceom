@@ -1,6 +1,6 @@
 import { requireStudentArea, isMentor } from "@/lib/auth";
 import { AppSidebar } from "@/components/shared/app-sidebar";
-import { OceanBackground } from "@/components/brand/ocean-background";
+import { MerkabaBackdrop } from "@/components/brand/merkaba-backdrop";
 import { studentGroups } from "@/config/navigation";
 
 export default async function EstudianteLayout({
@@ -13,7 +13,7 @@ export default async function EstudianteLayout({
 
   return (
     <div className="min-h-dvh">
-      <OceanBackground />
+      <MerkabaBackdrop />
       <AppSidebar
         groups={studentGroups}
         userName={profile.full_name ?? "Viajero"}

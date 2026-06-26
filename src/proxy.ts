@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 
-/** Rutas públicas (no requieren sesión). */
-const PUBLIC_PATHS = ["/login", "/registro", "/recuperar"];
+/** Páginas de autenticación. */
+const AUTH_PATHS = ["/login", "/registro", "/recuperar"];
 
 /** Proxy de Next 16 (antes "middleware"): refresca la sesión y protege rutas.
  *  Es la primera capa de defensa (UX). RLS en Supabase es la frontera real. */
@@ -14,7 +14,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, user } = await updateSession(request);
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isLanding = pathname === "/";
+  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = isLanding || isAuthPage;
 
   // No autenticado intentando entrar a zona privada -> login.
   if (!user && !isPublic) {
@@ -24,8 +26,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Autenticado en una página de auth -> fuera (a la raíz, que enruta por rol).
-  if (user && isPublic) {
+  // Autenticado en una página de auth -> a la landing (que muestra su CTA).
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
