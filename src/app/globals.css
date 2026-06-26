@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
+/* ============================================================
+   OCEOM by E-MOTION® — Design tokens
+   Estética: azul noche, cyan luminoso, glassmorphism, océano/cosmos.
+   Colores de marca en HEX literal (evita distorsión oklch/Lightning CSS).
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Profundidades del océano */
+  --ocean-abyss: #03060e;
+  --ocean-deep: #07132b;
+  --ocean-mid: #0d2148;
+  --ocean-surface: #0a1124;
+
+  /* Luz */
+  --ocean-cyan: #22d3ee;
+  --ocean-glow: #5eead4;
+  --ocean-violet: #818cf8;
+  --ocean-foam: #e6f6ff;
+
+  /* Semánticos */
+  --background: var(--ocean-abyss);
+  --foreground: #e8eefb;
+  --muted: #8aa0c6;
+  --card: rgba(15, 26, 54, 0.55);
+  --card-border: rgba(94, 234, 212, 0.14);
+  --primary: var(--ocean-cyan);
+  --primary-foreground: #04121a;
+  --ring: rgba(34, 211, 238, 0.45);
+  --danger: #fb7185;
+  --success: #34d399;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ocean-abyss: var(--ocean-abyss);
+  --color-ocean-deep: var(--ocean-deep);
+  --color-ocean-mid: var(--ocean-mid);
+  --color-ocean-surface: var(--ocean-surface);
+  --color-ocean-cyan: var(--ocean-cyan);
+  --color-ocean-glow: var(--ocean-glow);
+  --color-ocean-violet: var(--ocean-violet);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --font-display: var(--font-sora);
+  --font-sans: var(--font-inter);
+
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 4s ease-in-out infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-22px) translateX(10px); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.06); }
+  66% { transform: translate(-30px, 20px) scale(0.96); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes wave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+* {
+  border-color: var(--card-border);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(120% 90% at 50% -10%, #0a1d3f 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #0b2a3d 0%, transparent 45%),
+    var(--ocean-abyss);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/* Glassmorphism reutilizable */
+@utility glass {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+@utility glass-strong {
+  background: rgba(10, 17, 36, 0.78);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(94, 234, 212, 0.18);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(94, 234, 212, 0.32); }

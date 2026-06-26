@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OCEOM by E-MOTION®
 
-## Getting Started
+> Donde el océano interior despierta. Tecnología emocional para la evolución humana.
 
-First, run the development server:
+Ecosistema digital premium del método **E-MOTION®** de Valeria Rueda Caicedo:
+un santuario digital inmersivo para procesos de sanación neuroemocional,
+corporal y energética.
+
+## Stack
+
+- **Next.js 16** (App Router, RSC) · React 19 · TypeScript estricto
+- **Tailwind CSS v4** + design system OCEOM (glassmorphism, océano/cosmos)
+- **Supabase** — Auth · Postgres · Storage · Realtime · pgvector (RAG de AURA)
+- **motion** (Framer Motion) · **lucide-react** · **zod**
+- Video privado: **Vimeo Pro** · Emails: **Resend** · Pagos: Stripe/Wompi (fase final)
+
+## Arquitectura de seguridad
+
+Tres capas de defensa para datos sensibles (bitácora, check-ins, notas):
+
+1. **proxy.ts** (antes "middleware" — renombrado en Next 16): refresca sesión y protege rutas (UX).
+2. **Server Actions** con `requireRole()` y validación Zod.
+3. **RLS en Supabase**: la frontera real. Ver `supabase/migrations/0002_rls.sql`.
+
+`service_role` se usa solo en server-side controlado (`src/lib/supabase/service.ts`).
+
+## Puesta en marcha
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Instalar dependencias
+npm install
+
+# 2. Configurar entorno
+cp .env.local.example .env.local   # y rellenar con tus valores de Supabase
+
+# 3. Base de datos (en el proyecto Supabase):
+#    Ejecutar en orden, desde el SQL Editor o Supabase CLI:
+#    - supabase/migrations/0001_schema.sql
+#    - supabase/migrations/0002_rls.sql
+#    - supabase/seed.sql   (programas demo E-MOTION® y Neuropsíquica)
+
+# 4. Desarrollo
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Crear la mentora (Valeria) y roles
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tras registrar usuarios desde `/registro`, ajusta el rol en Supabase:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sql
+update profiles set role = 'mentor'      where email = 'valeria@...';
+update profiles set role = 'super_admin' where email = 'admin@...';
+-- los demás quedan como 'student' por defecto
+```
 
-## Learn More
+Inscribe a un estudiante en un programa:
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+insert into enrollments (student_id, program_id, status)
+select p.id, pr.id, 'active'
+from profiles p, programs pr
+where p.email = 'estudiante@...' and pr.slug = 'metodo-emotion';
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estructura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  app/
+    (auth)/         login · registro · onboarding
+    (estudiante)/   santuario · explorar · mi-ruta · deep-waves · aura · ...
+    (admin)/        panel · estudiantes · programas · entregas · ...
+  components/  ui · brand · shared (+ estudiante/admin/player/aura en próximos sprints)
+  lib/         supabase · auth · actions · validations
+  config/      navigation (lenguaje de marca OCEOM) · site
+  types/       domain
+supabase/      migrations · seed
+```
 
-## Deploy on Vercel
+## Lenguaje de marca
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Genérico | OCEOM |
+|---|---|
+| Inicio | Santuario |
+| Cursos | Rutas |
+| Lecciones | Experiencias |
+| Tareas | Integraciones |
+| Journal | Bitácora Interior |
+| Progreso | Mi Evolución |
+| Sesiones en vivo | Círculos en Vivo |
+| Audios | Deep Waves |
+| IA | AURA |
+| Perfil | Mi Portal |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Estado: Sprint 1 ✅
+
+Setup, autenticación, roles, RLS, layouts estudiante/admin, dashboards base
+(Santuario + Panel), estética OCEOM y seed demo. Próximo: **Sprint 2** (programas,
+rutas y experiencias).
