@@ -1,16 +1,24 @@
-import { Sparkles } from "lucide-react";
-import { ComingSoon } from "@/components/shared/coming-soon";
+import { requireRole } from "@/lib/auth";
+import { AuraChat } from "@/components/aura/aura-chat";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "AURA · OCEOM" };
 
-export default function AuraPage() {
+export default async function AuraPage() {
+  const profile = await requireRole("student");
+  const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
+
   return (
-    <ComingSoon
-      title="AURA"
-      subtitle="Tu guía neuroemocional y energética dentro de OCEOM."
-      icon={Sparkles}
-      sprint="Sprint 8 / 9"
-      description="AURA te acompañará con preguntas, prácticas y reflexiones del método E-MOTION®, usando solo fuentes autorizadas. No reemplaza apoyo terapéutico profesional."
-    />
+    <div className="space-y-5">
+      <div>
+        <h1 className="flex items-center gap-2 font-display text-3xl font-bold tracking-tight text-foreground">
+          AURA
+        </h1>
+        <p className="mt-1 text-muted">
+          Tu guía neuroemocional y energética dentro de OCEOM.
+        </p>
+      </div>
+      <AuraChat firstName={firstName} />
+    </div>
   );
 }

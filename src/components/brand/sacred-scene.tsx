@@ -18,7 +18,6 @@ import * as THREE from "three";
 
 const CYAN = "#22d3ee";
 const GLOW = "#5eead4";
-const VIOLET = "#818cf8";
 
 /* Construye una BufferGeometry de segmentos para N circunferencias. */
 function buildCircles(
@@ -117,60 +116,6 @@ function FlowerOfLife() {
   );
 }
 
-/* ---------- Sólido platónico en wireframe flotante ---------- */
-function WireSolid({
-  geo,
-  color,
-  position,
-  scale,
-  speed,
-}: {
-  geo: THREE.BufferGeometry;
-  color: string;
-  position: [number, number, number];
-  scale: number;
-  speed: number;
-}) {
-  const ref = useRef<THREE.LineSegments>(null!);
-  const edges = useMemo(() => new THREE.EdgesGeometry(geo), [geo]);
-
-  useFrame((state, delta) => {
-    ref.current.rotation.x += delta * speed;
-    ref.current.rotation.y += delta * speed * 0.7;
-    const t = state.clock.elapsedTime;
-    ref.current.position.y = position[1] + Math.sin(t * 0.4 + position[0]) * 0.45;
-    ref.current.position.x = position[0] + Math.cos(t * 0.25 + position[1]) * 0.3;
-  });
-
-  return (
-    <lineSegments ref={ref} geometry={edges} position={position} scale={scale}>
-      <lineBasicMaterial color={color} transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
-    </lineSegments>
-  );
-}
-
-/* ---------- Sólidos platónicos = los 5 elementos ---------- */
-function PlatonicSolids() {
-  const solids = useMemo(
-    () => [
-      { geo: new THREE.TetrahedronGeometry(1), color: VIOLET, position: [-6, 2.4, -3] as [number, number, number], scale: 0.9, speed: 0.25 },
-      { geo: new THREE.OctahedronGeometry(1), color: CYAN, position: [6.2, -1.6, -2.5] as [number, number, number], scale: 1.0, speed: 0.3 },
-      { geo: new THREE.IcosahedronGeometry(1), color: GLOW, position: [-5.4, -2.8, -4] as [number, number, number], scale: 1.1, speed: 0.2 },
-      { geo: new THREE.DodecahedronGeometry(1), color: CYAN, position: [5.2, 3, -5] as [number, number, number], scale: 1.2, speed: 0.18 },
-      { geo: new THREE.BoxGeometry(1.4, 1.4, 1.4), color: GLOW, position: [0.5, -3.6, -3.5] as [number, number, number], scale: 0.8, speed: 0.22 },
-    ],
-    [],
-  );
-
-  return (
-    <>
-      {solids.map((s, i) => (
-        <WireSolid key={i} {...s} />
-      ))}
-    </>
-  );
-}
-
 /* ---------- Partículas de luz (plancton / marine snow) ---------- */
 function LightMotes() {
   const pts = useRef<THREE.Points>(null!);
@@ -227,7 +172,6 @@ export function SacredScene() {
 
       <FlowerOfLife />
       <Metatron />
-      <PlatonicSolids />
       <LightMotes />
       <Rig />
     </Canvas>

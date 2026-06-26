@@ -8,6 +8,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
+import { getStudentRoute } from "@/lib/queries/route";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GlowOrb } from "@/components/brand/glow-orb";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export const metadata = { title: "Santuario · OCEOM" };
 export default async function SantuarioPage() {
   const profile = await requireRole("student");
   const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
+  const route = await getStudentRoute(profile.id);
 
   return (
     <div className="space-y-8">
@@ -54,8 +56,16 @@ export default async function SantuarioPage() {
 
       {/* Progreso + próxima experiencia */}
       <section className="grid gap-5 md:grid-cols-3">
-        <ProgressCard percentage={0} />
-        <RecommendationCard />
+        <ProgressCard
+          percentage={route?.progressPct ?? 0}
+          completed={route?.completedLessons ?? 0}
+          total={route?.totalLessons ?? 0}
+        />
+        <RecommendationCard
+          lesson={route?.currentLesson ?? null}
+          programTitle={route?.program.title ?? null}
+          done={!route?.currentLesson && !!route}
+        />
         <NextSessionCard />
       </section>
 
@@ -99,7 +109,15 @@ export default async function SantuarioPage() {
   );
 }
 
-function ProgressCard({ percentage }: { percentage: number }) {
+function ProgressCard({
+  percentage,
+  completed,
+  total,
+}: {
+  percentage: number;
+  completed: number;
+  total: number;
+}) {
   return (
     <Card>
       <div className="flex items-center gap-2 text-muted">
@@ -119,29 +137,60 @@ function ProgressCard({ percentage }: { percentage: number }) {
         />
       </div>
       <p className="mt-3 text-xs text-muted">
-        Tu progreso aparecerá cuando comiences tu primera experiencia.
+        {total > 0
+          ? `${completed} de ${total} experiencias completadas.`
+          : "Tu progreso aparecerá cuando comiences tu primera experiencia."}
       </p>
     </Card>
   );
 }
 
-function RecommendationCard() {
+function RecommendationCard({
+  lesson,
+  programTitle,
+  done,
+}: {
+  lesson: { id: string; title: string } | null;
+  programTitle: string | null;
+  done: boolean;
+}) {
   return (
     <Card>
       <div className="flex items-center gap-2 text-muted">
         <ClipboardList className="size-4" />
-        <span className="text-sm">Recomendación de hoy</span>
+        <span className="text-sm">Continúa tu viaje</span>
       </div>
-      <p className="mt-4 font-display text-lg font-semibold text-foreground">
-        Mapa de las heridas emocionales
-      </p>
-      <p className="mt-1 text-sm text-muted">Método E-MOTION® · Experiencia 1 de 9</p>
-      <Link
-        href="/mi-ruta"
-        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-      >
-        Comenzar <ArrowRight className="size-4" />
-      </Link>
+      {lesson ? (
+        <>
+          <p className="mt-4 font-display text-lg font-semibold text-foreground">
+            {lesson.title}
+          </p>
+          {programTitle && (
+            <p className="mt-1 text-sm text-muted">{programTitle}</p>
+          )}
+          <Link
+            href={`/experiencia/${lesson.id}`}
+            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
+          >
+            Continuar <ArrowRight className="size-4" />
+          </Link>
+        </>
+      ) : (
+        <>
+          <p className="mt-4 font-display text-lg font-semibold text-foreground">
+            {done ? "¡Ruta completada! 🌊" : "Aún no tienes programa activo"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {done ? "Has recorrido todo tu camino." : "Explora los programas disponibles."}
+          </p>
+          <Link
+            href={done ? "/mi-evolucion" : "/explorar"}
+            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
+          >
+            {done ? "Ver mi evolución" : "Explorar"} <ArrowRight className="size-4" />
+          </Link>
+        </>
+      )}
     </Card>
   );
 }

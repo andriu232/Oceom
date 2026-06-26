@@ -16,26 +16,32 @@ export function SacredOceanBackdrop() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Profundidad base: luz arriba -> abismo abajo */}
+      {/* Profundidad base: luz arriba -> abismo abajo (más oscuro) */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, #0b2c49 0%, #071d35 32%, #04111f 64%, #03060e 100%)",
+            "linear-gradient(180deg, #082138 0%, #05162a 32%, #030c18 64%, #02040b 100%)",
         }}
       />
 
-      {/* Resplandor central detrás del mandala */}
-      <div
-        className="absolute left-1/2 top-1/2 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px] [animation:pulse-glow_7s_ease-in-out_infinite]"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(34,211,238,0.22) 0%, rgba(129,140,248,0.12) 45%, transparent 72%)",
-        }}
-      />
+      {/* Capa alineada al área de contenido: centra el mandala en desktop
+          (descontando el ancho de la sidebar). En móvil ocupa todo. */}
+      <div className="absolute inset-0 lg:left-[19rem]">
+        {/* Resplandor central detrás del mandala */}
+        <div
+          className="absolute left-1/2 top-1/2 size-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px] [animation:pulse-glow_7s_ease-in-out_infinite]"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(34,211,238,0.16) 0%, rgba(129,140,248,0.09) 45%, transparent 72%)",
+          }}
+        />
+        {/* Escena 3D (solo cliente) */}
+        {mounted && <SacredScene />}
+      </div>
 
-      {/* Escena 3D (solo cliente) */}
-      {mounted && <SacredScene />}
+      {/* Velo oscuro: atenúa la geometría para que el contenido resalte */}
+      <div className="absolute inset-0 bg-[#03060e]/45" />
 
       {/* Resplandor de superficie */}
       <div
@@ -55,7 +61,7 @@ export function SacredOceanBackdrop() {
             style={{
               left: `${left}%`,
               background:
-                "linear-gradient(180deg, rgba(140,225,240,0.36) 0%, transparent 72%)",
+                "linear-gradient(180deg, rgba(140,225,240,0.24) 0%, transparent 72%)",
               animation: `ray-shift ${18 + i * 3}s ease-in-out ${-i * 2}s infinite`,
             }}
           />
@@ -67,8 +73,8 @@ export function SacredOceanBackdrop() {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(125% 85% at 50% 12%, transparent 46%, rgba(3,6,14,0.5) 100%)," +
-            "linear-gradient(180deg, transparent 60%, rgba(3,6,14,0.6) 100%)",
+            "radial-gradient(125% 85% at 50% 12%, transparent 38%, rgba(2,4,11,0.72) 100%)," +
+            "linear-gradient(180deg, transparent 52%, rgba(2,4,11,0.74) 100%)",
         }}
       />
     </div>
