@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Waves, Brain, Check, ArrowRight, Lock } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { listCatalog } from "@/lib/queries/catalog";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Academia · OCEOM" };
 
 export default async function AcademiaPage() {
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const programs = await listCatalog(profile.id);
 
   return (

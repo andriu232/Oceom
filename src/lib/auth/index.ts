@@ -50,5 +50,11 @@ export async function requireRole(...roles: UserRole[]): Promise<Profile> {
   return profile;
 }
 
+/** Acceso al área de estudiante: el estudiante real, o mentora/super admin
+ *  en modo previsualización (para ver la plataforma como la ve el estudiante). */
+export async function requireStudentArea(): Promise<Profile> {
+  return requireAuth();
+}
+
 export const isMentor = (role: UserRole) =>
   role === "mentor" || role === "super_admin";

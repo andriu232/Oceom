@@ -7,7 +7,7 @@ import {
   CalendarClock,
   ClipboardList,
 } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { getStudentRoute } from "@/lib/queries/route";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GlowOrb } from "@/components/brand/glow-orb";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Santuario · OCEOM" };
 
 export default async function SantuarioPage() {
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
   const route = await getStudentRoute(profile.id);
 

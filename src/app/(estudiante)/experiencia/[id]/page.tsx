@@ -8,7 +8,7 @@ import {
   Target,
   Sparkles,
 } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GlowOrb } from "@/components/brand/glow-orb";
@@ -32,7 +32,7 @@ export default async function ExperienciaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const supabase = await createClient();
 
   const { data: lesson } = await supabase

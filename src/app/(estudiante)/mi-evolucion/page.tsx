@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TrendingUp, CheckCircle2, BookOpenText, Heart, Compass } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getStudentRoute } from "@/lib/queries/route";
 import { PageHeader } from "@/components/shared/page-header";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi Evolución · OCEOM" };
 
 export default async function MiEvolucionPage() {
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const supabase = await createClient();
 
   const [route, checkinsRes, journalRes] = await Promise.all([

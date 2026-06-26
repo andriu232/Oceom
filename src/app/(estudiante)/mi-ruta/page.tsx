@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Compass, Route as RouteIcon } from "lucide-react";
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { getStudentRoute } from "@/lib/queries/route";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi Ruta · OCEOM" };
 
 export default async function MiRutaPage() {
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const route = await getStudentRoute(profile.id);
 
   if (!route) {

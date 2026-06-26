@@ -1,11 +1,11 @@
-import { requireRole } from "@/lib/auth";
+import { requireStudentArea } from "@/lib/auth";
 import { AuraChat } from "@/components/aura/aura-chat";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "AURA · OCEOM" };
 
 export default async function AuraPage() {
-  const profile = await requireRole("student");
+  const profile = await requireStudentArea();
   const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
 
   return (

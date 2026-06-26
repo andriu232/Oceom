@@ -34,8 +34,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
+import { ModeSwitcher } from "@/components/shared/mode-switcher";
 import { signOutAction } from "@/lib/actions/auth";
 import type { IconName, NavGroup } from "@/config/navigation";
+import type { ViewMode } from "@/lib/auth/mode";
 
 /** Resuelve la clave de ícono (string serializable) al componente Lucide. */
 const ICONS: Record<IconName, LucideIcon> = {
@@ -68,10 +70,14 @@ export function AppSidebar({
   groups,
   userName,
   roleLabel,
+  canSwitch = false,
+  viewMode,
 }: {
   groups: NavGroup[];
   userName: string;
   roleLabel: string;
+  canSwitch?: boolean;
+  viewMode?: ViewMode;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -118,8 +124,15 @@ export function AppSidebar({
           </Link>
         </div>
 
+        {/* Switcher de modo (solo mentora/super admin) */}
+        {canSwitch && viewMode && (
+          <div className="mt-6 px-2">
+            <ModeSwitcher mode={viewMode} />
+          </div>
+        )}
+
         {/* Navegación agrupada */}
-        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1">
+        <nav className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1">
           {groups.map((group) => (
             <div key={group.label}>
               {group.label && (

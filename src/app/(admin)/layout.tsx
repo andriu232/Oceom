@@ -17,6 +17,8 @@ export default async function AdminLayout({
         groups={adminGroups}
         userName={profile.full_name ?? "Mentora"}
         roleLabel={profile.role === "super_admin" ? "Super Admin" : "Mentora"}
+        canSwitch
+        viewMode="admin"
       />
       <main className="px-5 py-8 lg:pl-[19rem] lg:pr-8">
         <div className="mx-auto max-w-6xl">{children}</div>
