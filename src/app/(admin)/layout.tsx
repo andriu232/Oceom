@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
-import { adminNav } from "@/config/navigation";
+import { adminGroups } from "@/config/navigation";
 
 export default async function AdminLayout({
   children,
@@ -14,7 +14,7 @@ export default async function AdminLayout({
     <div className="min-h-dvh">
       <SacredOceanBackdrop />
       <AppSidebar
-        items={adminNav}
+        groups={adminGroups}
         userName={profile.full_name ?? "Mentora"}
         roleLabel={profile.role === "super_admin" ? "Super Admin" : "Mentora"}
       />

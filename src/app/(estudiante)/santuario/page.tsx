@@ -184,7 +184,7 @@ function RecommendationCard({
             {done ? "Has recorrido todo tu camino." : "Explora los programas disponibles."}
           </p>
           <Link
-            href={done ? "/mi-evolucion" : "/explorar"}
+            href={done ? "/mi-evolucion" : "/academia"}
             className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
           >
             {done ? "Ver mi evolución" : "Explorar"} <ArrowRight className="size-4" />

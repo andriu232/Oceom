@@ -36,7 +36,7 @@ export default async function MiEvolucionPage() {
           title="Tu evolución comienza con tu primera experiencia"
           description="Cuando tengas un programa activo, aquí verás tu progreso y tu camino."
         >
-          <Link href="/explorar" className={buttonVariants({})}>
+          <Link href="/academia" className={buttonVariants({})}>
             Explorar programas
           </Link>
         </EmptyState>

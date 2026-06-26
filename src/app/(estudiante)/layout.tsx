@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { OceanBackground } from "@/components/brand/ocean-background";
-import { studentNav } from "@/config/navigation";
+import { studentGroups } from "@/config/navigation";
 
 export default async function EstudianteLayout({
   children,
@@ -14,7 +14,7 @@ export default async function EstudianteLayout({
     <div className="min-h-dvh">
       <OceanBackground />
       <AppSidebar
-        items={studentNav}
+        groups={studentGroups}
         userName={profile.full_name ?? "Viajero"}
         roleLabel="Estudiante"
       />

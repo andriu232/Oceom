@@ -24,7 +24,7 @@ export default async function MiRutaPage() {
           title="Aún no tienes un programa activo"
           description="Cuando tu mentora abra tu acceso, tu ruta aparecerá aquí. Mientras tanto, explora los programas disponibles."
         >
-          <Link href="/explorar" className={buttonVariants({})}>
+          <Link href="/academia" className={buttonVariants({})}>
             Explorar programas
           </Link>
         </EmptyState>

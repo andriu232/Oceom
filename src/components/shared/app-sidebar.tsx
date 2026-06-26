@@ -24,12 +24,18 @@ import {
   ClipboardCheck,
   BarChart3,
   Settings,
+  Milestone,
+  Wrench,
+  ShoppingBag,
+  CreditCard,
+  Gift,
+  AudioLines,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { signOutAction } from "@/lib/actions/auth";
-import type { IconName, NavItem } from "@/config/navigation";
+import type { IconName, NavGroup } from "@/config/navigation";
 
 /** Resuelve la clave de ícono (string serializable) al componente Lucide. */
 const ICONS: Record<IconName, LucideIcon> = {
@@ -40,11 +46,18 @@ const ICONS: Record<IconName, LucideIcon> = {
   book: BookOpenText,
   map: Map,
   radio: Radio,
+  audio: AudioLines,
   users: Users,
   trending: TrendingUp,
   user: CircleUser,
   dashboard: LayoutDashboard,
   students: GraduationCap,
+  academia: GraduationCap,
+  roadmap: Milestone,
+  tools: Wrench,
+  store: ShoppingBag,
+  membership: CreditCard,
+  gift: Gift,
   library: Library,
   clipboard: ClipboardCheck,
   chart: BarChart3,
@@ -52,11 +65,11 @@ const ICONS: Record<IconName, LucideIcon> = {
 };
 
 export function AppSidebar({
-  items,
+  groups,
   userName,
   roleLabel,
 }: {
-  items: NavItem[];
+  groups: NavGroup[];
   userName: string;
   roleLabel: string;
 }) {
@@ -105,53 +118,64 @@ export function AppSidebar({
           </Link>
         </div>
 
-        {/* Navegación */}
-        <nav className="mt-8 flex-1 space-y-1 overflow-y-auto pr-1">
-          {items.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
-            const Icon = ICONS[item.icon];
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-                  active
-                    ? "text-ocean-cyan"
-                    : "text-muted hover:bg-white/5 hover:text-foreground",
-                )}
-              >
-                {/* Indicador activo animado (compartido entre items) */}
-                {active && (
-                  <motion.span
-                    layoutId="nav-active"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    className="absolute inset-0 rounded-xl border border-ocean-cyan/25 bg-ocean-cyan/10"
-                  />
-                )}
-                {active && (
-                  <span
-                    aria-hidden
-                    className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-ocean-cyan shadow-[0_0_12px_2px_rgba(34,211,238,0.7)]"
-                  />
-                )}
-                <Icon
-                  className={cn(
-                    "relative size-[18px] shrink-0 transition-transform group-hover:scale-110",
-                    active && "drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]",
-                  )}
-                />
-                <span className="relative flex-1">{item.label}</span>
-                {item.hint && (
-                  <span className="relative text-[0.6rem] uppercase tracking-wide text-muted/60">
-                    {item.hint}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        {/* Navegación agrupada */}
+        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1">
+          {groups.map((group) => (
+            <div key={group.label}>
+              {group.label && (
+                <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted/50">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const active =
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
+                  const Icon = ICONS[item.icon];
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+                        active
+                          ? "text-ocean-cyan"
+                          : "text-muted hover:bg-white/5 hover:text-foreground",
+                      )}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="nav-active"
+                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          className="absolute inset-0 rounded-xl border border-ocean-cyan/25 bg-ocean-cyan/10"
+                        />
+                      )}
+                      {active && (
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-ocean-cyan shadow-[0_0_12px_2px_rgba(34,211,238,0.7)]"
+                        />
+                      )}
+                      <Icon
+                        className={cn(
+                          "relative size-[18px] shrink-0 transition-transform group-hover:scale-110",
+                          active && "drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]",
+                        )}
+                      />
+                      <span className="relative flex-1">{item.label}</span>
+                      {item.hint && (
+                        <span className="relative text-[0.6rem] uppercase tracking-wide text-muted/60">
+                          {item.hint}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Tarjeta de usuario premium */}
