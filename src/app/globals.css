@@ -82,6 +82,84 @@
   100% { transform: translateX(100%); }
 }
 
+/* Aurora oceánica: deriva lenta de gradientes de fondo */
+@keyframes aurora {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(0, -4%, 0) rotate(4deg) scale(1.08); }
+}
+
+/* Barrido de luz tipo reflejo de agua sobre superficies/bordes */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Giro muy lento para halos */
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* Partículas luminosas que ascienden como burbujas de energía */
+@keyframes rise {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.5; }
+  100% { transform: translateY(-160px) scale(1.1); opacity: 0; }
+}
+
+/* Borde iluminado que respira */
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.8; }
+}
+
+/* ---- Vida marina: nado a través de la pantalla ---- */
+@keyframes swim-ltr {
+  from { transform: translateX(-30vw); }
+  to   { transform: translateX(130vw); }
+}
+@keyframes swim-rtl {
+  from { transform: translateX(130vw); }
+  to   { transform: translateX(-30vw); }
+}
+/* Cabeceo vertical suave mientras nadan */
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50%      { transform: translateY(16px) rotate(1.5deg); }
+}
+/* Medusas pulsando hacia arriba */
+@keyframes drift-up {
+  0%   { transform: translateY(14vh); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateY(-118vh); opacity: 0; }
+}
+@keyframes sway {
+  0%, 100% { transform: translateX(-6px) rotate(-4deg); }
+  50%      { transform: translateX(6px) rotate(4deg); }
+}
+/* Rayos de luz (god rays) desde la superficie */
+@keyframes ray-shift {
+  0%, 100% { opacity: 0.06; transform: translateX(0) skewX(-14deg); }
+  50%      { opacity: 0.16; transform: translateX(26px) skewX(-14deg); }
+}
+/* Burbujas ascendentes */
+@keyframes bubble-up {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  12%  { opacity: 0.7; }
+  100% { transform: translateY(-92vh) translateX(18px); opacity: 0; }
+}
+
+/* Línea/halo con barrido de luz cyan */
+@utility shimmer-line {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(94, 234, 212, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 6s linear infinite;
+}
+
 * {
   border-color: var(--card-border);
 }
