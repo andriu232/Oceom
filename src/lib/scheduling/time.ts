@@ -41,6 +41,12 @@ export function formatTime(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** Hoy en hora de Colombia, como {y, m (1-12), d}. */
+export function todayInBogota(): { y: number; m: number; d: number } {
+  const [y, m, d] = dayKey(new Date().toISOString()).split("-").map(Number);
+  return { y, m, d };
+}
+
 export interface DayGroup<T> {
   key: string;
   label: string;

@@ -2,10 +2,10 @@ import { CalendarDays, Trash2, User } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { listMentorSlots } from "@/lib/queries/scheduling";
 import { deleteSlotAction } from "@/lib/actions/scheduling";
-import { groupByDay, formatTime } from "@/lib/scheduling/time";
+import { groupByDay, formatTime, todayInBogota } from "@/lib/scheduling/time";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AddSlotForm } from "@/components/admin/add-slot-form";
+import { SlotScheduler } from "@/components/admin/slot-scheduler";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Agenda · OCEOM" };
@@ -13,6 +13,7 @@ export const metadata = { title: "Agenda · OCEOM" };
 export default async function AgendaPage() {
   await requireRole("mentor", "super_admin");
   const slots = await listMentorSlots();
+  const today = todayInBogota();
   const days = groupByDay(slots, (s) => s.startsAt);
 
   const booked = slots.filter((s) => s.status === "booked").length;
@@ -31,7 +32,7 @@ export default async function AgendaPage() {
         }
       />
 
-      <AddSlotForm />
+      <SlotScheduler today={today} />
 
       {days.length === 0 ? (
         <EmptyState
