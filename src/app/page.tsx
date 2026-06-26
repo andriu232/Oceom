@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { getProfile, homeForRole } from "@/lib/auth";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { MerkabaBackdrop } from "@/components/brand/merkaba-backdrop";
+import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
@@ -79,7 +79,7 @@ export default async function LandingPage() {
 
   return (
     <div className="relative">
-      <MerkabaBackdrop />
+      <SacredOceanBackdrop />
 
       {/* Header */}
       <header className="sticky top-0 z-40">

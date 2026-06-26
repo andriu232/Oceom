@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MerkabaBackdrop } from "@/components/brand/merkaba-backdrop";
+import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { GlowOrb } from "@/components/brand/glow-orb";
 import { Logo } from "@/components/brand/logo";
 import { site } from "@/config/site";
@@ -11,7 +11,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative grid min-h-dvh lg:grid-cols-2">
-      <MerkabaBackdrop />
+      <SacredOceanBackdrop />
 
       {/* Panel emocional (izquierda en desktop) */}
       <div className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">

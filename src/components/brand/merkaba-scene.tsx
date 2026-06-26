@@ -5,16 +5,59 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 /* ============================================================
-   MerkabaScene — estrella tetraédrica (Merkaba) girando en el océano.
-   Geometría sagrada del área de estudiante. WebGL r3f.
+   MerkabaScene — estrella tetraédrica (Merkaba) inclinada en 3D sobre una
+   Flor de la Vida tenue. Geometría sagrada del área de estudiante.
    ============================================================ */
 
 const CYAN = "#22d3ee";
 const GLOW = "#5eead4";
 const VIOLET = "#818cf8";
 
-/* ---------- Merkaba: dos tetraedros contrarrotando ---------- */
+function buildCircles(centers: [number, number][], radius: number, segments = 56) {
+  const pts: number[] = [];
+  for (const [cx, cy] of centers) {
+    for (let s = 0; s < segments; s++) {
+      const a0 = (s / segments) * Math.PI * 2;
+      const a1 = ((s + 1) / segments) * Math.PI * 2;
+      pts.push(cx + Math.cos(a0) * radius, cy + Math.sin(a0) * radius, 0);
+      pts.push(cx + Math.cos(a1) * radius, cy + Math.sin(a1) * radius, 0);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+  return g;
+}
+
+/* ---------- Flor de la Vida (fondo tenue) ---------- */
+function FlowerOfLife() {
+  const ref = useRef<THREE.LineSegments>(null!);
+  const geo = useMemo(() => {
+    const r = 1;
+    const ax: [number, number] = [r, 0];
+    const bx: [number, number] = [r * 0.5, (r * Math.sqrt(3)) / 2];
+    const centers: [number, number][] = [];
+    for (let i = -2; i <= 2; i++)
+      for (let j = -2; j <= 2; j++) {
+        const dist = (Math.abs(i) + Math.abs(j) + Math.abs(i + j)) / 2;
+        if (dist <= 2) centers.push([i * ax[0] + j * bx[0], i * ax[1] + j * bx[1]]);
+      }
+    return buildCircles(centers, r);
+  }, []);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    ref.current.rotation.z = -t * 0.02;
+    ref.current.scale.setScalar(3.2 * (1 + Math.sin(t * 0.35) * 0.02));
+  });
+  return (
+    <lineSegments ref={ref} geometry={geo} position={[0, 0, -6]}>
+      <lineBasicMaterial color={CYAN} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </lineSegments>
+  );
+}
+
+/* ---------- Merkaba: dos tetraedros contrarrotando, inclinado en 3D ---------- */
 function Merkaba() {
+  const group = useRef<THREE.Group>(null!);
   const up = useRef<THREE.LineSegments>(null!);
   const down = useRef<THREE.LineSegments>(null!);
   const halo = useRef<THREE.LineSegments>(null!);
@@ -23,12 +66,10 @@ function Merkaba() {
     () => new THREE.EdgesGeometry(new THREE.TetrahedronGeometry(2.3)),
     [],
   );
-
-  // Halo: circunferencia alrededor del merkaba.
   const ring = useMemo(() => {
     const pts: number[] = [];
     const N = 96;
-    const r = 3.4;
+    const r = 3.5;
     for (let i = 0; i < N; i++) {
       const a0 = (i / N) * Math.PI * 2;
       const a1 = ((i + 1) / N) * Math.PI * 2;
@@ -40,31 +81,32 @@ function Merkaba() {
   }, []);
 
   useFrame((state, delta) => {
-    up.current.rotation.y += delta * 0.28;
-    down.current.rotation.y -= delta * 0.28;
+    up.current.rotation.y += delta * 0.3;
+    down.current.rotation.y -= delta * 0.3;
     const t = state.clock.elapsedTime;
     const s = 1 + Math.sin(t * 0.5) * 0.04;
     up.current.scale.setScalar(s);
     down.current.scale.setScalar(s);
     halo.current.rotation.z = t * 0.05;
+    // Cabeceo suave del conjunto para mostrar la profundidad 3D
+    group.current.rotation.x = 0.45 + Math.sin(t * 0.25) * 0.08;
   });
 
   return (
-    <group position={[0, 0, -1]}>
+    <group ref={group} position={[0, 0, -1]}>
       <lineSegments ref={up} geometry={tetra}>
-        <lineBasicMaterial color={CYAN} transparent opacity={0.75} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial color={CYAN} transparent opacity={0.9} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
-      <lineSegments ref={down} geometry={tetra} rotation={[Math.PI, 0, 0]}>
-        <lineBasicMaterial color={VIOLET} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
+      <lineSegments ref={down} geometry={tetra} rotation={[Math.PI, 0, Math.PI / 3]}>
+        <lineBasicMaterial color={VIOLET} transparent opacity={0.75} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments ref={halo} geometry={ring}>
-        <lineBasicMaterial color={GLOW} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial color={GLOW} transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
     </group>
   );
 }
 
-/* ---------- Partículas de luz ---------- */
 function LightMotes() {
   const pts = useRef<THREE.Points>(null!);
   const COUNT = 1000;
@@ -114,6 +156,7 @@ export function MerkabaScene() {
     >
       <fog attach="fog" args={["#06243a", 12, 38]} />
       <ambientLight intensity={0.7} color="#a9e6ff" />
+      <FlowerOfLife />
       <Merkaba />
       <LightMotes />
       <Rig />
