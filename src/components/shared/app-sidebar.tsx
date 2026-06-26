@@ -30,6 +30,7 @@ import {
   CreditCard,
   Gift,
   AudioLines,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   map: Map,
   radio: Radio,
   audio: AudioLines,
+  calendar: CalendarDays,
   users: Users,
   trending: TrendingUp,
   user: CircleUser,

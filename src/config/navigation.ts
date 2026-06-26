@@ -10,6 +10,7 @@ export type IconName =
   | "map"
   | "radio"
   | "audio"
+  | "calendar"
   | "users"
   | "trending"
   | "user"
@@ -48,6 +49,7 @@ export const studentGroups: NavGroup[] = [
       { label: "Academia", href: "/academia", icon: "academia" },
       { label: "Mi Ruta", href: "/mi-ruta", icon: "route" },
       { label: "Hojas de Ruta", href: "/hojas-de-ruta", icon: "roadmap" },
+      { label: "Agendar Clase", href: "/agendar", icon: "calendar" },
       { label: "Círculos en Vivo", href: "/circulos", icon: "radio" },
       { label: "Deep Waves", href: "/deep-waves", icon: "audio" },
     ],
@@ -84,6 +86,7 @@ export const adminGroups: NavGroup[] = [
       { label: "Estudiantes", href: "/estudiantes", icon: "students" },
       { label: "Programas", href: "/programas", icon: "library" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
+      { label: "Agenda", href: "/agenda", icon: "calendar" },
       { label: "Círculos", href: "/circulos-admin", icon: "radio" },
     ],
   },
