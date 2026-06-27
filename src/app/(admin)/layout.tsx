@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { AppSidebar } from "@/components/shared/app-sidebar";
-import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
+import { OceomSanctuaryBackground } from "@/components/brand/sanctuary-background";
 import { adminGroups } from "@/config/navigation";
 
 export default async function AdminLayout({
@@ -12,7 +12,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-dvh">
-      <SacredOceanBackdrop />
+      <OceomSanctuaryBackground scene="sacred" />
       <AppSidebar
         groups={adminGroups}
         userName={profile.full_name ?? "Mentora"}

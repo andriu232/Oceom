@@ -1,6 +1,6 @@
 import { requireStudentArea, isMentor } from "@/lib/auth";
 import { AppSidebar } from "@/components/shared/app-sidebar";
-import { FlowerBackdrop } from "@/components/brand/flower-backdrop";
+import { OceomSanctuaryBackground } from "@/components/brand/sanctuary-background";
 import { studentGroups } from "@/config/navigation";
 
 export default async function EstudianteLayout({
@@ -13,7 +13,7 @@ export default async function EstudianteLayout({
 
   return (
     <div className="min-h-dvh">
-      <FlowerBackdrop />
+      <OceomSanctuaryBackground scene="flower" />
       <AppSidebar
         groups={studentGroups}
         userName={profile.full_name ?? "Viajero"}

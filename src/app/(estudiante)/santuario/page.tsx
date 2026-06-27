@@ -6,11 +6,19 @@ import {
   ArrowRight,
   CalendarClock,
   ClipboardList,
+  Heart,
 } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { getStudentRoute } from "@/lib/queries/route";
-import { Card, CardTitle } from "@/components/ui/card";
-import { GlowOrb } from "@/components/brand/glow-orb";
+import { OceomOrb } from "@/components/brand/oceom-orb";
+import { OceomButton } from "@/components/ui/oceom-button";
+import { OceomProgressBar } from "@/components/ui/oceom-progress";
+import {
+  PortalCard,
+  OrbIcon,
+  SectionLabel,
+} from "@/components/ui/oceom-card";
+import type { Accent } from "@/lib/accents";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,39 +30,53 @@ export default async function SantuarioPage() {
   const route = await getStudentRoute(profile.id);
 
   return (
-    <div className="space-y-8">
-      {/* Hero de bienvenida */}
-      <section className="glass relative overflow-hidden rounded-2xl p-8">
-        <GlowOrb className="absolute -right-16 -top-10 size-64" />
-        <div className="relative">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-ocean-cyan">
-            Tu santuario
-          </p>
-          <h1 className="mt-3 font-display text-4xl font-bold text-foreground">
-            Hola, {firstName}. ¿Qué quieres explorar hoy?
-          </h1>
-          <p className="mt-3 max-w-xl text-muted">
-            Tu océano interior sigue despertando. Cada experiencia es un paso más
-            profundo en tu proceso de transformación.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/mi-ruta"
-              className="inline-flex items-center gap-2 rounded-xl bg-ocean-cyan px-5 py-3 text-sm font-semibold text-[var(--ocean-abyss)] shadow-[0_0_28px_-6px_var(--ocean-cyan)] transition hover:brightness-110"
-            >
-              Continuar mi ruta <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/omi"
-              className="glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium text-foreground transition hover:text-ocean-cyan"
-            >
-              <Sparkles className="size-4" /> Hablar con OMI
-            </Link>
+    <div className="space-y-10 [animation:surface_0.7s_ease-out]">
+      {/* ---------- Hero / portal del santuario ---------- */}
+      <section
+        className="relative overflow-hidden rounded-[26px] p-px"
+        style={{ background: "linear-gradient(150deg, rgba(34,211,238,0.4), rgba(255,255,255,0.05) 36%, rgba(129,140,248,0.28))" }}
+      >
+        <div className="glass-strong relative overflow-hidden rounded-[25px] px-8 py-10 sm:px-10 sm:py-12">
+          {/* Luz submarina interior */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-80"
+            style={{ background: "radial-gradient(80% 120% at 88% 0%, rgba(34,211,238,0.16), transparent 55%)" }}
+          />
+          <span aria-hidden className="grain pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-overlay" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          />
+
+          {/* Orbe oceánico flotante */}
+          <OceomOrb className="pointer-events-none absolute -right-10 -top-8 w-52 opacity-90 sm:right-2 sm:top-1/2 sm:w-64 sm:-translate-y-1/2 lg:w-72" />
+
+          <div className="relative max-w-2xl">
+            <SectionLabel>Tu Santuario</SectionLabel>
+            <h1 className="mt-4 font-display text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-[2.6rem]">
+              Hola, {firstName}.{" "}
+              <span className="bg-gradient-to-r from-ocean-foam via-ocean-glow to-ocean-cyan bg-clip-text text-transparent">
+                ¿Qué dimensión de tu mundo interior quieres explorar hoy?
+              </span>
+            </h1>
+            <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-muted">
+              Tu océano interior sigue despertando. Cada experiencia abre una nueva
+              capa de consciencia, sanación y expansión.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <OceomButton href="/mi-ruta">
+                Continuar mi ruta <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </OceomButton>
+              <OceomButton href="/omi" variant="glass">
+                <Sparkles className="size-4" /> Hablar con OMI
+              </OceomButton>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Progreso + próxima experiencia */}
+      {/* ---------- Progreso + próxima experiencia ---------- */}
       <section className="grid gap-5 md:grid-cols-3">
         <ProgressCard
           percentage={route?.progressPct ?? 0}
@@ -69,46 +91,70 @@ export default async function SantuarioPage() {
         <NextSessionCard />
       </section>
 
-      {/* Accesos + estado emocional */}
+      {/* ---------- Estado emocional + Deep Waves ---------- */}
       <section className="grid gap-5 md:grid-cols-2">
-        <Card>
-          <div className="flex items-center justify-between">
-            <CardTitle>Estado emocional del día</CardTitle>
-            <span className="text-xs text-muted">Check-in</span>
+        <PortalCard accent="rose">
+          <div className="flex items-start gap-4">
+            <OrbIcon accent="rose">
+              <Heart />
+            </OrbIcon>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  Estado emocional del día
+                </h3>
+                <span className="text-[0.7rem] uppercase tracking-wider text-muted/70">Check-in</span>
+              </div>
+              <p className="mt-1.5 text-sm text-muted">
+                Antes de avanzar, vuelve a ti. ¿Cómo se mueve hoy tu océano interior?
+              </p>
+              <CardLink href="/bitacora" accent="rose">Hacer mi check-in</CardLink>
+            </div>
           </div>
-          <p className="mt-2 text-sm text-muted">
-            Antes de explorar, conéctate contigo. ¿Cómo te sientes hoy?
-          </p>
-          <Link
-            href="/bitacora"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-          >
-            Hacer mi check-in <ArrowRight className="size-4" />
-          </Link>
-        </Card>
+        </PortalCard>
 
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-xl bg-ocean-violet/15 text-ocean-violet">
-              <Radio className="size-5" />
-            </div>
-            <div>
-              <CardTitle>Deep Waves</CardTitle>
-              <p className="text-sm text-muted">Meditaciones, hipnosis y respiraciones.</p>
+        <PortalCard accent="violet">
+          <div className="flex items-start gap-4">
+            <OrbIcon accent="violet">
+              <Radio />
+            </OrbIcon>
+            <div className="flex-1">
+              <h3 className="font-display text-lg font-semibold text-foreground">Deep Waves</h3>
+              <p className="mt-1.5 text-sm text-muted">
+                Meditaciones, hipnosis y respiraciones para entrar en profundidad.
+              </p>
+              <CardLink href="/deep-waves" accent="violet">Entrar a Deep Waves</CardLink>
             </div>
           </div>
-          <Link
-            href="/deep-waves"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-          >
-            Entrar a Deep Waves <ArrowRight className="size-4" />
-          </Link>
-        </Card>
+        </PortalCard>
       </section>
     </div>
   );
 }
 
+/* ---------- Enlace de card con acento ---------- */
+function CardLink({
+  href,
+  accent,
+  children,
+}: {
+  href: string;
+  accent: Accent;
+  children: React.ReactNode;
+}) {
+  const color = { cyan: "text-ocean-cyan", rose: "text-[#fb7185]", violet: "text-ocean-violet", magenta: "text-oceom-magenta", blue: "text-oceom-blue", gold: "text-oceom-gold", green: "text-oceom-green", turquoise: "text-oceom-turquoise" }[accent];
+  return (
+    <Link
+      href={href}
+      className={cn("group/l mt-5 inline-flex items-center gap-1.5 text-sm font-medium hover:underline", color)}
+    >
+      {children}
+      <ArrowRight className="size-4 transition-transform group-hover/l:translate-x-0.5" />
+    </Link>
+  );
+}
+
+/* ---------- Cards de la fila de progreso ---------- */
 function ProgressCard({
   percentage,
   completed,
@@ -119,29 +165,28 @@ function ProgressCard({
   total: number;
 }) {
   return (
-    <Card>
-      <div className="flex items-center gap-2 text-muted">
-        <Route className="size-4" />
-        <span className="text-sm">Mi evolución</span>
+    <PortalCard accent="cyan">
+      <div className="flex items-center gap-3">
+        <OrbIcon accent="cyan">
+          <Route />
+        </OrbIcon>
+        <div>
+          <SectionLabel>Mi evolución</SectionLabel>
+        </div>
       </div>
-      <div className="mt-4 flex items-end gap-2">
-        <span className="font-display text-4xl font-bold text-foreground">
+      <div className="mt-5 flex items-end gap-2">
+        <span className="font-display text-[2.75rem] font-bold leading-none text-foreground">
           {percentage}%
         </span>
         <span className="mb-1 text-sm text-muted">completado</span>
       </div>
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
-        <div
-          className={cn("h-full rounded-full bg-gradient-to-r from-ocean-glow to-ocean-cyan")}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+      <OceomProgressBar value={percentage} accent="cyan" className="mt-4" />
       <p className="mt-3 text-xs text-muted">
         {total > 0
-          ? `${completed} de ${total} experiencias completadas.`
-          : "Tu progreso aparecerá cuando comiences tu primera experiencia."}
+          ? `Tu transformación toma forma experiencia por experiencia · ${completed}/${total}.`
+          : "Tu transformación toma forma con tu primera experiencia."}
       </p>
-    </Card>
+    </PortalCard>
   );
 }
 
@@ -155,62 +200,52 @@ function RecommendationCard({
   done: boolean;
 }) {
   return (
-    <Card>
-      <div className="flex items-center gap-2 text-muted">
-        <ClipboardList className="size-4" />
-        <span className="text-sm">Continúa tu viaje</span>
+    <PortalCard accent="magenta">
+      <div className="flex items-center gap-3">
+        <OrbIcon accent="magenta">
+          <ClipboardList />
+        </OrbIcon>
+        <SectionLabel accent="magenta">Continúa tu viaje</SectionLabel>
       </div>
       {lesson ? (
         <>
-          <p className="mt-4 font-display text-lg font-semibold text-foreground">
+          <p className="mt-5 font-display text-lg font-semibold leading-snug text-foreground">
             {lesson.title}
           </p>
-          {programTitle && (
-            <p className="mt-1 text-sm text-muted">{programTitle}</p>
-          )}
-          <Link
-            href={`/experiencia/${lesson.id}`}
-            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-          >
-            Continuar <ArrowRight className="size-4" />
-          </Link>
+          {programTitle && <p className="mt-1 text-sm text-muted">{programTitle}</p>}
+          <CardLink href={`/experiencia/${lesson.id}`} accent="magenta">Continuar</CardLink>
         </>
       ) : (
         <>
-          <p className="mt-4 font-display text-lg font-semibold text-foreground">
+          <p className="mt-5 font-display text-lg font-semibold text-foreground">
             {done ? "¡Ruta completada! 🌊" : "Aún no tienes programa activo"}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {done ? "Has recorrido todo tu camino." : "Explora los programas disponibles."}
+            {done ? "Has recorrido todo tu camino interior." : "Explora los programas disponibles."}
           </p>
-          <Link
-            href={done ? "/mi-evolucion" : "/academia"}
-            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-          >
-            {done ? "Ver mi evolución" : "Explorar"} <ArrowRight className="size-4" />
-          </Link>
+          <CardLink href={done ? "/mi-evolucion" : "/academia"} accent="magenta">
+            {done ? "Ver mi evolución" : "Explorar"}
+          </CardLink>
         </>
       )}
-    </Card>
+    </PortalCard>
   );
 }
 
 function NextSessionCard() {
   return (
-    <Card>
-      <div className="flex items-center gap-2 text-muted">
-        <CalendarClock className="size-4" />
-        <span className="text-sm">Próximo Círculo en Vivo</span>
+    <PortalCard accent="blue">
+      <div className="flex items-center gap-3">
+        <OrbIcon accent="blue">
+          <CalendarClock />
+        </OrbIcon>
+        <SectionLabel accent="blue">Próximo Círculo en Vivo</SectionLabel>
       </div>
-      <p className="mt-4 text-sm text-muted">
-        Aún no tienes sesiones programadas. Tu mentora las publicará aquí.
+      <p className="mt-5 text-sm text-muted">
+        Aún no tienes encuentros programados. Tu mentora abrirá aquí las próximas
+        sesiones en vivo.
       </p>
-      <Link
-        href="/circulos"
-        className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
-      >
-        Ver Círculos <ArrowRight className="size-4" />
-      </Link>
-    </Card>
+      <CardLink href="/circulos" accent="blue">Ver Círculos</CardLink>
+    </PortalCard>
   );
 }

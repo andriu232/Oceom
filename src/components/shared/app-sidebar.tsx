@@ -200,7 +200,18 @@ export function AppSidebar({
           <div className="rounded-2xl border border-card-border bg-ocean-surface/40 p-3">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-ocean-glow to-ocean-violet opacity-70 blur-[3px]" />
+                {/* Aro de energía rotando */}
+                <span
+                  aria-hidden
+                  className="absolute -inset-1 rounded-full [animation:spin-slow_14s_linear_infinite]"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, #5eead4, #818cf8, #22d3ee, #5eead4)",
+                    maskImage: "radial-gradient(circle, transparent 56%, black 60%)",
+                    WebkitMaskImage: "radial-gradient(circle, transparent 56%, black 60%)",
+                  }}
+                />
+                <span className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-ocean-glow to-ocean-violet opacity-50 blur-[4px]" />
                 <div className="relative grid size-10 place-items-center rounded-full bg-gradient-to-br from-ocean-glow to-ocean-violet text-sm font-semibold text-[var(--ocean-abyss)]">
                   {userName.charAt(0).toUpperCase()}
                 </div>
