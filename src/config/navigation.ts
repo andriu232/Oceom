@@ -48,6 +48,7 @@ export const studentGroups: NavGroup[] = [
       { label: "Santuario", href: "/santuario", icon: "waves", hint: "Inicio" },
       { label: "Academia", href: "/academia", icon: "academia" },
       { label: "Mi Ruta", href: "/mi-ruta", icon: "route" },
+      { label: "Ruta del Viajero", href: "/ruta-viajero", icon: "compass", hint: "Viaje" },
       { label: "Hojas de Ruta", href: "/hojas-de-ruta", icon: "roadmap" },
       { label: "Agendar Clase", href: "/agendar", icon: "calendar" },
       { label: "Círculos en Vivo", href: "/circulos", icon: "radio" },
