@@ -10,6 +10,7 @@ import {
   X,
   Waves,
   Compass,
+  Telescope,
   Route,
   Sparkles,
   BookOpenText,
@@ -44,6 +45,7 @@ import type { ViewMode } from "@/lib/auth/mode";
 const ICONS: Record<IconName, LucideIcon> = {
   waves: Waves,
   compass: Compass,
+  explore: Telescope,
   route: Route,
   sparkles: Sparkles,
   book: BookOpenText,

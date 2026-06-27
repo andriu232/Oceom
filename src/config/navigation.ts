@@ -4,6 +4,7 @@
 export type IconName =
   | "waves"
   | "compass"
+  | "explore"
   | "route"
   | "sparkles"
   | "book"
@@ -46,6 +47,7 @@ export const studentGroups: NavGroup[] = [
     label: "Aprender",
     items: [
       { label: "Santuario", href: "/santuario", icon: "waves", hint: "Inicio" },
+      { label: "Explorar", href: "/explorar", icon: "explore" },
       { label: "Academia", href: "/academia", icon: "academia" },
       { label: "Mi Ruta", href: "/mi-ruta", icon: "route" },
       { label: "Ruta del Viajero", href: "/ruta-viajero", icon: "compass", hint: "Viaje" },
