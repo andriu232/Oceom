@@ -19,6 +19,13 @@
   --ocean-violet: #818cf8;
   --ocean-foam: #e6f6ff;
 
+  /* Acentos de marca extendidos (referencias visuales OCEOM) */
+  --oceom-turquoise: #2dd4bf;
+  --oceom-blue: #38bdf8;
+  --oceom-magenta: #e879f9;
+  --oceom-gold: #f5c451;
+  --oceom-green: #34d399;
+
   /* Semánticos */
   --background: var(--ocean-abyss);
   --foreground: #e8eefb;
@@ -47,6 +54,11 @@
   --color-ocean-cyan: var(--ocean-cyan);
   --color-ocean-glow: var(--ocean-glow);
   --color-ocean-violet: var(--ocean-violet);
+  --color-oceom-turquoise: var(--oceom-turquoise);
+  --color-oceom-blue: var(--oceom-blue);
+  --color-oceom-magenta: var(--oceom-magenta);
+  --color-oceom-gold: var(--oceom-gold);
+  --color-oceom-green: var(--oceom-green);
   --color-danger: var(--danger);
   --color-success: var(--success);
 
