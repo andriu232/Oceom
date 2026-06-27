@@ -29,14 +29,14 @@ const SUGGESTIONS = [
   "¿Cómo integro la clase de hoy?",
   "Me siento bloqueado/a",
   "Sugiéreme una práctica",
-  "¿Qué es una herida emocional?",
+  "Ayúdame a decodificar algo que viví",
 ];
 
-export function AuraChat({ firstName }: { firstName: string }) {
+export function OmiChat({ firstName }: { firstName: string }) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      content: `Hola, ${firstName}. Soy AURA, tu guía dentro de OCEOM. Estoy aquí para acompañarte en tu proceso. ¿Qué quieres explorar hoy?`,
+      content: `Hola, ${firstName}. Soy OMI, tu acompañamiento consciente dentro de OCEOM. Estoy aquí para escucharte, comprenderte y acompañarte en tu evolución. ¿Qué quieres explorar hoy?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -56,11 +56,11 @@ export function AuraChat({ firstName }: { firstName: string }) {
   function send(text: string) {
     const content = text.trim();
     if (!content) return;
-    const aura = reply(content);
+    const omi = reply(content);
     setMessages((m) => [
       ...m,
       { role: "user", content },
-      { role: "assistant", content: aura },
+      { role: "assistant", content: omi },
     ]);
     setInput("");
     requestAnimationFrame(() =>
@@ -69,7 +69,7 @@ export function AuraChat({ firstName }: { firstName: string }) {
   }
 
   return (
-    <div className="glass flex h-[calc(100dvh-12rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl">
+    <div className="glass flex h-[calc(100dvh-16rem)] min-h-[26rem] flex-col overflow-hidden rounded-2xl">
       {/* Disclaimer de seguridad */}
       <div className="flex items-start gap-2 border-b border-card-border bg-ocean-violet/10 px-5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
@@ -84,7 +84,7 @@ export function AuraChat({ firstName }: { firstName: string }) {
             className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}
           >
             {m.role === "assistant" && (
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-ocean-glow to-ocean-violet text-[var(--ocean-abyss)]">
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-oceom-blue to-ocean-violet text-[var(--ocean-abyss)]">
                 <Sparkles className="size-4" />
               </div>
             )}
@@ -128,7 +128,7 @@ export function AuraChat({ firstName }: { firstName: string }) {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe a AURA…"
+            placeholder="Escribe a OMI…"
             className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none placeholder:text-muted/70 focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)]"
           />
           <button
@@ -139,7 +139,7 @@ export function AuraChat({ firstName }: { firstName: string }) {
           </button>
         </form>
         <p className="mt-2 text-center text-[0.65rem] text-muted/60">
-          Vista previa de AURA · La IA con tus fuentes autorizadas llega en el Sprint 8–9
+          Vista previa de OMI · La IA con tus fuentes autorizadas llega en el Sprint 8–9
         </p>
       </div>
     </div>

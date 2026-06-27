@@ -16,7 +16,7 @@ const NEXT_STEPS = [
   "Crea y publica las experiencias de cada programa (Sprint 2–3).",
   "Inscribe a tus estudiantes y abre sus accesos (Sprint 6).",
   "Programa tus Círculos en Vivo (Sprint 7).",
-  "Alimenta a AURA con tus fuentes autorizadas (Sprint 9).",
+  "Alimenta a OMI con tus fuentes autorizadas (Sprint 9).",
 ];
 
 const fade = {

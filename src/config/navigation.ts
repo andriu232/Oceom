@@ -57,7 +57,7 @@ export const studentGroups: NavGroup[] = [
   {
     label: "Ecosistema",
     items: [
-      { label: "AURA", href: "/aura", icon: "sparkles", hint: "IA" },
+      { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA" },
       { label: "Círculo", href: "/circulo", icon: "users" },
       { label: "Mis Herramientas", href: "/herramientas", icon: "tools" },
       { label: "Bitácora Interior", href: "/bitacora", icon: "book" },

@@ -62,7 +62,7 @@ const PROGRAMS = [
 ];
 
 const ECOSYSTEM = [
-  { icon: Sparkles, title: "AURA", desc: "Tu guía de IA neuroemocional, contigo 24/7." },
+  { icon: Sparkles, title: "OMI", desc: "Tu guía de IA neuroemocional, contigo 24/7." },
   { icon: AudioLines, title: "Deep Waves", desc: "Meditaciones, hipnosis y respiraciones." },
   { icon: BookOpenText, title: "Bitácora Interior", desc: "Tu diario emocional y de insights." },
   { icon: Map, title: "Mapa de Visión", desc: "Diseña tu futuro por áreas de vida." },

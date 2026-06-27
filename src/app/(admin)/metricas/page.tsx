@@ -10,7 +10,7 @@ export default function MetricasPage() {
       subtitle="La salud de tu mentoría, de un vistazo."
       icon={BarChart3}
       sprint="Sprint 5 / 6"
-      description="Estudiantes activos, progreso promedio, entregas, asistencia, uso de AURA y experiencias con mayor abandono."
+      description="Estudiantes activos, progreso promedio, entregas, asistencia, uso de OMI y experiencias con mayor abandono."
     />
   );
 }

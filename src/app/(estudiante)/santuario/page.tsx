@@ -45,10 +45,10 @@ export default async function SantuarioPage() {
               Continuar mi ruta <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/aura"
+              href="/omi"
               className="glass inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium text-foreground transition hover:text-ocean-cyan"
             >
-              <Sparkles className="size-4" /> Hablar con AURA
+              <Sparkles className="size-4" /> Hablar con OMI
             </Link>
           </div>
         </div>
