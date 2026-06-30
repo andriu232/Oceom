@@ -41,6 +41,21 @@ export function formatTime(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** ISO → valor para <input type="datetime-local"> en hora Colombia. */
+export function isoToLocalInput(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BOGOTA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
 /** Hoy en hora de Colombia, como {y, m (1-12), d}. */
 export function todayInBogota(): { y: number; m: number; d: number } {
   const [y, m, d] = dayKey(new Date().toISOString()).split("-").map(Number);
