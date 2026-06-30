@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
-import { GlowOrb } from "@/components/brand/glow-orb";
 import { Logo } from "@/components/brand/logo";
 import { site } from "@/config/site";
 
@@ -15,7 +14,6 @@ export default function AuthLayout({
 
       {/* Panel emocional (izquierda en desktop) */}
       <div className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
-        <GlowOrb className="absolute -right-20 top-1/3 size-96" />
         <Link href="/">
           <Logo />
         </Link>
