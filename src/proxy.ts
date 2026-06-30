@@ -16,7 +16,9 @@ export async function proxy(request: NextRequest) {
 
   const isLanding = pathname === "/";
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
-  const isPublic = isLanding || isAuthPage;
+  // Callback OAuth (Google): debe canjear el código antes de tener sesión.
+  const isOAuthCallback = pathname.startsWith("/auth/");
+  const isPublic = isLanding || isAuthPage || isOAuthCallback;
 
   // No autenticado intentando entrar a zona privada -> login.
   if (!user && !isPublic) {

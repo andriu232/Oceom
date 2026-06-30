@@ -5,6 +5,8 @@ import { signUpAction, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleButton } from "@/components/auth/google-button";
+import { AuthDivider } from "@/components/auth/auth-divider";
 
 export function RegistroForm() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
@@ -13,6 +15,9 @@ export function RegistroForm() {
   );
 
   return (
+    <div className="space-y-5">
+    <GoogleButton label="Registrarme con Google" />
+    <AuthDivider />
     <form action={action} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="fullName">¿Cómo te llamas?</Label>
@@ -33,5 +38,6 @@ export function RegistroForm() {
         {pending ? "Creando…" : "Crear mi portal"}
       </Button>
     </form>
+    </div>
   );
 }

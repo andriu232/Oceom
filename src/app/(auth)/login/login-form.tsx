@@ -5,6 +5,8 @@ import { signInAction, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleButton } from "@/components/auth/google-button";
+import { AuthDivider } from "@/components/auth/auth-divider";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
@@ -13,6 +15,9 @@ export function LoginForm() {
   );
 
   return (
+    <div className="space-y-5">
+    <GoogleButton />
+    <AuthDivider />
     <form action={action} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="email">Correo</Label>
@@ -31,5 +36,6 @@ export function LoginForm() {
         {pending ? "Entrando…" : "Entrar al santuario"}
       </Button>
     </form>
+    </div>
   );
 }
