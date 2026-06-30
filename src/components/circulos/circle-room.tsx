@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { Video, Clock, ExternalLink, PlayCircle } from "lucide-react";
+import { Clock, ExternalLink, PlayCircle } from "lucide-react";
 import { joinCircleAction } from "@/lib/actions/circles";
+import { LiveCircle } from "@/components/circulos/live-circle";
 import type { CircleState } from "@/lib/queries/circles";
 
 /**
@@ -27,6 +28,23 @@ export function CircleRoom({
     if (state === "live") joinCircleAction(id).catch(() => {});
   }, [id, state]);
 
+  // En vivo → sala de video nativa (LiveKit).
+  if (state === "live") {
+    return (
+      <div className="space-y-3">
+        <LiveCircle roomId={id} />
+        {meetingUrl && (
+          <p className="text-center text-xs text-muted">
+            ¿Problemas con el video?{" "}
+            <a href={meetingUrl} target="_blank" rel="noreferrer" className="text-ocean-cyan hover:underline">
+              Entra por el enlace externo
+            </a>
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="glass-strong relative aspect-video w-full overflow-hidden rounded-2xl">
       <div
@@ -35,35 +53,6 @@ export function CircleRoom({
         style={{ background: "radial-gradient(70% 90% at 50% 0%, rgba(34,211,238,0.14), transparent 60%)" }}
       />
       <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-        {state === "live" && (
-          <>
-            <span className="inline-flex items-center gap-2 rounded-full bg-danger/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-danger">
-              <span className="size-2 animate-pulse rounded-full bg-danger" /> En vivo
-            </span>
-            <div className="grid size-16 place-items-center rounded-full bg-ocean-cyan/15 text-ocean-cyan ring-1 ring-ocean-cyan/30">
-              <Video className="size-7" />
-            </div>
-            {meetingUrl ? (
-              <>
-                <p className="text-sm text-muted">El círculo está en vivo.</p>
-                <a
-                  href={meetingUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-[18px] bg-[linear-gradient(135deg,#7df0e2,#22d3ee_48%,#13b3c4)] px-5 py-3 text-sm font-semibold text-[#04121a] shadow-[0_0_28px_-6px_rgba(34,211,238,0.8)] transition hover:-translate-y-0.5"
-                >
-                  Entrar a la videollamada <ExternalLink className="size-4" />
-                </a>
-              </>
-            ) : (
-              <p className="max-w-sm text-sm text-muted">
-                La sala de video nativa se activará en breve. Tu asistencia quedó
-                registrada.
-              </p>
-            )}
-          </>
-        )}
-
         {state === "upcoming" && (
           <>
             <div className="grid size-16 place-items-center rounded-full bg-ocean-violet/15 text-ocean-violet ring-1 ring-ocean-violet/30">
