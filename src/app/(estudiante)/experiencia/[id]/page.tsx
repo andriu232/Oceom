@@ -145,7 +145,7 @@ export default async function ExperienciaPage({
             {resources.map((r) => (
               <a
                 key={r.id}
-                href={r.file_url ?? "#"}
+                href={`/api/materials/${r.id}/download`}
                 className="glass group flex items-center gap-3 rounded-xl p-4 transition-colors hover:border-ocean-cyan/40"
               >
                 <div className="grid size-10 place-items-center rounded-xl bg-ocean-violet/15 text-ocean-violet">

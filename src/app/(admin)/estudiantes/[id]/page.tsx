@@ -15,6 +15,7 @@ import { getActiveEnrollment, getProgramRoute } from "@/lib/queries/route";
 import { Card } from "@/components/ui/card";
 import { RouteTimeline } from "@/components/ruta/route-timeline";
 import { GlowOrb } from "@/components/brand/glow-orb";
+import { EnrollmentManager } from "@/components/admin/enrollment-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,30 @@ export default async function EstudianteDetallePage({
     : null;
 
   const supabase = await createClient();
-  const { count: checkins } = await supabase
-    .from("emotional_checkins")
-    .select("id", { count: "exact", head: true })
-    .eq("student_id", id);
+  const [{ count: checkins }, programsRes, enrollRes] = await Promise.all([
+    supabase
+      .from("emotional_checkins")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", id),
+    supabase
+      .from("programs")
+      .select("id,title,type")
+      .eq("status", "published")
+      .order("created_at"),
+    supabase
+      .from("enrollments")
+      .select("program_id")
+      .eq("student_id", id)
+      .eq("status", "active"),
+  ]);
+
+  const enrolledIds = new Set((enrollRes.data ?? []).map((e) => e.program_id));
+  const programsForEnroll = (programsRes.data ?? []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    type: p.type,
+    enrolled: enrolledIds.has(p.id),
+  }));
 
   return (
     <div className="space-y-7">
@@ -87,6 +108,9 @@ export default async function EstudianteDetallePage({
         />
         <Metric icon={Heart} value={String(checkins ?? 0)} label="Check-ins emocionales" />
       </section>
+
+      {/* Acceso a programas (inscripción) */}
+      <EnrollmentManager studentId={id} programs={programsForEnroll} />
 
       {/* Clase actual */}
       {route?.currentLesson && (

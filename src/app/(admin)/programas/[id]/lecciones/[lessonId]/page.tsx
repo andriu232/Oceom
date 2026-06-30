@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { getLessonForEditor } from "@/lib/queries/admin-content";
 import { deleteLessonAction } from "@/lib/actions/content";
 import { LessonForm } from "@/components/admin/lesson-form";
+import { LessonMaterials } from "@/components/admin/lesson-materials";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,13 @@ export default async function LessonEditorPage({
   await requireRole("mentor", "super_admin");
   const lesson = await getLessonForEditor(lessonId);
   if (!lesson || lesson.program_id !== id) notFound();
+
+  const supabase = await createClient();
+  const { data: resources } = await supabase
+    .from("resources")
+    .select("id,title,description,file_type")
+    .eq("lesson_id", lessonId)
+    .order("created_at");
 
   return (
     <div className="space-y-6">
@@ -39,6 +48,12 @@ export default async function LessonEditorPage({
       </div>
 
       <LessonForm lesson={lesson} />
+
+      <LessonMaterials
+        lessonId={lessonId}
+        programId={id}
+        resources={resources ?? []}
+      />
     </div>
   );
 }
