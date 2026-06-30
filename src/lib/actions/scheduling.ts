@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireRole, getUser } from "@/lib/auth";
 import { localToIso } from "@/lib/scheduling/time";
+import { notifyBooking } from "@/lib/email/notify";
 
 export type SchedState = { error?: string; ok?: boolean } | undefined;
 
@@ -68,7 +69,7 @@ export async function bookSlotAction(
   const admin = createServiceClient();
   const { data: slot } = await admin
     .from("class_slots")
-    .select("id,status,starts_at")
+    .select("id,status,starts_at,duration_minutes,mentor_id")
     .eq("id", slotId)
     .maybeSingle();
 
@@ -94,6 +95,30 @@ export async function bookSlotAction(
 
   if (error) return { error: error.message };
   revalidateAgenda();
+
+  // Notifica por correo (estudiante + mentora). No bloquea la reserva si falla.
+  try {
+    const { data: people } = await admin
+      .from("profiles")
+      .select("id,full_name,email")
+      .in("id", [user.id, slot.mentor_id]);
+    const student = people?.find((p) => p.id === user.id);
+    const mentor = people?.find((p) => p.id === slot.mentor_id);
+    if (student?.email && mentor?.email) {
+      await notifyBooking({
+        studentName: student.full_name ?? "Estudiante",
+        studentEmail: student.email,
+        mentorName: mentor.full_name ?? "Tu mentora",
+        mentorEmail: mentor.email,
+        startsAtIso: slot.starts_at,
+        durationMin: slot.duration_minutes ?? 60,
+        note: note?.trim() || null,
+      });
+    }
+  } catch (err) {
+    console.error("[agenda] notificación falló:", err);
+  }
+
   return { ok: true };
 }
 
