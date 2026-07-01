@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SacredScene } from "./sacred-scene";
+import { CursorAura, usePointerControl } from "./pointer-interaction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,6 +24,7 @@ export function SacredOceanBackdrop({
 } = {}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const control = usePointerControl();
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -48,11 +50,14 @@ export function SacredOceanBackdrop({
           />
         )}
         {/* Escena 3D (solo cliente) */}
-        {mounted && <SacredScene />}
+        {mounted && <SacredScene control={control} />}
       </div>
 
       {/* Velo oscuro: atenúa la geometría para que el contenido resalte */}
       <div className="absolute inset-0 bg-[#03060e]/45" />
+
+      {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
+      <CursorAura control={control} />
 
       {/* Resplandor de superficie */}
       <div

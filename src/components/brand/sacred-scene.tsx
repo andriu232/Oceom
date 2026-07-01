@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import type { PointerControl } from "./pointer-interaction";
 
 /* ============================================================
    SacredScene — geometría sagrada flotando en el océano (WebGL r3f).
@@ -39,9 +40,12 @@ function buildCircles(
   return g;
 }
 
-/* ---------- Cubo de Metatrón (mandala central) ---------- */
-function Metatron() {
+/* ---------- Cubo de Metatrón (mandala central, interactivo) ---------- */
+function Metatron({ control }: { control?: PointerControl }) {
   const group = useRef<THREE.Group>(null!);
+  const linesMat = useRef<THREE.LineBasicMaterial>(null!);
+  const circlesMat = useRef<THREE.LineBasicMaterial>(null!);
+  const spinZ = useRef(0); // ángulo acumulado (base + impulso del usuario)
 
   const { circles, lines } = useMemo(() => {
     const r = 1;
@@ -67,19 +71,38 @@ function Metatron() {
     return { circles: buildCircles(centers, r, 56), lines };
   }, []);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
-    group.current.rotation.z = t * 0.04;
+    const dt = Math.min(delta, 0.05);
+    const c = control;
+
+    // Giro: base + impulso del usuario con inercia (fricción).
+    const user = c?.spin ?? 0;
+    spinZ.current += (0.04 + user) * dt;
+    group.current.rotation.z = spinZ.current;
+    if (c) c.spin += -c.spin * Math.min(1, dt * 1.4);
+
     group.current.scale.setScalar(2.1 * (1 + Math.sin(t * 0.5) * 0.03));
+
+    // Inclinación 3D hacia el cursor.
+    const tx = c?.present ? c.nx : 0;
+    const ty = c?.present ? c.ny : 0;
+    group.current.rotation.x += (ty * 0.28 - group.current.rotation.x) * 0.06;
+    group.current.rotation.y += (tx * 0.36 - group.current.rotation.y) * 0.06;
+
+    // Brillo reactivo al arrastrar / girar.
+    const boost = Math.min(0.6, Math.abs(user) * 0.24 + (c?.dragging ? 0.3 : 0));
+    if (linesMat.current) linesMat.current.opacity = 0.32 + boost * 0.8;
+    if (circlesMat.current) circlesMat.current.opacity = 0.6 + boost * 0.6;
   });
 
   return (
     <group ref={group} position={[0, 0, -1]}>
       <lineSegments geometry={lines}>
-        <lineBasicMaterial color={GLOW} transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial ref={linesMat} color={GLOW} transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments geometry={circles}>
-        <lineBasicMaterial color={CYAN} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial ref={circlesMat} color={CYAN} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
     </group>
   );
@@ -149,17 +172,19 @@ function LightMotes() {
   );
 }
 
-/* ---------- Parallax de cámara ---------- */
-function Rig() {
+/* ---------- Parallax de cámara (alimentado por el puntero global) ---------- */
+function Rig({ control }: { control?: PointerControl }) {
   useFrame((state) => {
-    state.camera.position.x += (state.pointer.x * 1.8 - state.camera.position.x) * 0.03;
-    state.camera.position.y += (state.pointer.y * 1.1 - state.camera.position.y) * 0.03;
+    const tx = control?.present ? control.nx : 0;
+    const ty = control?.present ? control.ny : 0;
+    state.camera.position.x += (tx * 1.8 - state.camera.position.x) * 0.03;
+    state.camera.position.y += (ty * 1.1 - state.camera.position.y) * 0.03;
     state.camera.lookAt(0, 0, -2);
   });
   return null;
 }
 
-export function SacredScene() {
+export function SacredScene({ control }: { control?: PointerControl }) {
   return (
     <Canvas
       dpr={[1, 1.75]}
@@ -171,9 +196,9 @@ export function SacredScene() {
       <ambientLight intensity={0.7} color="#a9e6ff" />
 
       <FlowerOfLife />
-      <Metatron />
+      <Metatron control={control} />
       <LightMotes />
-      <Rig />
+      <Rig control={control} />
     </Canvas>
   );
 }

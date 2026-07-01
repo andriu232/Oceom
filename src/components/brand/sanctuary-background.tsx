@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FlowerScene } from "./flower-scene";
 import { SacredScene } from "./sacred-scene";
+import { CursorAura, usePointerControl } from "./pointer-interaction";
 import { cn } from "@/lib/utils";
 
 /* ============================================================
@@ -22,6 +23,7 @@ export function OceomSanctuaryBackground({
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const control = usePointerControl();
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -47,7 +49,7 @@ export function OceomSanctuaryBackground({
         />
 
         {/* Geometría sagrada (WebGL) */}
-        {mounted && (scene === "sacred" ? <SacredScene /> : <FlowerScene />)}
+        {mounted && (scene === "sacred" ? <SacredScene control={control} /> : <FlowerScene control={control} />)}
 
         {/* Caústicas de agua: dos veladuras que ondulan lento */}
         <div
@@ -72,6 +74,9 @@ export function OceomSanctuaryBackground({
 
       {/* Velo de legibilidad */}
       <div className="absolute inset-0 bg-[#03060e]/45" />
+
+      {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
+      <CursorAura control={control} />
 
       {/* Rayos desde la superficie */}
       <div className="absolute inset-0 mix-blend-screen">

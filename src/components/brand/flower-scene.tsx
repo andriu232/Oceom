@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import type { PointerControl } from "./pointer-interaction";
 
 /* ============================================================
    FlowerScene — la Flor de la Vida como centro del área de
@@ -43,33 +44,59 @@ function flowerCenters(rings: number, r = 1): [number, number][] {
   return centers;
 }
 
-/* ---------- Flor de la Vida (mandala central, centrado) ---------- */
-function FlowerOfLife() {
+/* ---------- Flor de la Vida (mandala central, interactivo) ---------- */
+function FlowerOfLife({ control }: { control?: PointerControl }) {
   const group = useRef<THREE.Group>(null!);
   const inner = useRef<THREE.LineSegments>(null!);
+  const outerMat = useRef<THREE.LineBasicMaterial>(null!);
+  const innerMat = useRef<THREE.LineBasicMaterial>(null!);
+  const ringMat = useRef<THREE.LineBasicMaterial>(null!);
+  const spinZ = useRef(0); // ángulo acumulado (base + impulso del usuario)
 
   const geoOuter = useMemo(() => buildCircles(flowerCenters(2), 1, 64), []);
   const geoInner = useMemo(() => buildCircles(flowerCenters(1), 1, 64), []);
   // Anillo envolvente que enmarca la flor.
   const geoRing = useMemo(() => buildCircles([[0, 0]], 3.05, 128), []);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
-    group.current.rotation.z = t * 0.018;
+    const dt = Math.min(delta, 0.05);
+    const c = control;
+
+    // Giro: base lento + impulso del usuario con inercia (fricción).
+    const user = c?.spin ?? 0;
+    spinZ.current += (0.05 + user) * dt;
+    group.current.rotation.z = spinZ.current;
+    if (c) c.spin += -c.spin * Math.min(1, dt * 1.4);
+
+    // Respiración.
     group.current.scale.setScalar(3.1 * (1 + Math.sin(t * 0.3) * 0.022));
+
+    // Inclinación 3D hacia el cursor (parallax de rotación).
+    const tx = c?.present ? c.nx : 0;
+    const ty = c?.present ? c.ny : 0;
+    group.current.rotation.x += (ty * 0.32 - group.current.rotation.x) * 0.06;
+    group.current.rotation.y += (tx * 0.42 - group.current.rotation.y) * 0.06;
+
     inner.current.rotation.z = -t * 0.05;
+
+    // Brillo reactivo: se enciende al arrastrar / según la velocidad de giro.
+    const boost = Math.min(0.7, Math.abs(user) * 0.28 + (c?.dragging ? 0.35 : 0));
+    if (outerMat.current) outerMat.current.opacity = 0.22 + boost * 0.7;
+    if (innerMat.current) innerMat.current.opacity = 0.32 + boost;
+    if (ringMat.current) ringMat.current.opacity = 0.18 + boost * 0.5;
   });
 
   return (
     <group ref={group} position={[0, 0, -2]}>
       <lineSegments geometry={geoOuter}>
-        <lineBasicMaterial color={CYAN} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial ref={outerMat} color={CYAN} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments ref={inner} geometry={geoInner}>
-        <lineBasicMaterial color={GLOW} transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial ref={innerMat} color={GLOW} transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments geometry={geoRing}>
-        <lineBasicMaterial color={GLOW} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <lineBasicMaterial ref={ringMat} color={GLOW} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
     </group>
   );
@@ -106,17 +133,19 @@ function LightMotes() {
   );
 }
 
-/* ---------- Parallax de cámara ---------- */
-function Rig() {
+/* ---------- Parallax de cámara (alimentado por el puntero global) ---------- */
+function Rig({ control }: { control?: PointerControl }) {
   useFrame((state) => {
-    state.camera.position.x += (state.pointer.x * 1.4 - state.camera.position.x) * 0.03;
-    state.camera.position.y += (state.pointer.y * 1.0 - state.camera.position.y) * 0.03;
+    const tx = control?.present ? control.nx : 0;
+    const ty = control?.present ? control.ny : 0;
+    state.camera.position.x += (tx * 1.4 - state.camera.position.x) * 0.03;
+    state.camera.position.y += (ty * 1.0 - state.camera.position.y) * 0.03;
     state.camera.lookAt(0, 0, -2);
   });
   return null;
 }
 
-export function FlowerScene() {
+export function FlowerScene({ control }: { control?: PointerControl }) {
   return (
     <Canvas
       dpr={[1, 1.75]}
@@ -126,9 +155,9 @@ export function FlowerScene() {
     >
       <fog attach="fog" args={["#06243a", 13, 40]} />
       <ambientLight intensity={0.7} color="#a9e6ff" />
-      <FlowerOfLife />
+      <FlowerOfLife control={control} />
       <LightMotes />
-      <Rig />
+      <Rig control={control} />
     </Canvas>
   );
 }
