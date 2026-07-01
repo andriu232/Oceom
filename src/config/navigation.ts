@@ -33,6 +33,10 @@ export interface NavItem {
   href: string;
   icon: IconName;
   hint?: string;
+  /** Destino principal: aparece en la barra inferior móvil (bottom-nav). */
+  primary?: boolean;
+  /** Etiqueta corta para la barra inferior móvil (cae a `label`). */
+  short?: string;
 }
 
 export interface NavGroup {
@@ -46,21 +50,21 @@ export const studentGroups: NavGroup[] = [
   {
     label: "Aprender",
     items: [
-      { label: "Santuario", href: "/santuario", icon: "waves", hint: "Inicio" },
+      { label: "Santuario", href: "/santuario", icon: "waves", hint: "Inicio", primary: true, short: "Inicio" },
       { label: "Explorar", href: "/explorar", icon: "explore" },
       { label: "Academia", href: "/academia", icon: "academia" },
-      { label: "Mi Ruta", href: "/mi-ruta", icon: "route" },
+      { label: "Mi Ruta", href: "/mi-ruta", icon: "route", primary: true, short: "Mi Ruta" },
       { label: "Ruta del Viajero", href: "/ruta-viajero", icon: "compass", hint: "Viaje" },
       { label: "Hojas de Ruta", href: "/hojas-de-ruta", icon: "roadmap" },
       { label: "Agendar Clase", href: "/agendar", icon: "calendar" },
-      { label: "Círculos en Vivo", href: "/circulos", icon: "radio" },
+      { label: "Círculos en Vivo", href: "/circulos", icon: "radio", primary: true, short: "Círculos" },
       { label: "Deep Waves", href: "/deep-waves", icon: "audio" },
     ],
   },
   {
     label: "Ecosistema",
     items: [
-      { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA" },
+      { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA", primary: true, short: "OMI" },
       { label: "Círculo", href: "/circulo", icon: "users" },
       { label: "Mis Herramientas", href: "/herramientas", icon: "tools" },
       { label: "Bitácora Interior", href: "/bitacora", icon: "book" },
@@ -74,7 +78,7 @@ export const studentGroups: NavGroup[] = [
       { label: "Tienda", href: "/tienda", icon: "store" },
       { label: "Membresía", href: "/membresia", icon: "membership" },
       { label: "Referidos", href: "/referidos", icon: "gift" },
-      { label: "Mi Portal", href: "/mi-portal", icon: "user" },
+      { label: "Mi Portal", href: "/mi-portal", icon: "user", primary: true, short: "Portal" },
       { label: "Ajustes", href: "/ajustes", icon: "settings" },
     ],
   },
@@ -85,12 +89,12 @@ export const adminGroups: NavGroup[] = [
   {
     label: "Gestión",
     items: [
-      { label: "Panel", href: "/panel", icon: "dashboard" },
-      { label: "Estudiantes", href: "/estudiantes", icon: "students" },
-      { label: "Programas", href: "/programas", icon: "library" },
+      { label: "Panel", href: "/panel", icon: "dashboard", primary: true, short: "Panel" },
+      { label: "Estudiantes", href: "/estudiantes", icon: "students", primary: true, short: "Alumnos" },
+      { label: "Programas", href: "/programas", icon: "library", primary: true, short: "Rutas" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
-      { label: "Agenda", href: "/agenda", icon: "calendar" },
-      { label: "Círculos", href: "/circulos-admin", icon: "radio" },
+      { label: "Agenda", href: "/agenda", icon: "calendar", primary: true, short: "Agenda" },
+      { label: "Círculos", href: "/circulos-admin", icon: "radio", primary: true, short: "Círculos" },
     ],
   },
   {

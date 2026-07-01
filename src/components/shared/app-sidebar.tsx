@@ -4,71 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { motion } from "motion/react";
-import {
-  LogOut,
-  Menu,
-  X,
-  Waves,
-  Compass,
-  Telescope,
-  Route,
-  Sparkles,
-  BookOpenText,
-  Map,
-  Radio,
-  Users,
-  TrendingUp,
-  CircleUser,
-  LayoutDashboard,
-  GraduationCap,
-  Library,
-  ClipboardCheck,
-  BarChart3,
-  Settings,
-  Milestone,
-  Wrench,
-  ShoppingBag,
-  CreditCard,
-  Gift,
-  AudioLines,
-  CalendarDays,
-  type LucideIcon,
-} from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { ModeSwitcher } from "@/components/shared/mode-switcher";
+import { ICONS } from "@/components/shared/nav-icons";
 import { signOutAction } from "@/lib/actions/auth";
-import type { IconName, NavGroup } from "@/config/navigation";
+import type { NavGroup } from "@/config/navigation";
 import type { ViewMode } from "@/lib/auth/mode";
-
-/** Resuelve la clave de ícono (string serializable) al componente Lucide. */
-const ICONS: Record<IconName, LucideIcon> = {
-  waves: Waves,
-  compass: Compass,
-  explore: Telescope,
-  route: Route,
-  sparkles: Sparkles,
-  book: BookOpenText,
-  map: Map,
-  radio: Radio,
-  audio: AudioLines,
-  calendar: CalendarDays,
-  users: Users,
-  trending: TrendingUp,
-  user: CircleUser,
-  dashboard: LayoutDashboard,
-  students: GraduationCap,
-  academia: GraduationCap,
-  roadmap: Milestone,
-  tools: Wrench,
-  store: ShoppingBag,
-  membership: CreditCard,
-  gift: Gift,
-  library: Library,
-  clipboard: ClipboardCheck,
-  chart: BarChart3,
-  settings: Settings,
-};
 
 export function AppSidebar({
   groups,
