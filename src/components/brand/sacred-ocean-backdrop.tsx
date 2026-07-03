@@ -33,7 +33,9 @@ export function SacredOceanBackdrop({
   // fondo correcto por tema → sin flash oscuro al cargar en modo claro.
   if (!mounted) return null;
   if (theme === "light") {
-    return <LightBackdrop offsetSidebar={!fullWidth} />;
+    return (
+      <LightBackdrop control={control} scene="sacred" offsetSidebar={!fullWidth} />
+    );
   }
 
   return (

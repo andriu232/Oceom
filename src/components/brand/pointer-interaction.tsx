@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 /* ============================================================
    Interacción de puntero para la geometría sagrada de OCEOM.
@@ -124,9 +125,16 @@ export function usePointerControl(): PointerControl {
  * geometría por encima del velo oscuro (mix-blend-screen). Va como capa
  * dentro del backdrop, después del velo de legibilidad.
  */
-export function CursorAura({ control }: { control: PointerControl }) {
+export function CursorAura({
+  control,
+  theme = "dark",
+}: {
+  control: PointerControl;
+  theme?: "light" | "dark";
+}) {
   const layer = useRef<HTMLDivElement>(null);
   const [fine, setFine] = useState(false);
+  const light = theme === "light";
 
   useEffect(() => {
     setFine(window.matchMedia("(pointer: fine)").matches);
@@ -159,14 +167,22 @@ export function CursorAura({ control }: { control: PointerControl }) {
 
   if (!fine) return null;
 
+  // En oscuro: screen-blend cyan (ilumina la geometría). En claro: multiply
+  // con teal (una onda de agua que tiñe suave donde pasa el mouse; screen se
+  // borraría sobre fondo claro).
   return (
     <div
       ref={layer}
-      className="pointer-events-none absolute inset-0 opacity-0 mix-blend-screen"
+      className={cn(
+        "pointer-events-none absolute inset-0 opacity-0",
+        light ? "mix-blend-multiply" : "mix-blend-screen",
+      )}
       style={{
-        background:
-          "radial-gradient(22rem 22rem at var(--ax, 50%) var(--ay, 50%)," +
-          " rgba(94,234,212,0.17) 0%, rgba(56,189,248,0.10) 34%, transparent 68%)",
+        background: light
+          ? "radial-gradient(24rem 24rem at var(--ax, 50%) var(--ay, 50%)," +
+            " rgba(13,128,146,0.13) 0%, rgba(59,169,156,0.08) 36%, transparent 68%)"
+          : "radial-gradient(22rem 22rem at var(--ax, 50%) var(--ay, 50%)," +
+            " rgba(94,234,212,0.17) 0%, rgba(56,189,248,0.10) 34%, transparent 68%)",
       }}
     />
   );

@@ -32,7 +32,9 @@ export function OceomSanctuaryBackground({
   // fondo correcto por tema → sin flash oscuro al cargar en modo claro.
   if (!mounted) return null;
   if (theme === "light") {
-    return <LightBackdrop offsetSidebar={offsetSidebar} />;
+    return (
+      <LightBackdrop control={control} scene={scene} offsetSidebar={offsetSidebar} />
+    );
   }
 
   return (
