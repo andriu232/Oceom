@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Inter } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+
+// Aplica el tema guardado ANTES de pintar (evita parpadeo claro/oscuro).
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('oceom-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='dark';}})();`;
 
 const sora = Sora({
   variable: "--font-sora",
@@ -29,8 +33,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${sora.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${sora.variable} ${inter.variable} h-full antialiased`}
+    >
+      <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { site } from "@/config/site";
 
 export default function AuthLayout({
@@ -11,6 +12,7 @@ export default function AuthLayout({
   return (
     <div className="relative grid min-h-dvh lg:grid-cols-2">
       <SacredOceanBackdrop fullWidth showGlow={false} />
+      <ThemeToggle className="glass-strong fixed right-4 top-4 z-50" />
 
       {/* Panel emocional (izquierda en desktop) */}
       <div className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">

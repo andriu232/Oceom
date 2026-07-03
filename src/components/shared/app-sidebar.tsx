@@ -8,6 +8,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { ModeSwitcher } from "@/components/shared/mode-switcher";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ICONS } from "@/components/shared/nav-icons";
 import { signOutAction } from "@/lib/actions/auth";
 import type { NavGroup } from "@/config/navigation";
@@ -34,13 +35,16 @@ export function AppSidebar({
       {/* Barra superior móvil */}
       <div className="glass-strong sticky top-0 z-40 flex items-center justify-between px-4 py-3 lg:hidden">
         <Logo showBrand={false} />
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="grid size-10 place-items-center rounded-xl text-foreground transition-colors hover:bg-white/5"
-          aria-label="Menú"
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="grid size-10 place-items-center rounded-xl text-foreground transition-colors hover:bg-white/5"
+            aria-label="Menú"
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </div>
 
       <aside
@@ -167,6 +171,7 @@ export function AppSidebar({
                   {roleLabel}
                 </span>
               </div>
+              <ThemeToggle />
             </div>
             <form action={signOutAction}>
               <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-card-border py-2 text-sm text-muted transition-colors hover:border-danger/40 hover:bg-danger/10 hover:text-danger">

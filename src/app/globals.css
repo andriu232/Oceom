@@ -37,6 +37,52 @@
   --ring: rgba(34, 211, 238, 0.45);
   --danger: #fb7185;
   --success: #34d399;
+
+  /* Superficies para menús/paneles/popovers */
+  --card-strong: rgba(10, 17, 36, 0.78);
+  --popover: #0a1b30;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   MODO CLARO — misma gama OCEOM (cyan/teal/violeta/dorado) sobre
+   superficies luminosas tipo "océano al sol / espuma marina".
+   Se activa con [data-theme="light"] en <html>. Los acentos cyan/
+   teal se profundizan para leer bien sobre fondos claros.
+   ============================================================ */
+[data-theme="light"] {
+  --ocean-surface: #dfeaf5;
+  --ocean-cyan: #0891b2;
+  --ocean-glow: #0e9488;
+
+  --background: #eef5fb;
+  --foreground: #0f2942;
+  --muted: #5a7290;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-strong: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(18, 90, 120, 0.16);
+  --popover: #ffffff;
+  --ring: rgba(8, 145, 178, 0.4);
+
+  color-scheme: light;
+}
+
+/* Base detrás del backdrop (evita destellos blancos/negros) */
+html {
+  background: var(--background);
+}
+
+/* En claro, los overlays "white/X" (fills y hovers sutiles) se
+   invierten a tinta oscura para que se vean. */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(12, 40, 70, 0.05);
+}
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(12, 40, 70, 0.06);
+}
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(12, 40, 70, 0.09);
 }
 
 @theme inline {
@@ -45,6 +91,8 @@
   --color-muted: var(--muted);
   --color-card: var(--card);
   --color-card-border: var(--card-border);
+  --color-card-strong: var(--card-strong);
+  --color-popover: var(--popover);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-ocean-abyss: var(--ocean-abyss);
@@ -223,7 +271,7 @@ body {
 }
 
 @utility glass-strong {
-  background: rgba(10, 17, 36, 0.78);
+  background: var(--card-strong);
   border: 1px solid var(--card-border);
   backdrop-filter: blur(28px) saturate(150%);
   -webkit-backdrop-filter: blur(28px) saturate(150%);

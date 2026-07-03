@@ -20,6 +20,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -90,12 +91,15 @@ export default async function LandingPage() {
             <a href="#programas" className="transition-colors hover:text-foreground">Programas</a>
             <a href="#ecosistema" className="transition-colors hover:text-foreground">Ecosistema</a>
           </nav>
-          <Link
-            href={authedHref ?? "/login"}
-            className={buttonVariants({ variant: "glass", size: "sm" })}
-          >
-            {authedHref ? "Mi cuenta" : "Ingresar"}
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href={authedHref ?? "/login"}
+              className={buttonVariants({ variant: "glass", size: "sm" })}
+            >
+              {authedHref ? "Mi cuenta" : "Ingresar"}
+            </Link>
+          </div>
         </div>
       </header>
 

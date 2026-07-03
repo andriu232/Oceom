@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { SacredScene } from "./sacred-scene";
 import { CursorAura, usePointerControl } from "./pointer-interaction";
+import { LightBackdrop } from "./light-backdrop";
+import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,6 +27,11 @@ export function SacredOceanBackdrop({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const control = usePointerControl();
+  const { theme } = useTheme();
+
+  if (theme === "light") {
+    return <LightBackdrop offsetSidebar={!fullWidth} />;
+  }
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
