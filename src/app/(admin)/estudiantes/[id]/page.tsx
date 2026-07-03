@@ -7,15 +7,25 @@ import {
   Heart,
   Sparkles,
   Mail,
+  CalendarDays,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getStudentProfile } from "@/lib/queries/admin";
+import { getStudentProfile, listMentorNotes } from "@/lib/queries/admin";
 import { getActiveEnrollment, getProgramRoute } from "@/lib/queries/route";
 import { Card } from "@/components/ui/card";
 import { RouteTimeline } from "@/components/ruta/route-timeline";
 import { GlowOrb } from "@/components/brand/glow-orb";
 import { EnrollmentManager } from "@/components/admin/enrollment-manager";
+import { MentorNotes } from "@/components/admin/mentor-notes";
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +71,13 @@ export default async function EstudianteDetallePage({
     enrolled: enrolledIds.has(p.id),
   }));
 
+  const notes = await listMentorNotes(id);
+  const noteItems = notes.map((n) => ({
+    id: n.id,
+    note: n.note,
+    dateLabel: formatDate(n.created_at),
+  }));
+
   return (
     <div className="space-y-7">
       <Link
@@ -84,6 +101,18 @@ export default async function EstudianteDetallePage({
             <p className="mt-1 flex items-center gap-2 text-sm text-muted">
               <Mail className="size-3.5" /> {profile.email}
             </p>
+            <p className="mt-0.5 flex items-center gap-2 text-xs text-muted/80">
+              <CalendarDays className="size-3.5" /> Miembro desde{" "}
+              {formatDate(profile.created_at)}
+            </p>
+            {profile.email && (
+              <a
+                href={`mailto:${profile.email}`}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-ocean-cyan/40 hover:text-ocean-cyan"
+              >
+                <Mail className="size-3.5" /> Escribir correo
+              </a>
+            )}
           </div>
           <div className="text-right">
             <p className="text-sm text-muted">Programa</p>
@@ -111,6 +140,9 @@ export default async function EstudianteDetallePage({
 
       {/* Acceso a programas (inscripción) */}
       <EnrollmentManager studentId={id} programs={programsForEnroll} />
+
+      {/* Notas privadas de la mentora */}
+      <MentorNotes studentId={id} notes={noteItems} />
 
       {/* Clase actual */}
       {route?.currentLesson && (

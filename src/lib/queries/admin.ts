@@ -125,3 +125,22 @@ export async function getStudentProfile(
     .maybeSingle();
   return (data as Profile) ?? null;
 }
+
+export interface MentorNote {
+  id: string;
+  note: string;
+  created_at: string;
+}
+
+/** Notas privadas de la mentora sobre un estudiante (más recientes primero). */
+export async function listMentorNotes(
+  studentId: string,
+): Promise<MentorNote[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("mentor_notes")
+    .select("id,note,created_at")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  return (data as MentorNote[]) ?? [];
+}
