@@ -34,11 +34,9 @@ function readStored(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() =>
-    typeof document !== "undefined"
-      ? ((document.documentElement.dataset.theme as Theme) || "dark")
-      : "dark",
-  );
+  // Arranca "dark" para COINCIDIR con el SSR (evita el error de hidratación
+  // #418). El useEffect corrige al tema real tras montar.
+  const [theme, setThemeState] = useState<Theme>("dark");
 
   // CRÍTICO: React BORRA el data-theme que puso el script anti-parpadeo al
   // hidratar <html> (no está en su JSX). Aquí lo RE-ESCRIBIMOS desde
