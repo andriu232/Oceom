@@ -7,9 +7,12 @@ import {
   Download,
   Target,
   Sparkles,
+  ClipboardList,
 } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { listStudentAssignments } from "@/lib/queries/assignments";
+import { AssignmentSubmit } from "@/components/entregas/assignment-submit";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GlowOrb } from "@/components/brand/glow-orb";
 import { CompleteToggle } from "@/components/ruta/complete-toggle";
@@ -47,7 +50,7 @@ export default async function ExperienciaPage({
 
   if (!lesson) notFound();
 
-  const [{ data: resources }, { data: prog }] = await Promise.all([
+  const [{ data: resources }, { data: prog }, assignments] = await Promise.all([
     supabase
       .from("resources")
       .select("id,title,description,file_url,file_type")
@@ -58,6 +61,7 @@ export default async function ExperienciaPage({
       .eq("student_id", profile.id)
       .eq("lesson_id", id)
       .maybeSingle(),
+    listStudentAssignments(id, profile.id),
   ]);
 
   const completed = Boolean(prog?.completed_at);
@@ -168,6 +172,20 @@ export default async function ExperienciaPage({
           </p>
         )}
       </div>
+
+      {/* Integraciones (tareas) */}
+      {assignments.length > 0 && (
+        <div>
+          <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+            <ClipboardList className="size-4 text-ocean-cyan" /> Integraciones
+          </h2>
+          <div className="space-y-3">
+            {assignments.map((a) => (
+              <AssignmentSubmit key={a.id} assignment={a} lessonId={lesson.id} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

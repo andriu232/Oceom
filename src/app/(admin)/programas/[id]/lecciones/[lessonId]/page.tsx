@@ -5,8 +5,10 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getLessonForEditor } from "@/lib/queries/admin-content";
 import { deleteLessonAction } from "@/lib/actions/content";
+import { listLessonAssignments } from "@/lib/queries/assignments";
 import { LessonForm } from "@/components/admin/lesson-form";
 import { LessonMaterials } from "@/components/admin/lesson-materials";
+import { LessonAssignments } from "@/components/admin/lesson-assignments";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +23,14 @@ export default async function LessonEditorPage({
   if (!lesson || lesson.program_id !== id) notFound();
 
   const supabase = await createClient();
-  const { data: resources } = await supabase
-    .from("resources")
-    .select("id,title,description,file_type")
-    .eq("lesson_id", lessonId)
-    .order("created_at");
+  const [{ data: resources }, assignments] = await Promise.all([
+    supabase
+      .from("resources")
+      .select("id,title,description,file_type")
+      .eq("lesson_id", lessonId)
+      .order("created_at"),
+    listLessonAssignments(lessonId),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -53,6 +58,12 @@ export default async function LessonEditorPage({
         lessonId={lessonId}
         programId={id}
         resources={resources ?? []}
+      />
+
+      <LessonAssignments
+        lessonId={lessonId}
+        programId={id}
+        assignments={assignments}
       />
     </div>
   );
