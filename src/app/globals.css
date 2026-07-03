@@ -48,10 +48,11 @@
   --shadow-glass: none;
   --shadow-card: none;
 
-  /* Lienzo de la app (se pinta en <body>, correcto desde el 1er frame) */
+  /* Lienzo de la app (se pinta en <body>, theme-aware). Oscuro = original. */
   --app-canvas:
-    radial-gradient(120% 80% at 50% -8%, #0c2b48 0%, transparent 52%),
-    linear-gradient(180deg, #08203a 0%, #05162a 34%, #030d1a 66%, #02040b 100%);
+    radial-gradient(120% 90% at 50% -10%, #0a1d3f 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #0b2a3d 0%, transparent 45%),
+    var(--ocean-abyss);
 
   color-scheme: dark;
 }
@@ -102,15 +103,10 @@
   color-scheme: light;
 }
 
-/* Lienzo de la app: el gradiente oceánico se pinta en <html> y cubre TODO
-   el viewport, theme-aware por CSS → correcto desde el primer frame, sin
-   depender de React. Nunca queda una zona negra en modo claro. */
+/* Fallback base (el lienzo real theme-aware se pinta en <body> más abajo). */
 html {
-  background: var(--app-canvas) fixed;
+  background: var(--background);
   min-height: 100%;
-}
-body {
-  background: transparent;
 }
 
 /* Salvaguarda estructural: en modo claro NINGÚN backdrop oscuro (WebGL/veils)
@@ -312,10 +308,7 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(120% 90% at 50% -10%, #0a1d3f 0%, transparent 55%),
-    radial-gradient(90% 70% at 100% 0%, #0b2a3d 0%, transparent 45%),
-    var(--ocean-abyss);
+  background: var(--app-canvas);
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;

@@ -23,18 +23,30 @@ const ThemeContext = createContext<{
   setTheme: (t: Theme) => void;
 }>({ theme: "dark", toggle: () => {}, setTheme: () => {} });
 
+function readStored(): Theme {
+  try {
+    const s = localStorage.getItem("oceom-theme");
+    if (s === "light" || s === "dark") return s;
+  } catch {
+    /* almacenamiento bloqueado */
+  }
+  return "dark";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Lee el tema que ya puso el script anti-parpadeo (sincrónico en cliente),
-  // así los componentes que dependen del tema (backdrops) aciertan de una.
   const [theme, setThemeState] = useState<Theme>(() =>
     typeof document !== "undefined"
       ? ((document.documentElement.dataset.theme as Theme) || "dark")
       : "dark",
   );
 
+  // CRÍTICO: React BORRA el data-theme que puso el script anti-parpadeo al
+  // hidratar <html> (no está en su JSX). Aquí lo RE-ESCRIBIMOS desde
+  // localStorage tras montar, para que el tema quede realmente aplicado.
   useEffect(() => {
-    const t = (document.documentElement.dataset.theme as Theme) || "dark";
-    setThemeState((cur) => (cur === t ? cur : t));
+    const t = readStored();
+    document.documentElement.dataset.theme = t;
+    setThemeState(t);
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
