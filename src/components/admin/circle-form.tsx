@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import {
+  AccessSelect,
+  type ProgramOption,
+  type StudentOption,
+} from "@/components/admin/access-select";
 import type { Circle } from "@/lib/queries/circles";
-
-interface ProgramOption {
-  id: string;
-  title: string;
-}
 
 const FIELD =
   "h-11 w-full rounded-xl border border-card-border bg-ocean-surface/40 px-3 text-sm text-foreground outline-none focus:border-ocean-cyan/40";
@@ -39,9 +39,11 @@ function dateStr(offsetDays = 0): string {
 export function CircleForm({
   circle,
   programs,
+  students,
 }: {
   circle?: Circle;
   programs: ProgramOption[];
+  students: StudentOption[];
 }) {
   const editing = Boolean(circle);
   const [state, action, pending] = useActionState<CircleFormState, FormData>(
@@ -228,20 +230,13 @@ export function CircleForm({
 
       {/* Acceso */}
       <div className="space-y-1.5">
-        <Label htmlFor="c-prog">Acceso</Label>
-        <select
-          id="c-prog"
-          name="program_id"
-          defaultValue={circle?.program_id ?? ""}
-          className={FIELD}
-        >
-          <option value="">Abierto a todos los estudiantes</option>
-          {programs.map((p) => (
-            <option key={p.id} value={p.id}>
-              Solo inscritos en: {p.title}
-            </option>
-          ))}
-        </select>
+        <Label>Acceso</Label>
+        <AccessSelect
+          programs={programs}
+          students={students}
+          defaultProgramId={circle?.program_id}
+          defaultStudentId={circle?.student_id}
+        />
       </div>
 
       {editing && (

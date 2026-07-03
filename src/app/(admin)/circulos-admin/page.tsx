@@ -13,10 +13,15 @@ export const metadata = { title: "Círculos · OCEOM" };
 export default async function CirculosAdminPage() {
   await requireRole("mentor", "super_admin");
   const supabase = await createClient();
-  const [{ upcoming, past }, programsRes] = await Promise.all([
+  const [{ upcoming, past }, programsRes, studentsRes] = await Promise.all([
     listCirclesForAdmin(),
     supabase.from("programs").select("id,title").eq("status", "published").order("created_at"),
+    supabase.from("profiles").select("id,full_name,email").eq("role", "student").order("full_name"),
   ]);
+  const students = (studentsRes.data ?? []).map((s) => ({
+    id: s.id,
+    name: s.full_name ?? s.email ?? "Estudiante",
+  }));
 
   return (
     <div className="space-y-8">
@@ -25,7 +30,7 @@ export default async function CirculosAdminPage() {
         subtitle="Programa los encuentros en vivo con tu comunidad."
       />
 
-      <CircleForm programs={programsRes.data ?? []} />
+      <CircleForm programs={programsRes.data ?? []} students={students} />
 
       <section>
         <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
@@ -79,7 +84,11 @@ function AdminRow({ c }: { c: Circle }) {
           <Clock className="size-3.5" />
           {formatDayLabel(c.starts_at)} · {formatTime(c.starts_at)}
           <span className="mx-1">·</span>
-          {c.programTitle ? `Solo ${c.programTitle}` : "Abierto a todos"}
+          {c.studentName
+            ? `1:1 con ${c.studentName}`
+            : c.programTitle
+              ? `Solo ${c.programTitle}`
+              : "Abierto a todos"}
         </p>
       </div>
       <span className="inline-flex items-center gap-1 text-sm text-muted transition-colors group-hover:text-ocean-cyan">

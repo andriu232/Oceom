@@ -27,8 +27,13 @@ function parseForm(formData: FormData) {
   const startLocal = String(formData.get("starts_at") ?? "");
   const durationMin = Number(formData.get("duration") ?? 90) || 90;
   const meeting_url = String(formData.get("meeting_url") ?? "").trim() || null;
-  const program_id = String(formData.get("program_id") ?? "") || null;
-  return { title, description, startLocal, durationMin, meeting_url, program_id };
+  const studentSel = String(formData.get("student_id") ?? "") || null;
+  // Acceso: si hay estudiante 1:1, ignora el programa (mutuamente excluyentes).
+  const student_id = studentSel;
+  const program_id = studentSel
+    ? null
+    : String(formData.get("program_id") ?? "") || null;
+  return { title, description, startLocal, durationMin, meeting_url, program_id, student_id };
 }
 
 export async function createCircleAction(
@@ -61,6 +66,7 @@ export async function createCircleAction(
     ends_at,
     meeting_url: f.meeting_url,
     program_id: f.program_id,
+    student_id: f.student_id,
     status: mode === "now" ? "live" : "scheduled",
     created_by: profile.id,
   });
@@ -94,6 +100,7 @@ export async function updateCircleAction(
       ends_at,
       meeting_url: f.meeting_url,
       program_id: f.program_id,
+      student_id: f.student_id,
       recording_url: String(formData.get("recording_url") ?? "").trim() || null,
     })
     .eq("id", id);

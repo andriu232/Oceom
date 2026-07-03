@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCircle } from "@/lib/queries/circles";
 import { deleteCircleAction } from "@/lib/actions/circles";
 import { CircleForm } from "@/components/admin/circle-form";
+import { CircleShare } from "@/components/admin/circle-share";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,22 @@ export default async function EditCirclePage({
   if (!circle) notFound();
 
   const supabase = await createClient();
-  const { data: programs } = await supabase
-    .from("programs")
-    .select("id,title")
-    .eq("status", "published")
-    .order("created_at");
+  const [{ data: programs }, { data: studentRows }] = await Promise.all([
+    supabase
+      .from("programs")
+      .select("id,title")
+      .eq("status", "published")
+      .order("created_at"),
+    supabase
+      .from("profiles")
+      .select("id,full_name,email")
+      .eq("role", "student")
+      .order("full_name"),
+  ]);
+  const students = (studentRows ?? []).map((s) => ({
+    id: s.id,
+    name: s.full_name ?? s.email ?? "Estudiante",
+  }));
 
   return (
     <div className="space-y-6">
@@ -47,7 +59,13 @@ export default async function EditCirclePage({
         </form>
       </div>
 
-      <CircleForm circle={circle} programs={programs ?? []} />
+      <CircleShare
+        circleId={circle.id}
+        title={circle.title}
+        studentEmail={circle.studentEmail}
+      />
+
+      <CircleForm circle={circle} programs={programs ?? []} students={students} />
     </div>
   );
 }

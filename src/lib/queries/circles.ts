@@ -16,6 +16,9 @@ export interface Circle {
   status: string;
   program_id: string | null;
   programTitle: string | null;
+  student_id: string | null;
+  studentName: string | null;
+  studentEmail: string | null;
 }
 
 export type CircleState = "live" | "upcoming" | "past";
@@ -38,15 +41,33 @@ async function fetchCircles(): Promise<Circle[]> {
     supabase
       .from("live_sessions")
       .select(
-        "id,title,description,starts_at,ends_at,meeting_url,recording_url,status,program_id",
+        "id,title,description,starts_at,ends_at,meeting_url,recording_url,status,program_id,student_id",
       )
       .order("starts_at", { ascending: true }),
     supabase.from("programs").select("id,title"),
   ]);
   const pmap = new Map((programs ?? []).map((p) => [p.id, p.title as string]));
+
+  // Datos del estudiante para los círculos 1:1 (nombre/correo para mostrar y compartir).
+  const studentIds = [
+    ...new Set((sessions ?? []).map((s) => s.student_id).filter(Boolean)),
+  ] as string[];
+  const smap = new Map<string, { name: string; email: string | null }>();
+  if (studentIds.length) {
+    const { data: studs } = await supabase
+      .from("profiles")
+      .select("id,full_name,email")
+      .in("id", studentIds);
+    for (const st of studs ?? [])
+      smap.set(st.id, { name: st.full_name ?? st.email ?? "Estudiante", email: st.email });
+  }
+
   return (sessions ?? []).map((s) => ({
     ...s,
     programTitle: s.program_id ? pmap.get(s.program_id) ?? null : null,
+    student_id: s.student_id ?? null,
+    studentName: s.student_id ? smap.get(s.student_id)?.name ?? null : null,
+    studentEmail: s.student_id ? smap.get(s.student_id)?.email ?? null : null,
   })) as Circle[];
 }
 
