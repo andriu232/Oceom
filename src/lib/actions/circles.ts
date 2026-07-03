@@ -37,9 +37,18 @@ export async function createCircleAction(
 ): Promise<CircleFormState> {
   const profile = await requireRole("mentor", "super_admin");
   const f = parseForm(formData);
-  if (!f.title || !f.startLocal) return { error: "Falta el título o la fecha." };
+  if (!f.title) return { error: "Falta el título." };
 
-  const starts_at = localToIso(f.startLocal);
+  const mode = String(formData.get("mode") ?? "schedule");
+  let starts_at: string;
+  if (mode === "now") {
+    // Empieza ya: 1 min atrás para que quede EN VIVO al instante (no "próximo").
+    starts_at = new Date(Date.now() - 60_000).toISOString();
+  } else {
+    if (!f.startLocal) return { error: "Elige la fecha y la hora." };
+    starts_at = localToIso(f.startLocal);
+  }
+
   const ends_at = new Date(
     new Date(starts_at).getTime() + f.durationMin * 60000,
   ).toISOString();
@@ -52,7 +61,7 @@ export async function createCircleAction(
     ends_at,
     meeting_url: f.meeting_url,
     program_id: f.program_id,
-    status: "scheduled",
+    status: mode === "now" ? "live" : "scheduled",
     created_by: profile.id,
   });
   if (error) return { error: error.message };
