@@ -28,6 +28,9 @@ export function OceomSanctuaryBackground({
   const control = usePointerControl();
   const { theme } = useTheme();
 
+  // No pintamos en SSR/primer frame: el lienzo (body --app-canvas) ya da el
+  // fondo correcto por tema → sin flash oscuro al cargar en modo claro.
+  if (!mounted) return null;
   if (theme === "light") {
     return <LightBackdrop offsetSidebar={offsetSidebar} />;
   }

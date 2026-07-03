@@ -38,51 +38,103 @@
   --danger: #fb7185;
   --success: #34d399;
 
-  /* Superficies para menús/paneles/popovers */
+  /* Superficies para menús/paneles/popovers/botones */
   --card-strong: rgba(10, 17, 36, 0.78);
   --popover: #0a1b30;
+  --btn-glass: rgba(10, 17, 36, 0.72);
+  --border-active: rgba(34, 211, 238, 0.45);
+
+  /* Elevación (oscuro: sin sombras de tarjeta → estética intacta) */
+  --shadow-glass: none;
+  --shadow-card: none;
+
+  /* Lienzo de la app (se pinta en <body>, correcto desde el 1er frame) */
+  --app-canvas:
+    radial-gradient(120% 80% at 50% -8%, #0c2b48 0%, transparent 52%),
+    linear-gradient(180deg, #08203a 0%, #05162a 34%, #030d1a 66%, #02040b 100%);
 
   color-scheme: dark;
 }
 
 /* ============================================================
-   MODO CLARO — misma gama OCEOM (cyan/teal/violeta/dorado) sobre
-   superficies luminosas tipo "océano al sol / espuma marina".
-   Se activa con [data-theme="light"] en <html>. Los acentos cyan/
-   teal se profundizan para leer bien sobre fondos claros.
+   LIGHT SANCTUARY MODE — santuario de agua, aire y luz.
+   Misma alma OCEOM (cyan/teal/violeta) sobre nácar y espuma marina.
+   Acentos profundizados para leer bien; elevación con sombras de
+   tinte azul; lienzo oceánico envolvente. El modo oscuro queda intacto.
    ============================================================ */
 [data-theme="light"] {
-  --ocean-surface: #dfeaf5;
-  --ocean-cyan: #0891b2;
-  --ocean-glow: #0e9488;
+  /* Acentos profundizados (contraste sobre superficies claras) */
+  --ocean-foam: #0d5c72;
+  --ocean-cyan: #0b7d92;
+  --ocean-glow: #12a594;
+  --ocean-violet: #6d6ae6;
 
-  --background: #eef5fb;
-  --foreground: #0f2942;
-  --muted: #5a7290;
-  --card: rgba(255, 255, 255, 0.72);
-  --card-strong: rgba(255, 255, 255, 0.85);
-  --card-border: rgba(18, 90, 120, 0.16);
+  /* Base y texto */
+  --background: #f4fbfc;
+  --foreground: #102a3a;
+  --muted: #536b7c;
+
+  /* Superficies: nácar / vidrio esmerilado */
+  --card: rgba(255, 255, 255, 0.80);
+  --card-strong: rgba(255, 255, 255, 0.92);
+  --card-border: rgba(13, 79, 107, 0.10);
+  --border-active: rgba(73, 214, 223, 0.45);
   --popover: #ffffff;
-  --ring: rgba(8, 145, 178, 0.4);
+  --btn-glass: rgba(255, 255, 255, 0.78);
+  --ocean-surface: #dceaf1;
+  --ring: rgba(73, 214, 223, 0.5);
+
+  /* Elevación premium: sombras suaves con tinte azul/cyan */
+  --shadow-glass:
+    0 14px 36px -16px rgba(13, 79, 107, 0.18),
+    0 4px 14px -8px rgba(73, 214, 223, 0.16);
+  --shadow-card:
+    0 26px 64px -26px rgba(13, 79, 107, 0.22),
+    0 10px 28px -14px rgba(73, 214, 223, 0.18);
+
+  /* Lienzo oceánico luminoso */
+  --app-canvas:
+    radial-gradient(circle at 18% 6%, rgba(73, 214, 223, 0.22), transparent 34%),
+    radial-gradient(circle at 84% 2%, rgba(175, 167, 255, 0.16), transparent 32%),
+    radial-gradient(circle at 62% 108%, rgba(59, 169, 156, 0.12), transparent 42%),
+    linear-gradient(135deg, #f7fcfd 0%, #eef8fa 48%, #f9fbff 100%);
 
   color-scheme: light;
 }
 
-/* Base detrás del backdrop (evita destellos blancos/negros) */
+/* Lienzo de fondo — correcto desde el primer frame (el backdrop 3D/
+   decorativo se monta encima tras hidratar). */
 html {
   background: var(--background);
 }
+body {
+  background: var(--app-canvas);
+  background-attachment: fixed;
+}
 
-/* En claro, los overlays "white/X" (fills y hovers sutiles) se
-   invierten a tinta oscura para que se vean. */
+/* Transición suave de tema */
+@media (prefers-reduced-motion: no-preference) {
+  html,
+  body {
+    transition: background-color 0.4s ease;
+  }
+  .glass,
+  .glass-strong {
+    transition: background-color 0.3s ease, border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+}
+
+/* En claro, los overlays "white/X" (fills/hovers) se invierten a tinta
+   oceánica para que se vean. */
 [data-theme="light"] .bg-white\/5 {
-  background-color: rgba(12, 40, 70, 0.05);
+  background-color: rgba(13, 79, 107, 0.05);
 }
 [data-theme="light"] .hover\:bg-white\/5:hover {
-  background-color: rgba(12, 40, 70, 0.06);
+  background-color: rgba(13, 79, 107, 0.07);
 }
 [data-theme="light"] .bg-white\/10 {
-  background-color: rgba(12, 40, 70, 0.09);
+  background-color: rgba(13, 79, 107, 0.09);
 }
 
 @theme inline {
@@ -268,6 +320,7 @@ body {
   border: 1px solid var(--card-border);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow-glass);
 }
 
 @utility glass-strong {
@@ -275,6 +328,7 @@ body {
   border: 1px solid var(--card-border);
   backdrop-filter: blur(28px) saturate(150%);
   -webkit-backdrop-filter: blur(28px) saturate(150%);
+  box-shadow: var(--shadow-card);
 }
 
 /* Grano fino: textura sutil sobre superficies premium */

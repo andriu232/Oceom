@@ -27,8 +27,8 @@ const VARIANT: Record<Variant, string> = {
   ),
   glass: cn(
     "text-foreground backdrop-blur-md border border-transparent",
-    "[background:linear-gradient(rgba(10,17,36,0.72),rgba(10,17,36,0.72))_padding-box,linear-gradient(135deg,rgba(34,211,238,0.6),rgba(129,140,248,0.5))_border-box]",
-    "shadow-[0_8px_30px_-14px_rgba(0,0,0,0.7)] hover:-translate-y-0.5 hover:text-ocean-cyan",
+    "[background:linear-gradient(var(--btn-glass),var(--btn-glass))_padding-box,linear-gradient(135deg,rgba(34,211,238,0.6),rgba(129,140,248,0.5))_border-box]",
+    "shadow-[var(--shadow-glass)] hover:-translate-y-0.5 hover:text-ocean-cyan",
   ),
   ghost: "text-muted hover:text-foreground hover:bg-white/5 rounded-2xl",
 };

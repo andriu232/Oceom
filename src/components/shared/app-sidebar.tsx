@@ -87,7 +87,7 @@ export function AppSidebar({
           {groups.map((group) => (
             <div key={group.label}>
               {group.label && (
-                <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted/50">
+                <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted/70">
                   {group.label}
                 </p>
               )}
@@ -113,7 +113,7 @@ export function AppSidebar({
                         <motion.span
                           layoutId="nav-active"
                           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                          className="absolute inset-0 rounded-xl border border-ocean-cyan/25 bg-ocean-cyan/10"
+                          className="absolute inset-0 rounded-xl border border-[color:var(--border-active)] bg-gradient-to-r from-ocean-cyan/18 via-ocean-glow/10 to-transparent"
                         />
                       )}
                       {active && (

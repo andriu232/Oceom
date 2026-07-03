@@ -154,8 +154,8 @@ export default async function LandingPage() {
           </Reveal>
         </section>
 
-        {/* Resto sobre fondo sólido para legibilidad */}
-        <div className="relative bg-[#03060e]">
+        {/* Resto sobre fondo sólido para legibilidad (theme-aware) */}
+        <div className="relative bg-background">
           {/* ¿QUÉ RESUELVE? */}
           <section className="mx-auto max-w-6xl px-6 py-24">
             <Reveal className="text-center">
