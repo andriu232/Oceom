@@ -112,7 +112,7 @@ export function AccessSelect({
       </button>
 
       {open && (
-        <div className="absolute z-40 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-card-border bg-popover p-2 shadow-2xl shadow-black/30">
+        <div className="absolute z-40 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-card-border bg-[#0a1b30] p-2 shadow-2xl shadow-black/50">
           <Row
             icon={Users}
             label="Abierto a todos los estudiantes"

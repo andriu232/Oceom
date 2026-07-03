@@ -20,7 +20,6 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -91,15 +90,12 @@ export default async function LandingPage() {
             <a href="#programas" className="transition-colors hover:text-foreground">Programas</a>
             <a href="#ecosistema" className="transition-colors hover:text-foreground">Ecosistema</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link
-              href={authedHref ?? "/login"}
-              className={buttonVariants({ variant: "glass", size: "sm" })}
-            >
-              {authedHref ? "Mi cuenta" : "Ingresar"}
-            </Link>
-          </div>
+          <Link
+            href={authedHref ?? "/login"}
+            className={buttonVariants({ variant: "glass", size: "sm" })}
+          >
+            {authedHref ? "Mi cuenta" : "Ingresar"}
+          </Link>
         </div>
       </header>
 
@@ -154,8 +150,8 @@ export default async function LandingPage() {
           </Reveal>
         </section>
 
-        {/* Resto sobre fondo sólido para legibilidad (theme-aware) */}
-        <div className="relative bg-background">
+        {/* Resto sobre fondo sólido para legibilidad */}
+        <div className="relative bg-[#03060e]">
           {/* ¿QUÉ RESUELVE? */}
           <section className="mx-auto max-w-6xl px-6 py-24">
             <Reveal className="text-center">

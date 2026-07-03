@@ -9,32 +9,13 @@ import type { PointerControl } from "./pointer-interaction";
    FlowerScene — la Flor de la Vida como centro del área de
    estudiante. Mandala único, centrado, que respira y gira muy
    lento sobre un océano de partículas de luz. Solo monta en
-   cliente (evita SSR de WebGL). Adaptable a tema claro/oscuro.
+   cliente (evita SSR de WebGL).
    ============================================================ */
 
-type Theme = "light" | "dark";
+const CYAN = "#22d3ee";
+const GLOW = "#5eead4";
 
-/** Paleta por tema. En claro: líneas teal profundas con blending NORMAL (el
- *  aditivo es invisible sobre fondo claro). En oscuro: cyan aditivo luminoso. */
-function palette(theme: Theme) {
-  const light = theme === "light";
-  return {
-    light,
-    cyan: light ? "#0c7d92" : "#22d3ee",
-    glow: light ? "#0e9488" : "#5eead4",
-    blend: light ? THREE.NormalBlending : THREE.AdditiveBlending,
-    fog: light ? "#e9f4f8" : "#06243a",
-    ambient: light ? "#eaf6ff" : "#a9e6ff",
-    mote: light ? "#3f9db1" : "#bfeef5",
-    moteOp: light ? 0.3 : 0.7,
-    outer: light ? 0.62 : 0.42,
-    inner: light ? 0.85 : 0.58,
-    ring: light ? 0.5 : 0.34,
-    boost: light ? 0.4 : 0.7,
-  };
-}
-type Pal = ReturnType<typeof palette>;
-
+/* Segmentos de N circunferencias (para dibujar la flor en wireframe). */
 function buildCircles(centers: [number, number][], radius: number, segments = 64) {
   const pts: number[] = [];
   for (const [cx, cy] of centers) {
@@ -50,6 +31,7 @@ function buildCircles(centers: [number, number][], radius: number, segments = 64
   return g;
 }
 
+/* Centros de la Flor de la Vida hasta un anillo `rings`. */
 function flowerCenters(rings: number, r = 1): [number, number][] {
   const ax: [number, number] = [r, 0];
   const bx: [number, number] = [r * 0.5, (r * Math.sqrt(3)) / 2];
@@ -63,16 +45,17 @@ function flowerCenters(rings: number, r = 1): [number, number][] {
 }
 
 /* ---------- Flor de la Vida (mandala central, interactivo) ---------- */
-function FlowerOfLife({ control, pal }: { control?: PointerControl; pal: Pal }) {
+function FlowerOfLife({ control }: { control?: PointerControl }) {
   const group = useRef<THREE.Group>(null!);
   const inner = useRef<THREE.LineSegments>(null!);
   const outerMat = useRef<THREE.LineBasicMaterial>(null!);
   const innerMat = useRef<THREE.LineBasicMaterial>(null!);
   const ringMat = useRef<THREE.LineBasicMaterial>(null!);
-  const spinZ = useRef(0);
+  const spinZ = useRef(0); // ángulo acumulado (base + impulso del usuario)
 
   const geoOuter = useMemo(() => buildCircles(flowerCenters(2), 1, 64), []);
   const geoInner = useMemo(() => buildCircles(flowerCenters(1), 1, 64), []);
+  // Anillo envolvente que enmarca la flor.
   const geoRing = useMemo(() => buildCircles([[0, 0]], 3.05, 128), []);
 
   useFrame((state, delta) => {
@@ -80,13 +63,16 @@ function FlowerOfLife({ control, pal }: { control?: PointerControl; pal: Pal }) 
     const dt = Math.min(delta, 0.05);
     const c = control;
 
+    // Giro: base lento + impulso del usuario con inercia (fricción).
     const user = c?.spin ?? 0;
     spinZ.current += (0.05 + user) * dt;
     group.current.rotation.z = spinZ.current;
     if (c) c.spin += -c.spin * Math.min(1, dt * 1.4);
 
+    // Respiración.
     group.current.scale.setScalar(3.1 * (1 + Math.sin(t * 0.3) * 0.022));
 
+    // Inclinación 3D hacia el cursor (parallax de rotación).
     const tx = c?.present ? c.nx : 0;
     const ty = c?.present ? c.ny : 0;
     group.current.rotation.x += (ty * 0.32 - group.current.rotation.x) * 0.06;
@@ -94,29 +80,30 @@ function FlowerOfLife({ control, pal }: { control?: PointerControl; pal: Pal }) 
 
     inner.current.rotation.z = -t * 0.05;
 
+    // Brillo reactivo: se enciende al arrastrar / según la velocidad de giro.
     const boost = Math.min(0.7, Math.abs(user) * 0.28 + (c?.dragging ? 0.35 : 0));
-    if (outerMat.current) outerMat.current.opacity = pal.outer + boost * pal.boost;
-    if (innerMat.current) innerMat.current.opacity = pal.inner + boost * pal.boost;
-    if (ringMat.current) ringMat.current.opacity = pal.ring + boost * pal.boost;
+    if (outerMat.current) outerMat.current.opacity = 0.22 + boost * 0.7;
+    if (innerMat.current) innerMat.current.opacity = 0.32 + boost;
+    if (ringMat.current) ringMat.current.opacity = 0.18 + boost * 0.5;
   });
 
   return (
     <group ref={group} position={[0, 0, -2]}>
       <lineSegments geometry={geoOuter}>
-        <lineBasicMaterial ref={outerMat} color={pal.cyan} transparent opacity={pal.outer} blending={pal.blend} depthWrite={false} />
+        <lineBasicMaterial ref={outerMat} color={CYAN} transparent opacity={0.22} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments ref={inner} geometry={geoInner}>
-        <lineBasicMaterial ref={innerMat} color={pal.glow} transparent opacity={pal.inner} blending={pal.blend} depthWrite={false} />
+        <lineBasicMaterial ref={innerMat} color={GLOW} transparent opacity={0.32} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
       <lineSegments geometry={geoRing}>
-        <lineBasicMaterial ref={ringMat} color={pal.glow} transparent opacity={pal.ring} blending={pal.blend} depthWrite={false} />
+        <lineBasicMaterial ref={ringMat} color={GLOW} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
       </lineSegments>
     </group>
   );
 }
 
 /* ---------- Partículas de luz (plancton / marine snow) ---------- */
-function LightMotes({ pal }: { pal: Pal }) {
+function LightMotes() {
   const pts = useRef<THREE.Points>(null!);
   const COUNT = 1000;
   const positions = useMemo(() => {
@@ -141,7 +128,7 @@ function LightMotes({ pal }: { pal: Pal }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.06} color={pal.mote} transparent opacity={pal.moteOp} sizeAttenuation depthWrite={false} blending={pal.blend} />
+      <pointsMaterial size={0.06} color="#bfeef5" transparent opacity={0.7} sizeAttenuation depthWrite={false} blending={THREE.AdditiveBlending} />
     </points>
   );
 }
@@ -158,25 +145,18 @@ function Rig({ control }: { control?: PointerControl }) {
   return null;
 }
 
-export function FlowerScene({
-  control,
-  theme = "dark",
-}: {
-  control?: PointerControl;
-  theme?: Theme;
-}) {
-  const pal = palette(theme);
+export function FlowerScene({ control }: { control?: PointerControl }) {
   return (
     <Canvas
       dpr={[1, 1.75]}
       camera={{ position: [0, 0, 13], fov: 55 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       style={{ position: "absolute", inset: 0 }}
     >
-      <fog attach="fog" args={[pal.fog, 13, 40]} />
-      <ambientLight intensity={0.7} color={pal.ambient} />
-      <FlowerOfLife control={control} pal={pal} />
-      <LightMotes pal={pal} />
+      <fog attach="fog" args={["#06243a", 13, 40]} />
+      <ambientLight intensity={0.7} color="#a9e6ff" />
+      <FlowerOfLife control={control} />
+      <LightMotes />
       <Rig control={control} />
     </Canvas>
   );

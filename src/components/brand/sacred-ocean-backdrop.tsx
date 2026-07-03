@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { SacredScene } from "./sacred-scene";
 import { CursorAura, usePointerControl } from "./pointer-interaction";
-import { LightBackdrop } from "./light-backdrop";
-import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,23 +25,9 @@ export function SacredOceanBackdrop({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const control = usePointerControl();
-  const { theme } = useTheme();
-
-  // No pintamos en SSR/primer frame: el lienzo (body --app-canvas) ya da el
-  // fondo correcto por tema → sin flash oscuro al cargar en modo claro.
-  if (!mounted) return null;
-  if (theme === "light") {
-    return (
-      <LightBackdrop control={control} scene="sacred" offsetSidebar={!fullWidth} />
-    );
-  }
 
   return (
-    <div
-      aria-hidden
-      data-oceom-dark
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-    >
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       {/* Profundidad base: luz arriba -> abismo abajo (más oscuro) */}
       <div
         className="absolute inset-0"
@@ -69,8 +53,8 @@ export function SacredOceanBackdrop({
         {mounted && <SacredScene control={control} />}
       </div>
 
-      {/* Velo oscuro suave (para no tapar la geometría) */}
-      <div className="absolute inset-0 bg-[#03060e]/28" />
+      {/* Velo oscuro: atenúa la geometría para que el contenido resalte */}
+      <div className="absolute inset-0 bg-[#03060e]/45" />
 
       {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
       <CursorAura control={control} />

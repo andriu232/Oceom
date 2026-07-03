@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { FlowerScene } from "./flower-scene";
 import { SacredScene } from "./sacred-scene";
 import { CursorAura, usePointerControl } from "./pointer-interaction";
-import { LightBackdrop } from "./light-backdrop";
-import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 
 /* ============================================================
@@ -26,23 +24,9 @@ export function OceomSanctuaryBackground({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const control = usePointerControl();
-  const { theme } = useTheme();
-
-  // No pintamos en SSR/primer frame: el lienzo (body --app-canvas) ya da el
-  // fondo correcto por tema → sin flash oscuro al cargar en modo claro.
-  if (!mounted) return null;
-  if (theme === "light") {
-    return (
-      <LightBackdrop control={control} scene={scene} offsetSidebar={offsetSidebar} />
-    );
-  }
 
   return (
-    <div
-      aria-hidden
-      data-oceom-dark
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-    >
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       {/* Base: superficie luminosa arriba → abismo abajo */}
       <div
         className="absolute inset-0"
@@ -88,8 +72,8 @@ export function OceomSanctuaryBackground({
         style={{ background: "radial-gradient(circle, rgba(129,140,248,0.36), transparent 70%)" }}
       />
 
-      {/* Velo de legibilidad (suave, para no tapar la geometría) */}
-      <div className="absolute inset-0 bg-[#03060e]/28" />
+      {/* Velo de legibilidad */}
+      <div className="absolute inset-0 bg-[#03060e]/45" />
 
       {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
       <CursorAura control={control} />

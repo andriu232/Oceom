@@ -26,7 +26,7 @@ export function GoogleButton({ label = "Continuar con Google" }: { label?: strin
       type="button"
       onClick={handle}
       disabled={loading}
-      className="group relative inline-flex h-12 w-full items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-transparent text-sm font-medium text-foreground shadow-[var(--shadow-glass)] backdrop-blur-md transition-all duration-300 [background:linear-gradient(var(--btn-glass),var(--btn-glass))_padding-box,linear-gradient(135deg,rgba(34,211,238,0.6),rgba(129,140,248,0.5))_border-box] hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60"
+      className="group relative inline-flex h-12 w-full items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-transparent text-sm font-medium text-foreground backdrop-blur-md transition-all duration-300 [background:linear-gradient(rgba(10,17,36,0.72),rgba(10,17,36,0.72))_padding-box,linear-gradient(135deg,rgba(34,211,238,0.6),rgba(129,140,248,0.5))_border-box] hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60"
     >
       <span
         aria-hidden
