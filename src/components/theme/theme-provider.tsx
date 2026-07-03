@@ -24,11 +24,17 @@ const ThemeContext = createContext<{
 }>({ theme: "dark", toggle: () => {}, setTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  // Lee el tema que ya puso el script anti-parpadeo (sincrónico en cliente),
+  // así los componentes que dependen del tema (backdrops) aciertan de una.
+  const [theme, setThemeState] = useState<Theme>(() =>
+    typeof document !== "undefined"
+      ? ((document.documentElement.dataset.theme as Theme) || "dark")
+      : "dark",
+  );
 
   useEffect(() => {
     const t = (document.documentElement.dataset.theme as Theme) || "dark";
-    setThemeState(t);
+    setThemeState((cur) => (cur === t ? cur : t));
   }, []);
 
   const setTheme = useCallback((t: Theme) => {

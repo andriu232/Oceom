@@ -36,7 +36,11 @@ export function OceomSanctuaryBackground({
   }
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div
+      aria-hidden
+      data-oceom-dark
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
       {/* Base: superficie luminosa arriba → abismo abajo */}
       <div
         className="absolute inset-0"

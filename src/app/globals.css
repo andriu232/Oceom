@@ -102,14 +102,21 @@
   color-scheme: light;
 }
 
-/* Lienzo de fondo — correcto desde el primer frame (el backdrop 3D/
-   decorativo se monta encima tras hidratar). */
+/* Lienzo de la app: el gradiente oceánico se pinta en <html> y cubre TODO
+   el viewport, theme-aware por CSS → correcto desde el primer frame, sin
+   depender de React. Nunca queda una zona negra en modo claro. */
 html {
-  background: var(--background);
+  background: var(--app-canvas) fixed;
+  min-height: 100%;
 }
 body {
-  background: var(--app-canvas);
-  background-attachment: fixed;
+  background: transparent;
+}
+
+/* Salvaguarda estructural: en modo claro NINGÚN backdrop oscuro (WebGL/veils)
+   puede pintar el fondo, pase lo que pase con el estado de React. */
+[data-theme="light"] [data-oceom-dark] {
+  display: none !important;
 }
 
 /* Transición suave de tema */

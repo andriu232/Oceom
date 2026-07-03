@@ -37,7 +37,11 @@ export function SacredOceanBackdrop({
   }
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div
+      aria-hidden
+      data-oceom-dark
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
       {/* Profundidad base: luz arriba -> abismo abajo (más oscuro) */}
       <div
         className="absolute inset-0"
