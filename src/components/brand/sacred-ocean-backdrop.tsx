@@ -69,8 +69,8 @@ export function SacredOceanBackdrop({
         {mounted && <SacredScene control={control} />}
       </div>
 
-      {/* Velo oscuro: atenúa la geometría para que el contenido resalte */}
-      <div className="absolute inset-0 bg-[#03060e]/45" />
+      {/* Velo oscuro suave (para no tapar la geometría) */}
+      <div className="absolute inset-0 bg-[#03060e]/28" />
 
       {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
       <CursorAura control={control} />

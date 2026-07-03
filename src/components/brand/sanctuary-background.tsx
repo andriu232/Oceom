@@ -88,8 +88,8 @@ export function OceomSanctuaryBackground({
         style={{ background: "radial-gradient(circle, rgba(129,140,248,0.36), transparent 70%)" }}
       />
 
-      {/* Velo de legibilidad */}
-      <div className="absolute inset-0 bg-[#03060e]/45" />
+      {/* Velo de legibilidad (suave, para no tapar la geometría) */}
+      <div className="absolute inset-0 bg-[#03060e]/28" />
 
       {/* Spotlight que sigue al cursor: re-ilumina la geometría al pasar el mouse */}
       <CursorAura control={control} />

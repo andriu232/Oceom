@@ -27,9 +27,9 @@ function palette(theme: Theme) {
     ambient: light ? "#eaf6ff" : "#a9e6ff",
     mote: light ? "#3f9db1" : "#bfeef5",
     moteOp: light ? 0.3 : 0.7,
-    outer: light ? 0.5 : 0.22,
-    inner: light ? 0.72 : 0.32,
-    ring: light ? 0.42 : 0.18,
+    outer: light ? 0.62 : 0.42,
+    inner: light ? 0.85 : 0.58,
+    ring: light ? 0.5 : 0.34,
     boost: light ? 0.4 : 0.7,
   };
 }
@@ -170,7 +170,7 @@ export function FlowerScene({
     <Canvas
       dpr={[1, 1.75]}
       camera={{ position: [0, 0, 13], fov: 55 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
       style={{ position: "absolute", inset: 0 }}
     >
       <fog attach="fog" args={[pal.fog, 13, 40]} />

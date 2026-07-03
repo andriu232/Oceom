@@ -26,9 +26,9 @@ function palette(theme: Theme) {
     ambient: light ? "#eaf6ff" : "#a9e6ff",
     mote: light ? "#3f9db1" : "#bfeef5",
     moteOp: light ? 0.28 : 0.7,
-    lines: light ? 0.5 : 0.32,
-    circles: light ? 0.8 : 0.6,
-    flowerBg: light ? 0.2 : 0.12,
+    lines: light ? 0.62 : 0.48,
+    circles: light ? 0.9 : 0.78,
+    flowerBg: light ? 0.28 : 0.2,
     boostLines: light ? 0.4 : 0.8,
     boostCircles: light ? 0.3 : 0.6,
   };
@@ -197,7 +197,7 @@ export function SacredScene({
     <Canvas
       dpr={[1, 1.75]}
       camera={{ position: [0, 0, 14], fov: 55 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
       style={{ position: "absolute", inset: 0 }}
     >
       <fog attach="fog" args={[pal.fog, 13, 40]} />
