@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, DoorOpen } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getCircle } from "@/lib/queries/circles";
+import { getCircle, circleState } from "@/lib/queries/circles";
 import { deleteCircleAction } from "@/lib/actions/circles";
 import { CircleForm } from "@/components/admin/circle-form";
 import { CircleShare } from "@/components/admin/circle-share";
@@ -52,11 +52,21 @@ export default async function EditCirclePage({
         <h1 className="font-display text-2xl font-bold text-foreground">
           Editar círculo
         </h1>
-        <form action={deleteCircleAction.bind(null, id)}>
-          <button className="inline-flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm text-muted transition hover:border-danger/40 hover:bg-danger/10 hover:text-danger">
-            <Trash2 className="size-4" /> Eliminar
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          {circleState(circle) === "live" && (
+            <Link
+              href={`/circulos/${id}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-ocean-cyan px-4 py-2 text-sm font-semibold text-[var(--ocean-abyss)] transition hover:brightness-110"
+            >
+              <DoorOpen className="size-4" /> Ir a la sala
+            </Link>
+          )}
+          <form action={deleteCircleAction.bind(null, id)}>
+            <button className="inline-flex items-center gap-2 rounded-xl border border-card-border px-4 py-2 text-sm text-muted transition hover:border-danger/40 hover:bg-danger/10 hover:text-danger">
+              <Trash2 className="size-4" /> Eliminar
+            </button>
+          </form>
+        </div>
       </div>
 
       <CircleShare

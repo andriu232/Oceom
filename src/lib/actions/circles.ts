@@ -10,7 +10,9 @@ import { localToIso } from "@/lib/scheduling/time";
    Círculos en Vivo: gestión (mentora) + registro de asistencia.
    ============================================================ */
 
-export type CircleFormState = { error?: string; ok?: boolean } | undefined;
+export type CircleFormState =
+  | { error?: string; ok?: boolean; circleId?: string }
+  | undefined;
 
 function revalidateCircles(id?: string) {
   revalidatePath("/circulos-admin");
@@ -59,20 +61,24 @@ export async function createCircleAction(
   ).toISOString();
 
   const supabase = await createClient();
-  const { error } = await supabase.from("live_sessions").insert({
-    title: f.title,
-    description: f.description,
-    starts_at,
-    ends_at,
-    meeting_url: f.meeting_url,
-    program_id: f.program_id,
-    student_id: f.student_id,
-    status: mode === "now" ? "live" : "scheduled",
-    created_by: profile.id,
-  });
+  const { data, error } = await supabase
+    .from("live_sessions")
+    .insert({
+      title: f.title,
+      description: f.description,
+      starts_at,
+      ends_at,
+      meeting_url: f.meeting_url,
+      program_id: f.program_id,
+      student_id: f.student_id,
+      status: mode === "now" ? "live" : "scheduled",
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
   if (error) return { error: error.message };
   revalidateCircles();
-  return { ok: true };
+  return { ok: true, circleId: (data as { id: string } | null)?.id };
 }
 
 export async function updateCircleAction(

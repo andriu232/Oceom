@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Radio, Pencil, Clock, Dot } from "lucide-react";
+import { Radio, Pencil, Clock, Dot, DoorOpen } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { listCirclesForAdmin, circleState, type Circle } from "@/lib/queries/circles";
@@ -64,16 +64,15 @@ export default async function CirculosAdminPage() {
 function AdminRow({ c }: { c: Circle }) {
   const st = circleState(c);
   return (
-    <Link
-      href={`/circulos-admin/${c.id}`}
-      className="glass group flex items-center gap-4 rounded-xl p-4 transition-colors hover:border-ocean-cyan/40"
-    >
+    <div className="glass flex items-center gap-4 rounded-xl p-4">
       <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-violet/15 text-ocean-violet">
         <Radio className="size-5" />
       </div>
-      <div className="min-w-0 flex-1">
+      <Link href={`/circulos-admin/${c.id}`} className="group min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate font-medium text-foreground">{c.title}</p>
+          <p className="truncate font-medium text-foreground transition-colors group-hover:text-ocean-cyan">
+            {c.title}
+          </p>
           {st === "live" && (
             <span className="inline-flex items-center rounded-full bg-danger/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-danger">
               <Dot className="-ml-1 size-4 animate-pulse" /> En vivo
@@ -90,10 +89,23 @@ function AdminRow({ c }: { c: Circle }) {
               ? `Solo ${c.programTitle}`
               : "Abierto a todos"}
         </p>
-      </div>
-      <span className="inline-flex items-center gap-1 text-sm text-muted transition-colors group-hover:text-ocean-cyan">
+      </Link>
+      {st === "live" && (
+        <Link
+          href={`/circulos/${c.id}`}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-ocean-cyan/15 px-3 py-2 text-sm font-medium text-ocean-cyan transition-colors hover:bg-ocean-cyan/25"
+        >
+          <DoorOpen className="size-4" /> Ir a la sala
+        </Link>
+      )}
+      <Link
+        href={`/circulos-admin/${c.id}`}
+        className="shrink-0 text-muted transition-colors hover:text-ocean-cyan"
+        title="Editar"
+        aria-label="Editar círculo"
+      >
         <Pencil className="size-4" />
-      </span>
-    </Link>
+      </Link>
+    </div>
   );
 }

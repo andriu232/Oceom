@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Radio, Save, Zap, CalendarClock } from "lucide-react";
+import Link from "next/link";
+import { Radio, Save, Zap, CalendarClock, DoorOpen } from "lucide-react";
 import {
   createCircleAction,
   updateCircleAction,
@@ -252,15 +253,24 @@ export function CircleForm({
       )}
 
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state?.ok && (
-        <p className="text-sm text-success">
-          {editing
-            ? "Círculo actualizado ✓"
-            : mode === "now"
-              ? "¡Círculo en vivo creado! Entra a la sala 🎥"
-              : "Círculo programado ✓"}
-        </p>
-      )}
+      {state?.ok &&
+        (editing ? (
+          <p className="text-sm text-success">Círculo actualizado ✓</p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success/10 p-3">
+            <p className="text-sm font-medium text-success">
+              {mode === "now" ? "¡Círculo EN VIVO creado! 🎥" : "Círculo programado ✓"}
+            </p>
+            {state.circleId && mode === "now" && (
+              <Link
+                href={`/circulos/${state.circleId}`}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-ocean-cyan px-4 py-2 text-sm font-semibold text-[var(--ocean-abyss)] transition-colors hover:brightness-110"
+              >
+                <DoorOpen className="size-4" /> Ir a la sala
+              </Link>
+            )}
+          </div>
+        ))}
 
       <Button type="submit" disabled={pending}>
         {!editing && mode === "now" ? (
