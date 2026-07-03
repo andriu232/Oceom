@@ -15,7 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "OCEOM by E-MOTION®",
+  title: "OCEOM — Donde el océano interior despierta",
   description: "Donde el océano interior despierta. Tecnología emocional para la evolución humana.",
 };
 

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="body" cx="34%" cy="27%" r="80%">
+      <stop offset="0%" stop-color="#d3f6ff"/>
+      <stop offset="22%" stop-color="#54c6fb"/>
+      <stop offset="55%" stop-color="#1568bb"/>
+      <stop offset="100%" stop-color="#05152a"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="50%" stop-color="#22d3ee" stop-opacity="0"/>
+      <stop offset="78%" stop-color="#22d3ee" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gloss" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dff4ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="ball"><circle cx="32" cy="32" r="24"/></clipPath>
+  </defs>
+
+  <!-- halo -->
+  <circle cx="32" cy="32" r="31" fill="url(#halo)"/>
+  <!-- cuerpo de la esfera -->
+  <circle cx="32" cy="32" r="24" fill="url(#body)"/>
+  <!-- ola interior -->
+  <g clip-path="url(#ball)">
+    <path d="M2 40 Q19 32 32 39 T62 39 L62 62 L2 62 Z" fill="url(#wave)"/>
+  </g>
+  <!-- borde luminoso -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#c8f2ff" stroke-opacity="0.4" stroke-width="0.9"/>
+  <!-- brillo glossy -->
+  <ellipse cx="24" cy="20" rx="10.5" ry="7.5" fill="url(#gloss)"/>
+  <!-- destello puntual -->
+  <circle cx="23" cy="17.5" r="2.1" fill="#ffffff" fill-opacity="0.95"/>
+</svg>

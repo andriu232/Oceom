@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "OCEOM by E-MOTION® — Donde el océano interior despierta",
+  title: "OCEOM — Donde el océano interior despierta",
   description:
     "Ecosistema digital del método E-MOTION® de Valeria Rueda Caicedo. Sanación integral neuroemocional, corporal y energética.",
 };
