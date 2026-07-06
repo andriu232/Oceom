@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Users } from "lucide-react";
-import { requireStudentArea } from "@/lib/auth";
+import { requireStudentArea, isMentor } from "@/lib/auth";
 import { getCircle, circleState } from "@/lib/queries/circles";
 import { CircleRoom } from "@/components/circulos/circle-room";
 import { formatDayLabel, formatTime } from "@/lib/scheduling/time";
@@ -14,7 +14,7 @@ export default async function CircleRoomPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireStudentArea();
+  const profile = await requireStudentArea();
 
   const circle = await getCircle(id);
   if (!circle) notFound();
@@ -37,6 +37,7 @@ export default async function CircleRoomPage({
         meetingUrl={circle.meeting_url}
         recordingUrl={circle.recording_url}
         whenLabel={whenLabel}
+        isHost={isMentor(profile.role)}
       />
 
       <div>

@@ -12,11 +12,16 @@ import { getDeviceId } from "@/lib/livekit/device";
  * Sala de video nativa (LiveKit) del círculo, afinada para máxima calidad:
  * captura 1080p, audio de alta fidelidad y adaptiveStream/dynacast (ver
  * `lib/livekit/quality.ts`). Pide el token — con id de dispositivo para una
- * reconexión limpia — y conecta al tocar "Entrar al círculo" (el gesto es lo
- * que desbloquea el audio en iOS/Safari y pide cámara y micrófono en el momento
- * justo).
+ * reconexión limpia — y conecta al tocar el botón de entrada (el gesto es lo que
+ * desbloquea el audio en iOS/Safari y pide permisos en el momento justo).
+ *
+ * Modo clase: la **mentora (host)** entra publicando cámara y micrófono; el
+ * **estudiante** entra solo mirando/escuchando y puede encender su cámara o mic
+ * cuando quiera participar. Así una clase con muchos estudiantes no se satura
+ * (no hay 30 cámaras publicando a la vez) y el ancho de banda se prioriza para
+ * recibir en HD a quien está enseñando.
  */
-export function LiveCircle({ roomId }: { roomId: string }) {
+export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean }) {
   const [conn, setConn] = useState<{ token: string; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
@@ -79,8 +84,14 @@ export function LiveCircle({ roomId }: { roomId: string }) {
           <span className="grid size-20 place-items-center rounded-full bg-ocean-cyan/15 text-ocean-cyan ring-1 ring-ocean-cyan/40 transition group-hover:bg-ocean-cyan/25 group-hover:ring-ocean-cyan/60">
             <Video className="size-8" />
           </span>
-          <span className="text-base font-medium text-foreground">Entrar al círculo</span>
-          <span className="text-xs text-muted">Se activarán tu cámara y micrófono</span>
+          <span className="text-base font-medium text-foreground">
+            {isHost ? "Iniciar la clase" : "Entrar a la clase"}
+          </span>
+          <span className="text-xs text-muted">
+            {isHost
+              ? "Se activarán tu cámara y micrófono"
+              : "Verás y escucharás; activa tu cámara si quieres participar"}
+          </span>
         </button>
       </Frame>
     );
@@ -97,8 +108,10 @@ export function LiveCircle({ roomId }: { roomId: string }) {
         options={roomOptions}
         connectOptions={connectOptions}
         connect
-        video
-        audio
+        // El host publica cámara+mic al entrar; el estudiante entra sin publicar
+        // (puede encenderlos luego con los controles para pedir la palabra).
+        video={isHost}
+        audio={isHost}
         style={{ height: "100%" }}
         onConnected={() => {
           wasConnected.current = true;

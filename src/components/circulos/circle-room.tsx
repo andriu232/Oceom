@@ -17,12 +17,15 @@ export function CircleRoom({
   meetingUrl,
   recordingUrl,
   whenLabel,
+  isHost = false,
 }: {
   id: string;
   state: CircleState;
   meetingUrl: string | null;
   recordingUrl: string | null;
   whenLabel: string;
+  /** La mentora (host) publica al entrar; el estudiante entra solo mirando. */
+  isHost?: boolean;
 }) {
   useEffect(() => {
     if (state === "live") joinCircleAction(id).catch(() => {});
@@ -32,7 +35,7 @@ export function CircleRoom({
   if (state === "live") {
     return (
       <div className="space-y-3">
-        <LiveCircle roomId={id} />
+        <LiveCircle roomId={id} isHost={isHost} />
         {meetingUrl && (
           <p className="text-center text-xs text-muted">
             ¿Problemas con el video?{" "}

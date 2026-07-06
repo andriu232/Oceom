@@ -29,12 +29,15 @@ export type AudioProfile = "conference" | "fidelity";
 export const AUDIO_PROFILE: AudioProfile = "conference";
 
 /**
- * Códec de video. VP9 (SVC) da la mejor calidad por bit y, junto con dynacast,
- * es ideal para 1→N. `backupCodec` (por defecto) publica una pista VP8 de respaldo
- * para el navegador raro que no soporte VP9, así nadie se queda sin ver.
- * Si algún día aparecen problemas de compatibilidad/CPU, poné "h264".
+ * Códec de video. **H264** para clases en vivo reales: tiene aceleración por
+ * hardware casi universal (codificar y decodificar), así que va más fluido, gasta
+ * menos batería/CPU en móviles y es compatible con TODO (iOS/Safari, Android,
+ * navegadores viejos). Con simulcast (abajo) cada estudiante recibe la capa que su
+ * red aguanta. VP9 daría algo más de nitidez por bit, pero su codificación por
+ * software puede tirar los fps en equipos modestos → en un aula heterogénea, H264
+ * gana en fluidez y estabilidad. Para cambiarlo, poné "vp9".
  */
-const VIDEO_CODEC = "vp9" as const;
+const VIDEO_CODEC = "h264" as const;
 
 const AUDIO_BY_PROFILE: Record<
   AudioProfile,
@@ -45,6 +48,7 @@ const AUDIO_BY_PROFILE: Record<
       echoCancellation: true,
       noiseSuppression: true,
       autoGainControl: true,
+      sampleRate: 48000, // full-band: voz nítida sin recorte de agudos
     },
     publish: {
       audioPreset: AudioPresets.musicHighQuality, // 96 kbps, voz cristalina
@@ -94,14 +98,18 @@ export const roomOptions: RoomOptions = {
 
   publishDefaults: {
     videoCodec: VIDEO_CODEC,
-    backupCodec: true,
-    // Bitrate/encoding de la capa principal de cámara en 1080p.
+    // Capa principal de cámara en 1080p.
     videoEncoding: VideoPresets.h1080.encoding,
+    // Simulcast: además de 1080p, publica 540p y 180p. Cada estudiante recibe la
+    // capa que su red/pantalla soporta (la elige adaptiveStream) → HD para quien
+    // puede, fluido para quien tiene red lenta o mira en miniatura.
+    videoSimulcastLayers: [VideoPresets.h540, VideoPresets.h180],
     // Al compartir pantalla: 1080p a 30 fps + una capa baja para redes lentas.
     screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
     screenShareSimulcastLayers: [ScreenSharePresets.h360fps15],
-    // Ante congestión, degrada de forma equilibrada (ni solo fps ni solo nitidez).
-    degradationPreference: "balanced",
+    // Ante congestión, prioriza mantener los FPS (fluidez) antes que la resolución:
+    // en una clase, que no se congele importa más que un instante ultranítido.
+    degradationPreference: "maintain-framerate",
     ...audio.publish,
   },
 };
