@@ -72,8 +72,6 @@ export interface CalendarEventInput {
   description?: string;
   startIso: string;
   endIso: string;
-  /** Correo del estudiante para listarlo como invitado en el evento. */
-  attendeeEmail?: string;
 }
 
 /** Crea el evento en el calendario de Valeria. Devuelve el id del evento de
@@ -95,12 +93,11 @@ export async function createCalendarEvent(input: CalendarEventInput): Promise<st
       end: { dateTime: input.endIso, timeZone: TZ },
       reminders: { useDefault: true },
     };
-    if (input.attendeeEmail) {
-      body.attendees = [{ email: input.attendeeEmail }];
-    }
 
-    // sendUpdates=none: los correos ya los envía OCEOM vía Resend; un service
-    // account en calendario personal no puede notificar invitados por su cuenta.
+    // NO agregamos attendees: un service account sobre un calendario personal
+    // no puede invitar asistentes sin Domain-Wide Delegation (error 403). Los
+    // datos del estudiante van en la descripción, y el correo lo envía Resend.
+    // sendUpdates=none por la misma razón.
     const res = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cfg.calendarId)}/events?sendUpdates=none`,
       {

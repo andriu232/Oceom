@@ -113,14 +113,14 @@ export async function bookSlotAction(
     ).toISOString();
 
     // 1) Crea el evento en el calendario de Valeria y guarda su id.
+    const studentLine = student?.email
+      ? `Estudiante: ${studentName} (${student.email})`
+      : `Estudiante: ${studentName}`;
     const eventId = await createCalendarEvent({
       title: `Clase OCEOM · ${studentName}`,
-      description: note?.trim()
-        ? `Estudiante: ${studentName}\nNota: ${note.trim()}`
-        : `Estudiante: ${studentName}`,
+      description: note?.trim() ? `${studentLine}\nNota: ${note.trim()}` : studentLine,
       startIso: slot.starts_at,
       endIso,
-      attendeeEmail: student?.email ?? undefined,
     });
     if (eventId) {
       await admin
