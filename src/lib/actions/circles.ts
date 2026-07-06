@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireRole, requireStudentArea } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { localToIso } from "@/lib/scheduling/time";
+import { endLiveKitRoom } from "@/lib/livekit/server";
 
 /* ============================================================
    Círculos en Vivo: gestión (mentora) + registro de asistencia.
@@ -121,6 +122,24 @@ export async function deleteCircleAction(id: string) {
   await supabase.from("live_sessions").delete().eq("id", id);
   revalidateCircles();
   redirect("/circulos-admin");
+}
+
+/**
+ * Finaliza un Círculo en Vivo (solo la mentora). Lo marca como terminado
+ * (`ends_at = ahora` → deja de estar "live") y cierra la sala de LiveKit para
+ * desconectar a todos los participantes al instante.
+ */
+export async function endCircleAction(id: string): Promise<{ error?: string }> {
+  await requireRole("mentor", "super_admin");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("live_sessions")
+    .update({ ends_at: new Date().toISOString(), status: "ended" })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  await endLiveKitRoom(id);
+  revalidateCircles(id);
+  return {};
 }
 
 /** Registra (o actualiza) la asistencia del estudiante al entrar al círculo. */

@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import "@livekit/components-styles";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import { DisconnectReason } from "livekit-client";
-import { Loader2, Video, Sparkles } from "lucide-react";
+import { Loader2, Video, Sparkles, PhoneOff } from "lucide-react";
 import { roomOptions, connectOptions } from "@/lib/livekit/quality";
 import { getDeviceId } from "@/lib/livekit/device";
+import { endCircleAction } from "@/lib/actions/circles";
 
 /**
  * Sala de video nativa (LiveKit) del círculo, afinada para máxima calidad:
@@ -26,7 +27,24 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
   const [error, setError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [ending, setEnding] = useState(false);
   const wasConnected = useRef(false);
+
+  // Finaliza el círculo (solo la mentora): lo marca terminado en la BD y cierra
+  // la sala de LiveKit para desconectar a todos. Pide confirmación (es para todos).
+  async function handleEnd() {
+    if (ending) return;
+    if (!window.confirm("¿Finalizar la sesión en vivo para todos los participantes?"))
+      return;
+    setEnding(true);
+    const res = await endCircleAction(roomId);
+    if (res?.error) {
+      setEnding(false);
+      setError(res.error);
+      return;
+    }
+    setEnded(true);
+  }
 
   useEffect(() => {
     let active = true;
@@ -100,8 +118,18 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
   return (
     <div
       data-lk-theme="default"
-      className="h-[70vh] min-h-[420px] overflow-hidden rounded-2xl border border-card-border"
+      className="relative h-[70vh] min-h-[420px] overflow-hidden rounded-2xl border border-card-border"
     >
+      {isHost && (
+        <button
+          onClick={handleEnd}
+          disabled={ending}
+          className="absolute right-4 top-4 z-30 inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"
+        >
+          <PhoneOff className="size-4" />
+          {ending ? "Finalizando…" : "Finalizar sesión en vivo"}
+        </button>
+      )}
       <LiveKitRoom
         token={conn.token}
         serverUrl={conn.url}
