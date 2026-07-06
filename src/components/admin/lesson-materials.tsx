@@ -1,15 +1,20 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FileText, Upload, Trash2, Paperclip } from "lucide-react";
 import {
-  uploadMaterialAction,
+  createMaterialUpload,
+  registerMaterialAction,
   deleteMaterialAction,
-  type MaterialState,
 } from "@/lib/actions/materials";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const BUCKET = "materials";
+const MAX_BYTES = 52_428_800; // 50 MB
 
 export interface MaterialItem {
   id: string;
@@ -27,16 +32,69 @@ export function LessonMaterials({
   programId: string;
   resources: MaterialItem[];
 }) {
-  const [state, action, pending] = useActionState<MaterialState, FormData>(
-    uploadMaterialAction,
-    undefined,
-  );
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
 
-  // Limpia el formulario al subir con éxito.
-  useEffect(() => {
-    if (state?.ok) formRef.current?.reset();
-  }, [state?.ok]);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const title = String(fd.get("title") ?? "").trim();
+    const description = String(fd.get("description") ?? "").trim() || null;
+    const file = fd.get("file");
+
+    setError(null);
+    setOk(false);
+    if (!title) return setError("Falta el título del material.");
+    if (!(file instanceof File) || file.size === 0)
+      return setError("Selecciona un archivo.");
+    if (file.size > MAX_BYTES) return setError("El archivo supera los 50 MB.");
+
+    setPending(true);
+    try {
+      // 1) Firma la ruta de subida.
+      const signed = await createMaterialUpload(lessonId, file.name);
+      if ("error" in signed) {
+        setError(signed.error);
+        return;
+      }
+      // 2) Sube el archivo DIRECTO a Storage (no pasa por Vercel).
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(BUCKET)
+        .uploadToSignedUrl(signed.path, signed.token, file, {
+          contentType: file.type || undefined,
+        });
+      if (upErr) {
+        setError(`No se pudo subir: ${upErr.message}`);
+        return;
+      }
+      // 3) Registra el recurso en la BD.
+      const ext = file.name.includes(".")
+        ? file.name.split(".").pop()!.toLowerCase().slice(0, 8)
+        : null;
+      const res = await registerMaterialAction({
+        lessonId,
+        programId,
+        title,
+        description,
+        path: signed.path,
+        fileType: ext,
+      });
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
+      form.reset();
+      setOk(true);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <section className="glass rounded-2xl p-6">
@@ -93,7 +151,7 @@ export function LessonMaterials({
       )}
 
       {/* Formulario de subida */}
-      <form ref={formRef} action={action} className="mt-6 space-y-4 border-t border-card-border pt-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="mt-6 space-y-4 border-t border-card-border pt-6">
         <input type="hidden" name="lessonId" value={lessonId} />
         <input type="hidden" name="programId" value={programId} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -117,8 +175,8 @@ export function LessonMaterials({
           />
         </div>
 
-        {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state?.ok && <p className="text-sm text-success">Material subido ✓</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {ok && <p className="text-sm text-success">Material subido ✓</p>}
 
         <Button type="submit" disabled={pending}>
           <Upload className="size-4" /> {pending ? "Subiendo…" : "Subir material"}

@@ -68,6 +68,71 @@ export async function uploadMaterialAction(
   return { ok: true };
 }
 
+/* ------------------------------------------------------------------
+   Subida DIRECTA a Storage (para archivos grandes). El navegador sube
+   el archivo directo a Supabase con una URL firmada, sin pasar por el
+   server action ni por Vercel (que cortan las peticiones > 4.5 MB).
+   1) createMaterialUpload  → firma una ruta de subida.
+   2) el cliente sube el archivo a esa URL firmada.
+   3) registerMaterialAction → registra el recurso en la BD.
+   ------------------------------------------------------------------ */
+
+export type SignedUpload = { path: string; token: string } | { error: string };
+
+export async function createMaterialUpload(
+  lessonId: string,
+  fileName: string,
+): Promise<SignedUpload> {
+  await requireRole("mentor", "super_admin");
+  if (!lessonId) return { error: "Falta la lección." };
+
+  const safe = (fileName || "archivo").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+  const rand = Math.random().toString(36).slice(2, 10);
+  const path = `${lessonId}/${rand}-${safe}`;
+
+  const svc = createServiceClient();
+  const { data, error } = await svc.storage
+    .from(BUCKET)
+    .createSignedUploadUrl(path);
+  if (error || !data) {
+    return { error: error?.message ?? "No se pudo iniciar la subida." };
+  }
+  return { path: data.path, token: data.token };
+}
+
+export async function registerMaterialAction(input: {
+  lessonId: string;
+  programId: string;
+  title: string;
+  description: string | null;
+  path: string;
+  fileType: string | null;
+}): Promise<MaterialState> {
+  await requireRole("mentor", "super_admin");
+
+  const title = input.title?.trim();
+  if (!input.lessonId || !title) return { error: "Falta el título del material." };
+  if (!input.path) return { error: "No se recibió el archivo subido." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("resources").insert({
+    lesson_id: input.lessonId,
+    title,
+    description: input.description?.trim() || null,
+    file_url: input.path,
+    file_type: input.fileType,
+  });
+  if (error) {
+    // Rollback: si no se pudo registrar, borra el archivo subido.
+    await createServiceClient().storage.from(BUCKET).remove([input.path]);
+    return { error: error.message };
+  }
+
+  revalidatePath(`/programas/${input.programId}/lecciones/${input.lessonId}`);
+  revalidatePath(`/experiencia/${input.lessonId}`);
+  return { ok: true };
+}
+
 export async function deleteMaterialAction(
   resourceId: string,
   lessonId: string,
