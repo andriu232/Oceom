@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireRole, getUser } from "@/lib/auth";
 import { localToIso } from "@/lib/scheduling/time";
 import { notifyBooking } from "@/lib/email/notify";
+import { createCalendarEvent, deleteCalendarEvent } from "@/lib/google/calendar";
 
 export type SchedState = { error?: string; ok?: boolean } | undefined;
 
@@ -96,7 +97,8 @@ export async function bookSlotAction(
   if (error) return { error: error.message };
   revalidateAgenda();
 
-  // Notifica por correo (estudiante + mentora). No bloquea la reserva si falla.
+  // Sincroniza con Google Calendar + notifica por correo (estudiante + mentora).
+  // Nada de esto bloquea la reserva si falla.
   try {
     const { data: people } = await admin
       .from("profiles")
@@ -104,11 +106,35 @@ export async function bookSlotAction(
       .in("id", [user.id, slot.mentor_id]);
     const student = people?.find((p) => p.id === user.id);
     const mentor = people?.find((p) => p.id === slot.mentor_id);
+    const studentName = student?.full_name ?? "Estudiante";
+    const mentorName = mentor?.full_name ?? "Tu mentora";
+    const endIso = new Date(
+      new Date(slot.starts_at).getTime() + (slot.duration_minutes ?? 60) * 60000,
+    ).toISOString();
+
+    // 1) Crea el evento en el calendario de Valeria y guarda su id.
+    const eventId = await createCalendarEvent({
+      title: `Clase OCEOM · ${studentName}`,
+      description: note?.trim()
+        ? `Estudiante: ${studentName}\nNota: ${note.trim()}`
+        : `Estudiante: ${studentName}`,
+      startIso: slot.starts_at,
+      endIso,
+      attendeeEmail: student?.email ?? undefined,
+    });
+    if (eventId) {
+      await admin
+        .from("class_slots")
+        .update({ google_event_id: eventId })
+        .eq("id", slotId);
+    }
+
+    // 2) Correos de confirmación (con .ics + botón "Agregar a Google Calendar").
     if (student?.email && mentor?.email) {
       await notifyBooking({
-        studentName: student.full_name ?? "Estudiante",
+        studentName,
         studentEmail: student.email,
-        mentorName: mentor.full_name ?? "Tu mentora",
+        mentorName,
         mentorEmail: mentor.email,
         startsAtIso: slot.starts_at,
         durationMin: slot.duration_minutes ?? 60,
@@ -116,7 +142,7 @@ export async function bookSlotAction(
       });
     }
   } catch (err) {
-    console.error("[agenda] notificación falló:", err);
+    console.error("[agenda] sincronización/notificación falló:", err);
   }
 
   return { ok: true };
@@ -129,7 +155,7 @@ export async function cancelBookingAction(slotId: string): Promise<void> {
   const admin = createServiceClient();
   const { data: slot } = await admin
     .from("class_slots")
-    .select("id,student_id")
+    .select("id,student_id,google_event_id")
     .eq("id", slotId)
     .maybeSingle();
 
@@ -142,9 +168,17 @@ export async function cancelBookingAction(slotId: string): Promise<void> {
       student_id: null,
       note: null,
       program_id: null,
+      google_event_id: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", slotId);
+
+  // Borra el evento del calendario de Valeria (no bloquea la cancelación).
+  try {
+    await deleteCalendarEvent(slot.google_event_id);
+  } catch (err) {
+    console.error("[agenda] no se pudo borrar el evento de Google Calendar:", err);
+  }
 
   revalidateAgenda();
 }
