@@ -71,10 +71,10 @@ export default async function AcademiaPage() {
               <div className="mt-6 border-t border-card-border pt-5">
                 {p.enrolled ? (
                   <Link
-                    href="/mi-ruta"
+                    href={`/mi-ruta/${p.id}`}
                     className="inline-flex items-center gap-2 text-sm font-medium text-ocean-cyan hover:underline"
                   >
-                    Ir a mi ruta <ArrowRight className="size-4" />
+                    Abrir programa <ArrowRight className="size-4" />
                   </Link>
                 ) : (
                   <p className="inline-flex items-center gap-2 text-sm text-muted">
