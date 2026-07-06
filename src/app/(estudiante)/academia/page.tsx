@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Waves, Brain, Check, ArrowRight, Lock } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { listCatalog } from "@/lib/queries/catalog";
@@ -23,7 +24,18 @@ export default async function AcademiaPage() {
         {programs.map((p) => {
           const Icon = p.type === "neuropsychic" ? Brain : Waves;
           return (
-            <Card key={p.id} className="flex flex-col">
+            <Card key={p.id} className="flex flex-col overflow-hidden">
+              {p.cover_image_url && (
+                <div className="relative -mx-6 -mt-6 mb-5 aspect-video overflow-hidden">
+                  <Image
+                    src={p.cover_image_url}
+                    alt={p.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
               <div className="flex items-start gap-4">
                 <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ocean-cyan/12 text-ocean-cyan ring-1 ring-inset ring-ocean-cyan/20">
                   <Icon className="size-6" />

@@ -13,6 +13,7 @@ export interface CatalogProgram {
   type: string;
   level: string | null;
   duration_label: string | null;
+  cover_image_url: string | null;
   benefits: string[];
   lessons: number;
   enrolled: boolean;
@@ -24,7 +25,7 @@ export async function listCatalog(studentId: string): Promise<CatalogProgram[]> 
   const [programsRes, lessonsRes, enrollRes] = await Promise.all([
     supabase
       .from("programs")
-      .select("id,title,slug,subtitle,description,type,level,duration_label,benefits")
+      .select("id,title,slug,subtitle,description,type,level,duration_label,cover_image_url,benefits")
       .eq("status", "published")
       .order("created_at"),
     supabase.from("lessons").select("program_id").eq("status", "published"),
@@ -56,6 +57,7 @@ export async function listCatalog(studentId: string): Promise<CatalogProgram[]> 
     type: p.type,
     level: p.level,
     duration_label: p.duration_label,
+    cover_image_url: p.cover_image_url,
     benefits: Array.isArray(p.benefits) ? (p.benefits as string[]) : [],
     lessons: lessonCounts[p.id] ?? 0,
     enrolled: enrolledSet.has(p.id),

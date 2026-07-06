@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, Route as RouteIcon } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
@@ -42,6 +43,20 @@ export default async function ProgramRoutePage({
       >
         <ArrowLeft className="size-4" /> Volver a Academia
       </Link>
+
+      {/* Portada del programa */}
+      {route.program.cover_image_url && (
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl ring-1 ring-card-border">
+          <Image
+            src={route.program.cover_image_url}
+            alt={route.program.title}
+            fill
+            sizes="100vw"
+            priority
+            className="object-cover"
+          />
+        </div>
+      )}
 
       {/* Cabecera del programa */}
       <section className="glass relative overflow-hidden rounded-2xl p-8">

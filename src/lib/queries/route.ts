@@ -42,6 +42,7 @@ export interface ProgramRoute {
     type: string;
     level: string | null;
     duration_label: string | null;
+    cover_image_url: string | null;
   };
   phases: PhaseNode[];
   totalLessons: number;
@@ -85,7 +86,7 @@ export async function getProgramRoute(
     await Promise.all([
       supabase
         .from("programs")
-        .select("id,title,slug,subtitle,type,level,duration_label")
+        .select("id,title,slug,subtitle,type,level,duration_label,cover_image_url")
         .eq("id", programId)
         .maybeSingle(),
       supabase
@@ -185,6 +186,7 @@ export async function getProgramRoute(
       type: program.type,
       level: program.level,
       duration_label: program.duration_label,
+      cover_image_url: program.cover_image_url,
     },
     phases: phaseNodes,
     totalLessons,
