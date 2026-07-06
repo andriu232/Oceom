@@ -12,8 +12,12 @@ export const dynamic = "force-dynamic";
  * y solo se permite mientras el círculo está EN VIVO.
  */
 export async function GET(req: NextRequest) {
-  const room = new URL(req.url).searchParams.get("room");
+  const params = new URL(req.url).searchParams;
+  const room = params.get("room");
   if (!room) return NextResponse.json({ error: "room requerido" }, { status: 400 });
+
+  // Id de dispositivo/pestaña (lo genera y persiste el cliente). Sanitizado.
+  const device = (params.get("device") ?? "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24);
 
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -36,13 +40,19 @@ export async function GET(req: NextRequest) {
     user.email ||
     "Invitado";
 
-  const at = new AccessToken(apiKey, apiSecret, { identity: user.id, name });
+  // Identidad = usuario + dispositivo/pestaña: la misma cuenta puede entrar desde
+  // varios dispositivos y recargar sin que LiveKit expulse a las demás sesiones
+  // por identidad duplicada. TTL amplio (12h) para que una reconexión tras una
+  // caída de red o suspensión reuse el token en vez de dejar la sala colgada.
+  const identity = device ? `${user.id}__${device}` : user.id;
+  const at = new AccessToken(apiKey, apiSecret, { identity, name, ttl: "12h" });
   at.addGrant({
     roomJoin: true,
     room,
     canPublish: true,
     canSubscribe: true,
     canPublishData: true,
+    canUpdateOwnMetadata: true,
   });
 
   return NextResponse.json({ token: await at.toJwt(), url });
