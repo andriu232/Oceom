@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireRole, getUser } from "@/lib/auth";
 import { localToIso } from "@/lib/scheduling/time";
-import { notifyBooking } from "@/lib/email/notify";
+import { notifyBooking, notifyCancellation } from "@/lib/email/notify";
 import { createCalendarEvent, deleteCalendarEvent } from "@/lib/google/calendar";
 
 export type SchedState = { error?: string; ok?: boolean } | undefined;
@@ -148,18 +148,37 @@ export async function bookSlotAction(
   return { ok: true };
 }
 
-export async function cancelBookingAction(slotId: string): Promise<void> {
+export async function cancelBookingAction(
+  slotId: string,
+  reason: string,
+): Promise<SchedState> {
   const user = await getUser();
-  if (!user) return;
+  if (!user) return { error: "No autenticado." };
+
+  // El motivo es obligatorio para poder cancelar.
+  const motivo = reason?.trim();
+  if (!motivo || motivo.length < 3) {
+    return { error: "Escribe el motivo de la cancelación." };
+  }
 
   const admin = createServiceClient();
   const { data: slot } = await admin
     .from("class_slots")
-    .select("id,student_id,google_event_id")
+    .select("id,student_id,starts_at,duration_minutes,mentor_id,google_event_id")
     .eq("id", slotId)
     .maybeSingle();
 
-  if (!slot || slot.student_id !== user.id) return;
+  if (!slot || slot.student_id !== user.id) {
+    return { error: "No encontramos esa reserva." };
+  }
+
+  // Captura los datos ANTES de limpiar el slot (se necesitan para el correo).
+  const { data: people } = await admin
+    .from("profiles")
+    .select("id,full_name,email")
+    .in("id", [user.id, slot.mentor_id]);
+  const student = people?.find((p) => p.id === user.id);
+  const mentor = people?.find((p) => p.id === slot.mentor_id);
 
   await admin
     .from("class_slots")
@@ -173,12 +192,23 @@ export async function cancelBookingAction(slotId: string): Promise<void> {
     })
     .eq("id", slotId);
 
-  // Borra el evento del calendario de Valeria (no bloquea la cancelación).
+  // Borra el evento del calendario + avisa por correo (no bloquea la cancelación).
   try {
     await deleteCalendarEvent(slot.google_event_id);
+    if (student?.email && mentor?.email) {
+      await notifyCancellation({
+        studentName: student.full_name ?? "Estudiante",
+        studentEmail: student.email,
+        mentorName: mentor.full_name ?? "Tu mentora",
+        mentorEmail: mentor.email,
+        startsAtIso: slot.starts_at,
+        reason: motivo,
+      });
+    }
   } catch (err) {
-    console.error("[agenda] no se pudo borrar el evento de Google Calendar:", err);
+    console.error("[agenda] cancelación: sincronización/correo falló:", err);
   }
 
   revalidateAgenda();
+  return { ok: true };
 }

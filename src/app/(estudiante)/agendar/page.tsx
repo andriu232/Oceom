@@ -1,11 +1,11 @@
-import { CalendarCheck, Clock, X } from "lucide-react";
+import { CalendarCheck, Clock } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { listOpenSlots, listMyBookings } from "@/lib/queries/scheduling";
 import { getActiveEnrollment } from "@/lib/queries/route";
-import { cancelBookingAction } from "@/lib/actions/scheduling";
 import { groupByDay, formatDayLabel, formatTime } from "@/lib/scheduling/time";
 import { PageHeader } from "@/components/shared/page-header";
 import { BookingCalendar } from "@/components/scheduling/booking-calendar";
+import { CancelBookingButton } from "@/components/scheduling/cancel-booking-button";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -44,14 +44,7 @@ export default async function AgendarPage() {
                   </p>
                   {b.note && <p className="mt-2 text-xs text-muted">“{b.note}”</p>}
                 </div>
-                <form action={cancelBookingAction.bind(null, b.id)}>
-                  <button
-                    title="Cancelar reserva"
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-danger"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </form>
+                <CancelBookingButton slotId={b.id} dayLabel={formatDayLabel(b.startsAt)} />
               </Card>
             ))}
           </div>

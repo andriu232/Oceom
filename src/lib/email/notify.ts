@@ -102,6 +102,51 @@ export async function notifyBooking(b: BookingNotice): Promise<void> {
   });
 }
 
+export interface CancellationNotice {
+  studentName: string;
+  studentEmail: string;
+  mentorName: string;
+  mentorEmail: string;
+  startsAtIso: string;
+  reason: string;
+}
+
+/** Correos cuando el estudiante cancela una clase: aviso a la mentora (con el
+ *  motivo) + confirmación al estudiante. */
+export async function notifyCancellation(c: CancellationNotice): Promise<void> {
+  const when = `${formatDayLabel(c.startsAtIso)} · ${formatTime(c.startsAtIso)} (hora Colombia)`;
+
+  // Mentora
+  await sendEmail({
+    to: c.mentorEmail,
+    subject: `Clase cancelada: ${c.studentName}`,
+    replyTo: c.studentEmail,
+    html: shell(
+      "Se canceló una clase",
+      `${row("Estudiante", c.studentName)}
+       ${row("Correo", c.studentEmail)}
+       ${row("Era", when)}
+       ${row("Motivo", c.reason)}
+       <p style="color:#8aa0c6;font-size:12px;margin-top:18px">La franja quedó disponible de nuevo para otros estudiantes.</p>`,
+    ),
+  });
+
+  // Estudiante
+  await sendEmail({
+    to: c.studentEmail,
+    subject: `Cancelaste tu clase con ${c.mentorName}`,
+    replyTo: c.mentorEmail,
+    html: shell(
+      "Tu clase fue cancelada",
+      `<p style="color:#aab8d4;font-size:14px;margin:0 0 16px">Hola ${c.studentName}, confirmamos la cancelación de tu sesión:</p>
+       ${row("Era", when)}
+       ${row("Con", c.mentorName)}
+       ${row("Motivo", c.reason)}
+       <p style="color:#8aa0c6;font-size:12px;margin-top:18px">Cuando quieras puedes volver a agendar. 🌊</p>`,
+    ),
+  });
+}
+
 export interface EnrollmentNotice {
   studentName: string;
   studentEmail: string;
