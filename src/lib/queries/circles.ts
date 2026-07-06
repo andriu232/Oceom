@@ -92,3 +92,9 @@ export async function getCircle(id: string): Promise<Circle | null> {
   const all = await fetchCircles();
   return all.find((c) => c.id === id) ?? null;
 }
+
+/** ¿Hay algún Círculo EN VIVO ahora mismo visible para el usuario actual (RLS)? */
+export async function hasLiveCircle(): Promise<boolean> {
+  const all = await fetchCircles();
+  return all.some((c) => circleState(c) === "live");
+}

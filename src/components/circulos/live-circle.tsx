@@ -95,14 +95,34 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
   if (!started) {
     return (
       <Frame>
+        {/* Distintivo EN VIVO pulsante: comunica al instante que está ocurriendo. */}
+        <span className="inline-flex items-center gap-2 rounded-full bg-danger/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-danger ring-1 ring-danger/40">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-80" />
+            <span className="relative inline-flex size-2 rounded-full bg-danger" />
+          </span>
+          En vivo ahora
+        </span>
+
         <button
           onClick={() => setStarted(true)}
-          className="group flex flex-col items-center gap-4 rounded-2xl px-8 py-6 transition"
+          className="group mt-1 flex flex-col items-center gap-4"
         >
-          <span className="grid size-20 place-items-center rounded-full bg-ocean-cyan/15 text-ocean-cyan ring-1 ring-ocean-cyan/40 transition group-hover:bg-ocean-cyan/25 group-hover:ring-ocean-cyan/60">
-            <Video className="size-8" />
+          {/* Botón circular vibrante con halo pulsante (onda que llama la atención). */}
+          <span className="relative grid size-24 place-items-center">
+            <span
+              aria-hidden
+              className="absolute inset-0 animate-ping rounded-full bg-ocean-cyan/25"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-1 rounded-full bg-gradient-to-br from-ocean-glow/40 to-ocean-violet/40 blur-md"
+            />
+            <span className="relative grid size-20 place-items-center rounded-full bg-gradient-to-br from-ocean-glow to-ocean-cyan text-[var(--ocean-abyss)] shadow-[0_10px_34px_rgba(34,211,238,0.45)] transition group-hover:scale-105">
+              <Video className="size-8" />
+            </span>
           </span>
-          <span className="text-base font-medium text-foreground">
+          <span className="text-lg font-semibold text-foreground">
             {isHost ? "Iniciar la clase" : "Entrar a la clase"}
           </span>
           <span className="text-xs text-muted">

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { ModeSwitcher } from "@/components/shared/mode-switcher";
 import { ICONS } from "@/components/shared/nav-icons";
+import { LiveNavBadge } from "@/components/circulos/live-nav-badge";
 import { signOutAction } from "@/lib/actions/auth";
 import type { NavGroup } from "@/config/navigation";
 import type { ViewMode } from "@/lib/auth/mode";
@@ -125,6 +126,8 @@ export function AppSidebar({
                         )}
                       />
                       <span className="relative flex-1">{item.label}</span>
+                      {(item.href === "/circulos" ||
+                        item.href === "/circulos-admin") && <LiveNavBadge />}
                       {item.hint && (
                         <span className="relative text-[0.6rem] uppercase tracking-wide text-muted/60">
                           {item.hint}
