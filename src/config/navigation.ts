@@ -26,7 +26,8 @@ export type IconName =
   | "library"
   | "clipboard"
   | "chart"
-  | "settings";
+  | "settings"
+  | "heart";
 
 export interface NavItem {
   label: string;
@@ -102,6 +103,7 @@ export const adminGroups: NavGroup[] = [
     items: [
       { label: "Panel", href: "/panel", icon: "dashboard", primary: true, short: "Panel" },
       { label: "Estudiantes", href: "/estudiantes", icon: "students", primary: true, short: "Alumnos" },
+      { label: "Seguimiento", href: "/seguimiento", icon: "heart", primary: true, short: "Control" },
       { label: "Programas", href: "/programas", icon: "library", primary: true, short: "Rutas" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
       { label: "Agenda", href: "/agenda", icon: "calendar", primary: true, short: "Agenda" },

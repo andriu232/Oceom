@@ -23,6 +23,7 @@ import {
   Gift,
   AudioLines,
   CalendarDays,
+  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/config/navigation";
@@ -55,4 +56,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   clipboard: ClipboardCheck,
   chart: BarChart3,
   settings: Settings,
+  heart: HeartPulse,
 };
