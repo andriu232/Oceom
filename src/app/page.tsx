@@ -40,9 +40,12 @@ export const metadata = {
 /* ── Contenedor base: ancho premium (1180px) con foco central ── */
 const SHELL = "relative mx-auto w-full max-w-[1180px] px-6";
 
-/* ── Base de tarjeta con hover premium (lift + border glow + gradiente) ── */
+/* ── Base de tarjeta: casi transparente y SIN blur, para que la geometría
+   sagrada del backdrop se vea nítida detrás. Esquinas casi rectas (editorial,
+   nada de "rounded-2xl" genérico) + hairline. El marco iluminado y los acentos
+   de esquina los aporta <CardFrame />. ── */
 const CARD =
-  "group relative overflow-hidden rounded-2xl border border-card-border bg-ocean-surface/25 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-ocean-cyan/40 hover:shadow-[0_26px_70px_-38px_rgba(34,211,238,0.6)] motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  "group relative rounded-[3px] border border-white/10 bg-ocean-surface/35 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_-42px_rgba(34,211,238,0.5)] motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 const PROBLEMS = [
   {
@@ -218,13 +221,44 @@ const PILLARS = [
   },
 ];
 
-/* Halo/gradiente que aparece dentro de las tarjetas al hacer hover. */
-function CardSheen() {
+/* Marco premium reutilizable (bespoke, "0 IA"):
+   · línea superior sutil tipo hairline,
+   · borde iluminado en hover: anillo de gradiente cyan/teal enmascarado (1px),
+   · acentos de esquina tipo marco de arte que se encienden al pasar el mouse.
+   Va DENTRO de una tarjeta con `group relative`. */
+function CardFrame() {
   return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 bg-gradient-to-br from-ocean-cyan/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-    />
+    <>
+      {/* Hairline superior */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ocean-cyan/30 to-transparent opacity-50 transition-opacity duration-300 group-hover:opacity-100"
+      />
+      {/* Borde iluminado en hover (anillo de 1px con gradiente enmascarado) */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-[3px] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          padding: "1px",
+          background:
+            "linear-gradient(135deg, rgba(94,234,212,0.75), rgba(34,211,238,0.28) 42%, rgba(94,234,212,0) 72%)",
+          WebkitMask:
+            "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          WebkitMaskComposite: "xor",
+          mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          maskComposite: "exclude",
+        }}
+      />
+      {/* Acentos de esquina (marco bespoke) */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 size-3.5 border-l border-t border-ocean-cyan/25 transition-colors duration-300 group-hover:border-ocean-cyan/70"
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 right-0 size-3.5 border-b border-r border-ocean-cyan/25 transition-colors duration-300 group-hover:border-ocean-cyan/70"
+      />
+    </>
   );
 }
 
@@ -380,7 +414,7 @@ export default async function LandingPage() {
                 return (
                   <Reveal key={p.title} delay={i * 0.07}>
                     <div className={`${CARD} h-full p-7 sm:p-8`}>
-                      <CardSheen />
+                      <CardFrame />
                       <div className="relative">
                         <div className="grid size-12 place-items-center rounded-xl bg-ocean-cyan/10 text-ocean-cyan ring-1 ring-inset ring-ocean-cyan/20 transition-transform duration-300 group-hover:scale-105">
                           <Icon className="size-5" />
@@ -448,8 +482,9 @@ export default async function LandingPage() {
 
               {/* Columna derecha: la ruta de 7 pasos (timeline con espina luminosa) */}
               <Reveal delay={0.12}>
-                <div className="glass rounded-3xl p-6 sm:p-8">
-                  <div className="flex items-center justify-between">
+                <div className="group relative rounded-[3px] border border-white/10 bg-ocean-surface/45 p-6 transition-all duration-300 hover:shadow-[0_28px_70px_-42px_rgba(34,211,238,0.4)] sm:p-8">
+                  <CardFrame />
+                  <div className="relative flex items-center justify-between">
                     <p className="text-sm font-semibold text-ocean-cyan">
                       El Circuito E-MOTION®
                     </p>
@@ -503,7 +538,7 @@ export default async function LandingPage() {
                           : ""
                       }`}
                     >
-                      <CardSheen />
+                      <CardFrame />
                       {/* Badge superior */}
                       <div className="relative flex items-center justify-between">
                         <span
@@ -611,7 +646,7 @@ export default async function LandingPage() {
                 return (
                   <Reveal key={f.title} delay={(i % 3) * 0.08}>
                     <div className={`${CARD} h-full p-7`}>
-                      <CardSheen />
+                      <CardFrame />
                       <div className="relative flex items-start justify-between">
                         <div className="grid size-12 place-items-center rounded-xl bg-ocean-cyan/10 text-ocean-cyan ring-1 ring-inset ring-ocean-cyan/20 transition-transform duration-300 group-hover:scale-105">
                           <Icon className="size-5" />
@@ -652,7 +687,7 @@ export default async function LandingPage() {
                 return (
                   <Reveal key={p.title} delay={i * 0.08}>
                     <div className={`${CARD} h-full p-7 text-center sm:text-left`}>
-                      <CardSheen />
+                      <CardFrame />
                       <div className="relative mx-auto grid size-12 place-items-center rounded-xl bg-ocean-glow/10 text-ocean-glow ring-1 ring-inset ring-ocean-glow/20 sm:mx-0">
                         <Icon className="size-5" />
                       </div>
@@ -684,52 +719,66 @@ export default async function LandingPage() {
           {/* ══════════════ VALERIA — FIRMA DE LA GUÍA ══════════════ */}
           <section className={`${SHELL} max-w-3xl py-24 sm:py-28`}>
             <Reveal>
-              <div className="glass-strong relative overflow-hidden rounded-3xl p-8 sm:p-12">
+              <div className="group relative overflow-hidden rounded-[3px] border border-white/10 bg-ocean-surface/45 p-8 transition-all duration-300 hover:shadow-[0_34px_90px_-46px_rgba(34,211,238,0.45)] sm:p-12">
+                <CardFrame />
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full opacity-50 blur-3xl"
+                  className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-50 blur-3xl"
                   style={{
                     background:
-                      "radial-gradient(circle, rgba(34,211,238,0.28), transparent 70%)",
+                      "radial-gradient(circle, rgba(34,211,238,0.26), transparent 70%)",
                   }}
                 />
-                <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
-                  {/* Avatar monograma con aro de energía */}
-                  <div className="relative shrink-0">
+                <div className="relative flex flex-col items-center text-center">
+                  {/* Foto clara y central, enmarcada tipo retrato */}
+                  <div className="relative">
                     <span
                       aria-hidden
-                      className="absolute -inset-1.5 rounded-full opacity-70 [animation:spin-slow_16s_linear_infinite] motion-reduce:animate-none"
+                      className="absolute -inset-3 rounded-[8px] opacity-70 blur-2xl"
                       style={{
                         background:
-                          "conic-gradient(from 0deg, #5eead4, #22d3ee, #8fd6ec, #5eead4)",
-                        maskImage:
-                          "radial-gradient(circle, transparent 58%, black 61%)",
-                        WebkitMaskImage:
-                          "radial-gradient(circle, transparent 58%, black 61%)",
+                          "radial-gradient(circle, rgba(94,234,212,0.30), transparent 70%)",
                       }}
                     />
-                    <div className="relative grid size-20 place-items-center rounded-full bg-gradient-to-br from-ocean-glow to-ocean-cyan font-display text-3xl font-bold text-[var(--ocean-abyss)]">
-                      V
+                    <div className="relative h-60 w-48 overflow-hidden rounded-[4px] border border-ocean-cyan/25 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)] sm:h-72 sm:w-56">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/valeria.jpg"
+                        alt="Valeria Rueda Caicedo"
+                        className="h-full w-full object-cover object-[center_28%]"
+                      />
+                      {/* Velo inferior para fundir el retrato con el santuario */}
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ocean-abyss/70 to-transparent"
+                      />
                     </div>
+                    {/* Acentos de esquina sobre la foto */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute -left-1.5 -top-1.5 size-5 border-l-2 border-t-2 border-ocean-cyan/50"
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-1.5 -right-1.5 size-5 border-b-2 border-r-2 border-ocean-cyan/50"
+                    />
                   </div>
 
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ocean-cyan">
-                      Tu guía
-                    </p>
-                    <h2 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
-                      Valeria Rueda Caicedo
-                    </h2>
-                    <p className="mt-1 text-sm text-foreground/60">
-                      Coach transformacional · Terapeuta en sanación integral ·
-                      Creadora del método E-MOTION®
-                    </p>
-                    <p className="mt-5 text-lg italic leading-relaxed text-foreground/80">
-                      “E-MOTION® no es solo un método. Es la síntesis de un camino,
-                      una escucha profunda y un compromiso real con la sanación
-                      auténtica.”
-                    </p>
-                  </div>
+                  <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-ocean-cyan">
+                    Tu guía
+                  </p>
+                  <h2 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
+                    Valeria Rueda Caicedo
+                  </h2>
+                  <p className="mt-1.5 text-sm text-foreground/60">
+                    Coach transformacional · Terapeuta en sanación integral ·
+                    Creadora del método E-MOTION®
+                  </p>
+                  <p className="mx-auto mt-6 max-w-2xl text-lg italic leading-relaxed text-foreground/85">
+                    “E-MOTION® no es solo un método. Es la síntesis de un camino,
+                    una escucha profunda y un compromiso real con la sanación
+                    auténtica.”
+                  </p>
                 </div>
               </div>
             </Reveal>
@@ -738,7 +787,8 @@ export default async function LandingPage() {
           {/* ══════════════ CTA FINAL ══════════════ */}
           <section className={`${SHELL} max-w-4xl pb-28`}>
             <Reveal>
-              <div className="glass relative overflow-hidden rounded-[2rem] p-10 text-center sm:p-16">
+              <div className="group relative overflow-hidden rounded-[3px] border border-white/10 bg-ocean-surface/45 p-10 text-center transition-all duration-300 hover:shadow-[0_30px_80px_-44px_rgba(34,211,238,0.5)] sm:p-16">
+                <CardFrame />
                 <div
                   aria-hidden
                   className="pointer-events-none absolute left-1/2 top-0 size-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] [animation:pulse-glow_8s_ease-in-out_infinite] motion-reduce:animate-none"
