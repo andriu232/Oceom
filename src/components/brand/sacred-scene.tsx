@@ -142,7 +142,7 @@ function FlowerOfLife() {
 /* ---------- Partículas de luz (plancton / marine snow) ---------- */
 function LightMotes() {
   const pts = useRef<THREE.Points>(null!);
-  const COUNT = 1100;
+  const COUNT = 800;
   const positions = useMemo(() => {
     const a = new Float32Array(COUNT * 3);
     for (let i = 0; i < COUNT; i++) {
@@ -187,7 +187,7 @@ function Rig({ control }: { control?: PointerControl }) {
 export function SacredScene({ control }: { control?: PointerControl }) {
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      dpr={[1, 1.5]}
       camera={{ position: [0, 0, 14], fov: 55 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       style={{ position: "absolute", inset: 0 }}

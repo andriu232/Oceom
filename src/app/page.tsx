@@ -22,15 +22,12 @@ import {
   AtSign,
   Mail,
 } from "lucide-react";
-import { getProfile, homeForRole } from "@/lib/auth";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { site } from "@/config/site";
 
-export const dynamic = "force-dynamic";
 export const metadata = {
   title: "OCEOM — Donde el océano interior despierta",
   description:
@@ -262,13 +259,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default async function LandingPage() {
-  let authedHref: string | null = null;
-  if (hasSupabaseEnv()) {
-    const profile = await getProfile();
-    if (profile) authedHref = homeForRole(profile.role);
-  }
-
+export default function LandingPage() {
   return (
     <div className="relative">
       <SacredOceanBackdrop fullWidth />
@@ -292,10 +283,10 @@ export default async function LandingPage() {
             </a>
           </nav>
           <Link
-            href={authedHref ?? "/login"}
+            href="/login"
             className={buttonVariants({ variant: "glass", size: "sm" })}
           >
-            {authedHref ? "Mi cuenta" : "Ingresar"}
+            Ingresar
           </Link>
         </div>
       </header>
@@ -341,23 +332,15 @@ export default async function LandingPage() {
 
             <Reveal delay={0.24}>
               <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                {authedHref ? (
-                  <Link href={authedHref} className={buttonVariants({ size: "lg" })}>
-                    Entrar a mi cuenta <ArrowRight className="size-4" />
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/registro" className={buttonVariants({ size: "lg" })}>
-                      Comenzar mi proceso <ArrowRight className="size-4" />
-                    </Link>
-                    <a
-                      href="#metodo"
-                      className={buttonVariants({ variant: "glass", size: "lg" })}
-                    >
-                      Conocer el método
-                    </a>
-                  </>
-                )}
+                <Link href="/registro" className={buttonVariants({ size: "lg" })}>
+                  Comenzar mi proceso <ArrowRight className="size-4" />
+                </Link>
+                <a
+                  href="#metodo"
+                  className={buttonVariants({ variant: "glass", size: "lg" })}
+                >
+                  Conocer el método
+                </a>
               </div>
             </Reveal>
 
@@ -720,6 +703,8 @@ export default async function LandingPage() {
                     <img
                       src="/valeria.jpg"
                       alt="Valeria Rueda Caicedo"
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 h-full w-full object-cover object-[center_22%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     />
                     {/* Glow cyan delicado en el borde del retrato */}
@@ -846,20 +831,18 @@ export default async function LandingPage() {
                   </p>
                   <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
                     <Link
-                      href={authedHref ?? "/registro"}
+                      href="/registro"
                       className={buttonVariants({ size: "lg" })}
                     >
-                      {authedHref ? "Entrar a mi cuenta" : "Comenzar ahora"}
+                      Comenzar ahora
                       <ArrowRight className="size-4" />
                     </Link>
-                    {!authedHref && (
-                      <a
-                        href="#programas"
-                        className={buttonVariants({ variant: "glass", size: "lg" })}
-                      >
-                        Ver programas
-                      </a>
-                    )}
+                    <a
+                      href="#programas"
+                      className={buttonVariants({ variant: "glass", size: "lg" })}
+                    >
+                      Ver programas
+                    </a>
                   </div>
                   <p className="mt-5 text-xs text-foreground/45">
                     Cupos limitados · acompañamiento personalizado
