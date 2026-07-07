@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, homeForRole } from "@/lib/auth";
+import { attachPendingReferral } from "@/lib/referrals/attach";
 import { loginSchema, registerSchema } from "@/lib/validations/auth";
 
 export type AuthState = { error?: string } | undefined;
@@ -41,12 +42,16 @@ export async function signUpAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: { data: { full_name: parsed.data.fullName } },
   });
   if (error) return { error: error.message };
+
+  // Si el visitante llegó con ?ref=XXX, asocia su referrer (idempotente,
+  // silencioso si no hay cookie). Nunca rompe el alta.
+  if (data.user) await attachPendingReferral(data.user.id);
 
   redirect("/onboarding");
 }

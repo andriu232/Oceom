@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Inter } from "next/font/google";
+import { RefCapture } from "@/components/referrals/ref-capture";
 import "./globals.css";
 
 const sora = Sora({
@@ -30,7 +31,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${sora.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {/* Captura ?ref=XXX de cualquier URL → cookie 30d para asociar el
+            referido al registrarse (landing, auth, cualquier entrada). */}
+        <RefCapture />
+        {children}
+      </body>
     </html>
   );
 }

@@ -37,11 +37,22 @@ export interface NavItem {
   primary?: boolean;
   /** Etiqueta corta para la barra inferior móvil (cae a `label`). */
   short?: string;
+  /** Oculto del menú (reservado para un sprint futuro). La página sigue
+   *  existiendo; solo no se enlaza. Para reactivar, quita esta bandera. */
+  hidden?: boolean;
 }
 
 export interface NavGroup {
   label: string;
   items: NavItem[];
+}
+
+/** Filtra los ítems `hidden` y descarta grupos que queden vacíos. Se usa en
+ *  el layout antes de pasar la navegación al sidebar / bottom-nav. */
+export function visibleGroups(groups: NavGroup[]): NavGroup[] {
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden) }))
+    .filter((g) => g.items.length > 0);
 }
 
 /** Navegación del estudiante — agrupada al estilo del ecosistema, con
@@ -55,10 +66,10 @@ export const studentGroups: NavGroup[] = [
       { label: "Academia", href: "/academia", icon: "academia" },
       { label: "Mi Ruta", href: "/mi-ruta", icon: "route", primary: true, short: "Mi Ruta" },
       { label: "Ruta del Viajero", href: "/ruta-viajero", icon: "compass", hint: "Viaje" },
-      { label: "Hojas de Ruta", href: "/hojas-de-ruta", icon: "roadmap" },
+      { label: "Hojas de Ruta", href: "/hojas-de-ruta", icon: "roadmap", hidden: true },
       { label: "Agendar Clase", href: "/agendar", icon: "calendar" },
       { label: "Círculos en Vivo", href: "/circulos", icon: "radio", primary: true, short: "Círculos" },
-      { label: "Deep Waves", href: "/deep-waves", icon: "audio" },
+      { label: "Deep Waves", href: "/deep-waves", icon: "audio", hidden: true },
     ],
   },
   {
@@ -66,7 +77,7 @@ export const studentGroups: NavGroup[] = [
     items: [
       { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA", primary: true, short: "OMI" },
       { label: "Círculo", href: "/circulo", icon: "users" },
-      { label: "Mis Herramientas", href: "/herramientas", icon: "tools" },
+      { label: "Mis Herramientas", href: "/herramientas", icon: "tools", hidden: true },
       { label: "Bitácora Interior", href: "/bitacora", icon: "book" },
       { label: "Mapa de Visión", href: "/mapa-vision", icon: "map" },
     ],
@@ -75,8 +86,8 @@ export const studentGroups: NavGroup[] = [
     label: "Mi cuenta",
     items: [
       { label: "Mi Evolución", href: "/mi-evolucion", icon: "trending" },
-      { label: "Tienda", href: "/tienda", icon: "store" },
-      { label: "Membresía", href: "/membresia", icon: "membership" },
+      { label: "Tienda", href: "/tienda", icon: "store", hidden: true },
+      { label: "Membresía", href: "/membresia", icon: "membership", hidden: true },
       { label: "Referidos", href: "/referidos", icon: "gift" },
       { label: "Mi Portal", href: "/mi-portal", icon: "user", primary: true, short: "Portal" },
       { label: "Ajustes", href: "/ajustes", icon: "settings" },

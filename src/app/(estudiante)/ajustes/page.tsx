@@ -1,16 +1,37 @@
-import { Settings } from "lucide-react";
-import { ComingSoon } from "@/components/shared/coming-soon";
+import { requireAuth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
+import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
+import { PasswordSettingsForm } from "@/components/settings/password-settings-form";
 
 export const metadata = { title: "Ajustes · OCEOM" };
 
-export default function AjustesPage() {
+export default async function AjustesPage() {
+  const profile = await requireAuth();
+
   return (
-    <ComingSoon
-      title="Ajustes"
-      subtitle="Preferencias de tu cuenta y experiencia."
-      icon={Settings}
-      sprint="Sprint 6"
-      description="Configura tus datos, notificaciones, privacidad, idioma y preferencias de tu experiencia en OCEOM."
-    />
+    <div className="space-y-8">
+      <PageHeader
+        title="Ajustes"
+        subtitle="Administra los datos de tu cuenta y tu acceso."
+      />
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted/70">
+          Perfil
+        </h2>
+        <ProfileSettingsForm
+          fullName={profile.full_name ?? ""}
+          email={profile.email ?? ""}
+          avatarUrl={profile.avatar_url ?? ""}
+        />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted/70">
+          Seguridad
+        </h2>
+        <PasswordSettingsForm />
+      </section>
+    </div>
   );
 }

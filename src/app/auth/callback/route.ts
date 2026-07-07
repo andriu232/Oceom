@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, homeForRole } from "@/lib/auth";
+import { attachPendingReferral } from "@/lib/referrals/attach";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,14 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchanged, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=oauth`);
   }
+
+  // Asocia el referido pendiente (cookie ?ref=) si el visitante llegó por un
+  // enlace de invitación antes de entrar con Google.
+  if (exchanged?.user) await attachPendingReferral(exchanged.user.id);
 
   const profile = await getProfile();
   const dest = next && next.startsWith("/") ? next : homeForRole(profile?.role);

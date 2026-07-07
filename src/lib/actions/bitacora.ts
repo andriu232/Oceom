@@ -1,0 +1,73 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { EMOTION_BY_KEY } from "@/config/bitacora";
+
+export type BitacoraState = { ok?: boolean; error?: string } | undefined;
+
+const entrySchema = z.object({
+  title: z.string().trim().max(120, "El título es demasiado largo").optional(),
+  content: z.string().trim().min(1, "Escribe algo antes de guardar").max(8000, "La entrada es muy larga"),
+  emotion: z.string().trim().optional(),
+  intensity: z.coerce.number().int().min(0).max(10).optional(),
+  is_insight: z.coerce.boolean().optional(),
+  is_private: z.coerce.boolean().optional(),
+});
+
+/** Crea una entrada de bitácora del usuario actual. */
+export async function createEntryAction(
+  _prev: BitacoraState,
+  formData: FormData,
+): Promise<BitacoraState> {
+  const parsed = entrySchema.safeParse({
+    title: formData.get("title") ?? "",
+    content: formData.get("content") ?? "",
+    emotion: formData.get("emotion") ?? "",
+    intensity: formData.get("intensity") ?? undefined,
+    is_insight: formData.get("is_insight") === "on" || formData.get("is_insight") === "true",
+    is_private: formData.get("is_private") == null ? true : formData.get("is_private") !== "false",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Tu sesión expiró. Inicia sesión de nuevo." };
+
+  const emotion =
+    parsed.data.emotion && EMOTION_BY_KEY[parsed.data.emotion] ? parsed.data.emotion : null;
+
+  const { error } = await supabase.from("journal_entries").insert({
+    student_id: user.id,
+    title: parsed.data.title || null,
+    content: parsed.data.content,
+    emotion,
+    intensity: typeof parsed.data.intensity === "number" ? parsed.data.intensity : null,
+    is_insight: !!parsed.data.is_insight,
+    is_private: parsed.data.is_private !== false,
+  });
+  if (error) return { error: "No se pudo guardar tu entrada. Inténtalo de nuevo." };
+
+  revalidatePath("/bitacora");
+  return { ok: true };
+}
+
+/** Borra una entrada del usuario actual (RLS garantiza que sea suya). */
+export async function deleteEntryAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("journal_entries").delete().eq("id", id).eq("student_id", user.id);
+  revalidatePath("/bitacora");
+}
