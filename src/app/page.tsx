@@ -22,7 +22,6 @@ import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { site } from "@/config/site";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -150,8 +149,10 @@ export default async function LandingPage() {
           </Reveal>
         </section>
 
-        {/* Resto sobre fondo sólido para legibilidad */}
-        <div className="relative bg-[#03060e]">
+        {/* Resto de la landing: transparente para que la geometría sagrada y las
+            estrellas del backdrop fijo se vean en TODA la página (no solo el hero).
+            La legibilidad la dan el velo + viñeta del propio backdrop y las tarjetas glass. */}
+        <div className="relative">
           {/* ¿QUÉ RESUELVE? */}
           <section className="mx-auto max-w-6xl px-6 py-24">
             <Reveal className="text-center">
