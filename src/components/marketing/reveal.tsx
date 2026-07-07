@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
-/** Aparición suave al hacer scroll (fade + slide up). */
+/** Aparición suave al hacer scroll (fade + slide up).
+ *  Respeta prefers-reduced-motion: si está activo, renderiza sin animación. */
 export function Reveal({
   children,
   delay = 0,
@@ -12,6 +13,12 @@ export function Reveal({
   delay?: number;
   className?: string;
 }) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       className={className}
