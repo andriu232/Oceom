@@ -70,47 +70,38 @@ const PROBLEMS = [
   },
 ];
 
+/* El método real: 3 fases · 12 estaciones (alineado al pensum oficial —
+   "Manual del Estudiante"). Nombres tomados del currículo real. */
 const FASES = [
-  { label: "Fase I", name: "Despertar y reconocimiento" },
-  { label: "Fase II", name: "Reprogramación del subconsciente" },
-  { label: "Fase III", name: "Integración y maestría" },
-];
-
-const CIRCUITO = [
   {
-    n: "01",
-    name: "Heridas emocionales",
-    desc: "Diagnóstico del Ser: identificamos tu herida predominante y el patrón que se repite.",
+    label: "Fase I",
+    name: "Despertar y reconocimiento",
+    estaciones: [
+      { n: "01", name: "Diagnóstico del Ser", desc: "Identificamos tu herida predominante y el patrón que se repite." },
+      { n: "02", name: "Sanación de la niñez", desc: "Liberas las memorias que se grabaron antes de las palabras." },
+      { n: "03", name: "Sanación de los padres", desc: "Reconcilias el vínculo que moldeó tu forma de amar y sostenerte." },
+      { n: "04", name: "Árbol transgeneracional", desc: "Biodescodificación: sanas lo heredado, lo que no empezó en ti." },
+      { n: "05", name: "Parejas y vínculos", desc: "Cierras lazos y patrones que intentabas resolver en el otro." },
+    ],
   },
   {
-    n: "02",
-    name: "Niñez",
-    desc: "Sanación de la niñez: liberamos las memorias que se grabaron antes de las palabras.",
+    label: "Fase II",
+    name: "Reprogramación del subconsciente",
+    estaciones: [
+      { n: "06", name: "Tapping (EFT)", desc: "Descargas la emoción y abres espacio para lo nuevo." },
+      { n: "07", name: "Aformaciones", desc: "Reprogramación mental y emocional que reescribe la creencia raíz." },
+      { n: "08", name: "Reprogramación híbrida", desc: "Integras mente y emoción en un mismo movimiento de cambio." },
+      { n: "09", name: "Hipnosis reprogramativa", desc: "Accedes al subconsciente para consolidar la nueva programación." },
+    ],
   },
   {
-    n: "03",
-    name: "Linaje",
-    desc: "Árbol transgeneracional y biodescodificación: sanas lo heredado, lo que no empezó en ti.",
-  },
-  {
-    n: "04",
-    name: "Parejas y vínculos",
-    desc: "Cierras lazos y patrones que intentabas resolver en el otro.",
-  },
-  {
-    n: "05",
-    name: "Cuerpo y chakras",
-    desc: "El cuerpo como registro: liberas la emoción guardada como tensión y síntoma.",
-  },
-  {
-    n: "06",
-    name: "Reprogramación",
-    desc: "Subconsciente: tapping, aformaciones e hipnosis para reescribir la creencia raíz.",
-  },
-  {
-    n: "07",
-    name: "Mapa de sueños",
-    desc: "Integración: consolidas lo sanado y diseñas tu vida desde tu nuevo estado.",
+    label: "Fase III",
+    name: "Creación de la nueva identidad",
+    estaciones: [
+      { n: "10", name: "Mapa de sueños neurocientífico", desc: "Diseñas tu futuro por áreas de vida, con base neurocientífica." },
+      { n: "11", name: "Maestría y retroalimentación", desc: "Consolidas lo aprendido y afinas tu proceso acompañada." },
+      { n: "12", name: "Sesión de refuerzo", desc: "A los 21 días: integras y sostienes tu nuevo estado en el tiempo." },
+    ],
   },
 ];
 
@@ -433,83 +424,74 @@ export default async function LandingPage() {
             </div>
           </section>
 
-          {/* ══════════════ EL MÉTODO — RUTA TERAPÉUTICA ══════════════ */}
+          {/* ══════════════ EL MÉTODO — 3 FASES · 12 ESTACIONES ══════════════ */}
           <section id="metodo" className={`${SHELL} scroll-mt-24 py-24 sm:py-28`}>
-            <div className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-start lg:gap-16">
-              {/* Columna izquierda: narrativa + arco de fases + técnicas */}
-              <Reveal>
-                <Eyebrow>El método</Eyebrow>
-                <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-[2.6rem]">
-                  Una arquitectura terapéutica, no una lista de técnicas
-                </h2>
-                <p className="mt-5 text-lg text-foreground/70">
-                  E-MOTION® trabaja el sistema nervioso, la memoria emocional y el
-                  cuerpo como registro del subconsciente. Cada fase abre, libera,
-                  reorganiza y reprograma — respetando los tiempos del cuerpo.
-                </p>
+            <Reveal className="max-w-2xl">
+              <Eyebrow>El método</Eyebrow>
+              <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-[2.6rem]">
+                Una arquitectura terapéutica, no una lista de técnicas
+              </h2>
+              <p className="mt-5 text-lg text-foreground/70">
+                E-MOTION® se despliega en{" "}
+                <span className="font-medium text-foreground">
+                  3 fases y 12 estaciones
+                </span>{" "}
+                que trabajan el sistema nervioso, la memoria emocional y el cuerpo
+                como registro del subconsciente. Cada estación abre, libera,
+                reorganiza y reprograma — respetando los tiempos del cuerpo.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-2">
+                {TECHNIQUES.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-card-border bg-ocean-surface/40 px-3.5 py-1.5 text-sm text-foreground/80"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </Reveal>
 
-                {/* Arco de las 3 fases */}
-                <div className="mt-8 space-y-2.5">
-                  {FASES.map((f, i) => (
-                    <div key={f.label} className="flex items-center gap-3.5">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-ocean-cyan/25 bg-ocean-cyan/5 text-sm font-semibold text-ocean-cyan">
-                        {i + 1}
-                      </span>
-                      <div>
-                        <span className="text-[0.7rem] font-medium uppercase tracking-[0.14em] text-foreground/45">
-                          {f.label}
-                        </span>
-                        <p className="text-[0.95rem] font-medium text-foreground/90">
-                          {f.name}
+            {/* Las 3 fases, cada una con sus estaciones (mini-recorrido) */}
+            <div className="mt-14 grid gap-5 lg:grid-cols-3">
+              {FASES.map((fase, fi) => (
+                <Reveal key={fase.label} delay={fi * 0.1}>
+                  <div className={`${CARD} h-full p-7`}>
+                    <CardFrame />
+                    <div className="relative">
+                      <div className="flex items-baseline justify-between">
+                        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-foreground/45">
+                          {fase.label}
                         </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Técnicas como toolkit */}
-                <div className="mt-8 flex flex-wrap gap-2">
-                  {TECHNIQUES.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full border border-card-border bg-ocean-surface/40 px-3.5 py-1.5 text-sm text-foreground/80"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </Reveal>
-
-              {/* Columna derecha: la ruta de 7 pasos (timeline con espina luminosa) */}
-              <Reveal delay={0.12}>
-                <div className="group relative rounded-[3px] border border-white/10 bg-ocean-surface/45 p-6 transition-all duration-300 hover:shadow-[0_28px_70px_-42px_rgba(34,211,238,0.4)] sm:p-8">
-                  <CardFrame />
-                  <div className="relative flex items-center justify-between">
-                    <p className="text-sm font-semibold text-ocean-cyan">
-                      El Circuito E-MOTION®
-                    </p>
-                    <span className="text-xs text-foreground/40">7 estaciones</span>
-                  </div>
-
-                  <ol className="relative mt-6 space-y-6 before:absolute before:bottom-3 before:left-[19px] before:top-3 before:w-px before:bg-gradient-to-b before:from-ocean-cyan/50 before:via-ocean-cyan/20 before:to-transparent">
-                    {CIRCUITO.map((step) => (
-                      <li key={step.n} className="relative flex gap-4">
-                        <span className="relative z-10 grid size-10 shrink-0 place-items-center rounded-full border border-ocean-cyan/30 bg-ocean-abyss/90 font-display text-sm font-semibold text-ocean-cyan shadow-[0_0_18px_-4px_rgba(34,211,238,0.6)]">
-                          {step.n}
+                        <span className="text-[0.65rem] uppercase tracking-wide text-foreground/35">
+                          {fase.estaciones.length} estaciones
                         </span>
-                        <div className="pt-0.5">
-                          <h4 className="font-display text-base font-semibold text-foreground">
-                            {step.name}
-                          </h4>
-                          <p className="mt-1 text-sm leading-relaxed text-foreground/60">
-                            {step.desc}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </Reveal>
+                      </div>
+                      <h3 className="mt-1.5 font-display text-lg font-semibold text-ocean-cyan">
+                        {fase.name}
+                      </h3>
+
+                      <ol className="relative mt-5 space-y-5 before:absolute before:bottom-3 before:left-[15px] before:top-2 before:w-px before:bg-gradient-to-b before:from-ocean-cyan/40 before:via-ocean-cyan/15 before:to-transparent">
+                        {fase.estaciones.map((e) => (
+                          <li key={e.n} className="relative flex gap-3.5">
+                            <span className="relative z-10 grid size-8 shrink-0 place-items-center rounded-full border border-ocean-cyan/30 bg-ocean-abyss/90 font-display text-xs font-semibold text-ocean-cyan">
+                              {e.n}
+                            </span>
+                            <div className="pt-0.5">
+                              <h4 className="font-display text-sm font-semibold text-foreground">
+                                {e.name}
+                              </h4>
+                              <p className="mt-0.5 text-[0.82rem] leading-relaxed text-foreground/55">
+                                {e.desc}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </section>
 
@@ -716,69 +698,126 @@ export default async function LandingPage() {
             </Reveal>
           </section>
 
-          {/* ══════════════ VALERIA — FIRMA DE LA GUÍA ══════════════ */}
-          <section className={`${SHELL} max-w-3xl py-24 sm:py-28`}>
+          {/* ══════════════ VALERIA — SECCIÓN EDITORIAL DE AUTORIDAD ══════════════ */}
+          <section className={`${SHELL} py-24 sm:py-28`}>
             <Reveal>
-              <div className="group relative overflow-hidden rounded-[3px] border border-white/10 bg-ocean-surface/45 p-8 transition-all duration-300 hover:shadow-[0_34px_90px_-46px_rgba(34,211,238,0.45)] sm:p-12">
+              <div className="group relative overflow-hidden rounded-[3px] border border-white/10 bg-ocean-surface/40 transition-all duration-500 hover:shadow-[0_40px_100px_-50px_rgba(34,211,238,0.45)]">
                 <CardFrame />
+                {/* Glow ambiental hacia el contenido */}
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-50 blur-3xl"
+                  className="pointer-events-none absolute -right-16 -top-16 size-72 rounded-full opacity-40 blur-3xl"
                   style={{
                     background:
-                      "radial-gradient(circle, rgba(34,211,238,0.26), transparent 70%)",
+                      "radial-gradient(circle, rgba(34,211,238,0.24), transparent 70%)",
                   }}
                 />
-                <div className="relative flex flex-col items-center text-center">
-                  {/* Foto clara y central, enmarcada tipo retrato */}
-                  <div className="relative">
-                    <span
-                      aria-hidden
-                      className="absolute -inset-3 rounded-[8px] opacity-70 blur-2xl"
-                      style={{
-                        background:
-                          "radial-gradient(circle, rgba(94,234,212,0.30), transparent 70%)",
-                      }}
+
+                <div className="relative grid lg:grid-cols-[0.82fr_1fr]">
+                  {/* ── IZQUIERDA: retrato protagonista (sangra al borde) ── */}
+                  <div className="relative min-h-[24rem] lg:min-h-[34rem]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/valeria.jpg"
+                      alt="Valeria Rueda Caicedo"
+                      className="absolute inset-0 h-full w-full object-cover object-[center_22%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     />
-                    <div className="relative h-60 w-48 overflow-hidden rounded-[4px] border border-ocean-cyan/25 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)] sm:h-72 sm:w-56">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/valeria.jpg"
-                        alt="Valeria Rueda Caicedo"
-                        className="h-full w-full object-cover object-[center_28%]"
-                      />
-                      {/* Velo inferior para fundir el retrato con el santuario */}
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ocean-abyss/70 to-transparent"
-                      />
-                    </div>
-                    {/* Acentos de esquina sobre la foto */}
+                    {/* Glow cyan delicado en el borde del retrato */}
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute -left-1.5 -top-1.5 size-5 border-l-2 border-t-2 border-ocean-cyan/50"
+                      className="pointer-events-none absolute inset-0 shadow-[inset_0_0_55px_-18px_rgba(94,234,212,0.35)]"
                     />
+                    {/* Velo inferior (profundidad + integración en mobile) */}
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute -bottom-1.5 -right-1.5 size-5 border-b-2 border-r-2 border-ocean-cyan/50"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ocean-abyss/65 to-transparent"
+                    />
+                    {/* Velo lateral (funde el retrato con el contenido, solo desktop) */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-r from-transparent to-ocean-abyss/45 lg:block"
+                    />
+                    {/* Hairline vertical en la costura (desktop) */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-y-8 right-0 hidden w-px bg-gradient-to-b from-transparent via-ocean-cyan/40 to-transparent lg:block"
                     />
                   </div>
 
-                  <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-ocean-cyan">
-                    Tu guía
-                  </p>
-                  <h2 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
-                    Valeria Rueda Caicedo
-                  </h2>
-                  <p className="mt-1.5 text-sm text-foreground/60">
-                    Coach transformacional · Terapeuta en sanación integral ·
-                    Creadora del método E-MOTION®
-                  </p>
-                  <p className="mx-auto mt-6 max-w-2xl text-lg italic leading-relaxed text-foreground/85">
-                    “E-MOTION® no es solo un método. Es la síntesis de un camino,
-                    una escucha profunda y un compromiso real con la sanación
-                    auténtica.”
-                  </p>
+                  {/* ── DERECHA: contenido editorial ── */}
+                  <div className="relative flex flex-col justify-center p-8 sm:p-10 lg:py-14 lg:pl-12 lg:pr-14">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ocean-cyan">
+                      La creadora del método
+                    </p>
+                    <h2 className="mt-3 font-display text-4xl font-bold leading-[1.04] tracking-tight text-foreground sm:text-5xl">
+                      Valeria Rueda Caicedo
+                    </h2>
+                    <p className="mt-3 text-sm text-foreground/60 sm:text-base">
+                      Coach transformacional · Terapeuta en sanación integral ·
+                      Creadora del método E-MOTION®
+                    </p>
+
+                    {/* Autoridad en números */}
+                    <div className="mt-7 flex flex-wrap gap-x-10 gap-y-4">
+                      <div>
+                        <p className="font-display text-3xl font-bold text-foreground">
+                          +7 <span className="text-ocean-cyan">años</span>
+                        </p>
+                        <p className="mt-0.5 text-xs text-foreground/50">
+                          acompañando procesos
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-display text-3xl font-bold text-foreground">
+                          +2.000
+                        </p>
+                        <p className="mt-0.5 text-xs text-foreground/50">
+                          personas impactadas
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Autoridad + humanidad */}
+                    <p className="mt-7 text-[1.02rem] leading-relaxed text-foreground/80">
+                      Acompaña procesos de transformación profunda desde una
+                      integración emocional, corporal, energética y terapéutica —
+                      con herramientas de trabajo emocional, energético y sensorial.
+                      Su enfoque no busca solo aliviar síntomas, sino guiar a cada
+                      persona hacia una sanación auténtica desde la raíz.
+                    </p>
+
+                    {/* Quote destacada */}
+                    <blockquote className="mt-7 border-l-2 border-ocean-cyan/50 pl-5">
+                      <p className="font-display text-lg italic leading-relaxed text-foreground/90 sm:text-xl">
+                        “E-MOTION® no es solo un método. Es una forma de escuchar lo
+                        que el cuerpo, la emoción y el alma necesitan liberar.”
+                      </p>
+                    </blockquote>
+
+                    {/* Pilares */}
+                    <div className="mt-8 flex flex-wrap gap-2">
+                      {["Sanación integral", "Método propio", "Acompañamiento consciente"].map(
+                        (chip) => (
+                          <span
+                            key={chip}
+                            className="rounded-full border border-ocean-cyan/20 bg-ocean-cyan/[0.06] px-3.5 py-1.5 text-sm text-foreground/80"
+                          >
+                            {chip}
+                          </span>
+                        ),
+                      )}
+                    </div>
+
+                    {/* CTA secundario */}
+                    <div className="mt-9">
+                      <a
+                        href="#metodo"
+                        className={buttonVariants({ variant: "glass", size: "md" })}
+                      >
+                        Conocer el método <ArrowRight className="size-4" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Reveal>
