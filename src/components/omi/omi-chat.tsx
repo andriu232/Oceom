@@ -29,6 +29,16 @@ const SUGGESTIONS = [
   "Ayúdame a decodificar algo que viví",
 ];
 
+/** Limpia markdown ligero que el modelo pueda colar, para mantener el texto
+ *  natural (sin asteriscos/negritas/viñetas crudas) acorde al tono de OMI. */
+function clean(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "· ");
+}
+
 export function OmiChat({ firstName }: { firstName: string }) {
   const [messages, setMessages] = useState<Msg[]>([
     {
@@ -149,6 +159,8 @@ export function OmiChat({ firstName }: { firstName: string }) {
                     <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.15s]" />
                     <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan" />
                   </span>
+                ) : m.role === "assistant" ? (
+                  clean(m.content)
                 ) : (
                   m.content
                 )}
