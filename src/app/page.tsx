@@ -292,9 +292,11 @@ export default function LandingPage() {
               Ética
             </a>
           </nav>
+          {/* Estilo sólido y confiable: sin backdrop-blur ni borde-gradiente
+              (que se renderizaban "corruptos" anidados dentro del header glass). */}
           <Link
             href="/login"
-            className={buttonVariants({ variant: "glass", size: "sm" })}
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-[20px] border border-ocean-cyan/40 bg-ocean-cyan/10 px-4 text-sm font-medium text-ocean-cyan transition-colors hover:border-ocean-cyan/70 hover:bg-ocean-cyan/20"
           >
             Ingresar
           </Link>
