@@ -11,11 +11,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DeleteStudentButton } from "@/components/admin/delete-student-button";
 
 export interface StudentRow {
   id: string;
   name: string;
   email: string | null;
+  avatarUrl: string | null;
   programTitle: string | null;
   programId: string | null;
   enrollmentStatus: string | null;
@@ -165,16 +167,30 @@ export function StudentsPanel({
         ) : (
           <ul className="divide-y divide-card-border">
             {rows.map((s) => (
-              <li key={s.id}>
+              <li
+                key={s.id}
+                className="relative flex items-center transition-colors hover:bg-white/5"
+              >
                 <Link
                   href={`/estudiantes/${s.id}`}
-                  className="grid grid-cols-1 gap-3 px-5 py-4 transition-colors hover:bg-white/5 lg:grid-cols-12 lg:items-center lg:gap-4"
+                  className="grid min-w-0 flex-1 grid-cols-1 gap-3 px-5 py-4 lg:grid-cols-12 lg:items-center lg:gap-4"
                 >
                   {/* Estudiante */}
                   <div className="flex items-center gap-3 lg:col-span-3">
                     <div className="relative">
-                      <div className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-ocean-glow to-ocean-violet text-sm font-semibold text-[var(--ocean-abyss)]">
-                        {s.name.charAt(0).toUpperCase()}
+                      <div className="size-9 shrink-0 overflow-hidden rounded-full">
+                        {s.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={s.avatarUrl}
+                            alt={s.name}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid size-full place-items-center bg-gradient-to-br from-ocean-glow to-ocean-violet text-sm font-semibold text-[var(--ocean-abyss)]">
+                            {s.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                       </div>
                       {s.needsAttention && (
                         <span
@@ -241,6 +257,11 @@ export function StudentsPanel({
                     <ChevronRight className="ml-2 hidden size-4 text-muted lg:block" />
                   </div>
                 </Link>
+
+                {/* Acción destructiva — fuera del <Link> para no navegar */}
+                <div className="pr-3">
+                  <DeleteStudentButton id={s.id} name={s.name} />
+                </div>
               </li>
             ))}
           </ul>

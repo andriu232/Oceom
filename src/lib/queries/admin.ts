@@ -10,6 +10,7 @@ export interface StudentOverview {
   id: string;
   name: string;
   email: string | null;
+  avatarUrl: string | null;
   programTitle: string | null;
   programId: string | null;
   enrollmentStatus: string | null;
@@ -28,7 +29,7 @@ export async function listStudentsOverview(): Promise<StudentOverview[]> {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id,full_name,email,created_at")
+        .select("id,full_name,email,avatar_url,created_at")
         .eq("role", "student")
         .order("created_at"),
       supabase
@@ -99,6 +100,7 @@ export async function listStudentsOverview(): Promise<StudentOverview[]> {
       id: prof.id,
       name: prof.full_name ?? "Sin nombre",
       email: prof.email,
+      avatarUrl: prof.avatar_url ?? null,
       programTitle,
       programId,
       enrollmentStatus: enr?.status ?? null,
