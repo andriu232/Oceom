@@ -50,16 +50,27 @@ create trigger trg_omi_documents_updated
   before update on omi_documents
   for each row execute function set_updated_at();
 
--- Recupera los fragmentos más relevantes a la consulta (solo documentos activos).
+-- Recupera los fragmentos más relevantes a la consulta (solo documentos
+-- activos). Usa OR entre términos (convierte el & de websearch_to_tsquery en |)
+-- para traer fragmentos que compartan CUALQUIER palabra clave, rankeados por
+-- relevancia — apto para preguntas en lenguaje natural.
 create or replace function match_omi_chunks(query_text text, match_count int default 5)
 returns table (content text, document_id uuid, title text, rank real)
 language sql stable as $$
+  with q as (
+    select nullif(
+      replace(websearch_to_tsquery('spanish', query_text)::text, ' & ', ' | '),
+      ''
+    )::tsquery as query
+  )
   select c.content, c.document_id, d.title,
-         ts_rank_cd(c.tsv, websearch_to_tsquery('spanish', query_text)) as rank
+         ts_rank_cd(c.tsv, q.query) as rank
   from omi_chunks c
   join omi_documents d on d.id = c.document_id
-  where d.is_active
-    and c.tsv @@ websearch_to_tsquery('spanish', query_text)
+  cross join q
+  where q.query is not null
+    and d.is_active
+    and c.tsv @@ q.query
   order by rank desc
   limit match_count;
 $$;
