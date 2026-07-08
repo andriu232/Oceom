@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Sparkles, Send, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { streamOmi } from "@/lib/omi/stream-client";
 
 interface Msg {
   role: "user" | "assistant";
@@ -17,13 +18,9 @@ const CRISIS = [
   "no quiero vivir", "no puedo más", "morir",
 ];
 
-const GUIDES = [
-  "Gracias por compartir eso conmigo. Respira hondo un momento. ¿En qué parte del cuerpo sientes esa emoción ahora mismo?",
-  "Te acompaño. Si esa emoción pudiera hablar, ¿qué crees que está intentando protegerte o decirte?",
-  "Hermosa intención. Te propongo una práctica de Deep Waves: 4 respiraciones lentas, alargando la exhalación. ¿Cómo te sientes después?",
-  "Eso que nombras suele tener raíz en una herida emocional. ¿Recuerdas la primera vez que sentiste algo parecido?",
-  "Estás haciendo un trabajo profundo. Para integrar tu última experiencia, ¿qué insight te llevas y qué acción pequeña puedes dar hoy?",
-];
+const CRISIS_REPLY =
+  "Lamento mucho que estés pasando por esto, y gracias por confiármelo. Lo que sientes importa y merece atención humana ahora mismo. Por favor, contacta a una línea de ayuda de tu país o a alguien de confianza en este momento. No estás sola/o. " +
+  DISCLAIMER;
 
 const SUGGESTIONS = [
   "¿Cómo integro la clase de hoy?",
@@ -40,33 +37,78 @@ export function OmiChat({ firstName }: { firstName: string }) {
     },
   ]);
   const [input, setInput] = useState("");
-  const turn = useRef(0);
+  const [streaming, setStreaming] = useState(false);
+  const convId = useRef<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  function reply(text: string): string {
-    const lower = text.toLowerCase();
-    if (CRISIS.some((k) => lower.includes(k))) {
-      return `Lamento mucho que estés pasando por esto y te agradezco la confianza. Esto es importante y merece atención humana inmediata. Por favor contacta a una línea de ayuda de tu país o a alguien de confianza ahora mismo. ${DISCLAIMER}`;
-    }
-    const g = GUIDES[turn.current % GUIDES.length];
-    turn.current += 1;
-    return g;
-  }
-
-  function send(text: string) {
-    const content = text.trim();
-    if (!content) return;
-    const omi = reply(content);
-    setMessages((m) => [
-      ...m,
-      { role: "user", content },
-      { role: "assistant", content: omi },
-    ]);
-    setInput("");
+  const scrollDown = () =>
     requestAnimationFrame(() =>
       endRef.current?.scrollIntoView({ behavior: "smooth" }),
     );
+
+  async function send(text: string) {
+    const content = text.trim();
+    if (!content || streaming) return;
+    setInput("");
+
+    // Guarda de crisis: respuesta segura garantizada, sin llamar al modelo.
+    if (CRISIS.some((k) => content.toLowerCase().includes(k))) {
+      setMessages((m) => [
+        ...m,
+        { role: "user", content },
+        { role: "assistant", content: CRISIS_REPLY },
+      ]);
+      scrollDown();
+      return;
+    }
+
+    const userMsg: Msg = { role: "user", content };
+    const history = [...messages, userMsg];
+    setMessages((m) => [...m, userMsg, { role: "assistant", content: "" }]);
+    setStreaming(true);
+    scrollDown();
+
+    let acc = "";
+    const setLast = (value: string) =>
+      setMessages((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = { role: "assistant", content: value };
+        return copy;
+      });
+
+    await streamOmi(
+      {
+        conversationId: convId.current,
+        messages: history.map((m) => ({ role: m.role, content: m.content })),
+      },
+      {
+        onStart: (id) => {
+          if (id) convId.current = id;
+        },
+        onToken: (t) => {
+          acc += t;
+          setLast(acc);
+          scrollDown();
+        },
+        onDone: (id) => {
+          if (id) convId.current = id;
+          setStreaming(false);
+          scrollDown();
+        },
+        onError: (msg) => {
+          setLast(acc || msg);
+          setStreaming(false);
+          scrollDown();
+        },
+      },
+    );
   }
+
+  const typing =
+    streaming &&
+    messages.length > 0 &&
+    messages[messages.length - 1].role === "assistant" &&
+    messages[messages.length - 1].content === "";
 
   return (
     <div className="glass flex h-[calc(100dvh-16rem)] min-h-[26rem] flex-col overflow-hidden rounded-2xl">
@@ -78,28 +120,42 @@ export function OmiChat({ firstName }: { firstName: string }) {
 
       {/* Mensajes */}
       <div className="flex-1 space-y-4 overflow-y-auto p-5">
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}
-          >
-            {m.role === "assistant" && (
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-oceom-blue to-ocean-violet text-[var(--ocean-abyss)]">
-                <Sparkles className="size-4" />
-              </div>
-            )}
+        {messages.map((m, i) => {
+          const isTypingBubble = typing && i === messages.length - 1;
+          return (
             <div
-              className={cn(
-                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
-                m.role === "user"
-                  ? "bg-ocean-cyan/15 text-foreground"
-                  : "border border-card-border bg-ocean-surface/50 text-foreground/90",
-              )}
+              key={i}
+              className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}
             >
-              {m.content}
+              {m.role === "assistant" && (
+                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-oceom-blue to-ocean-violet text-[var(--ocean-abyss)]">
+                  <Sparkles className="size-4" />
+                </div>
+              )}
+              <div
+                className={cn(
+                  "max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
+                  m.role === "user"
+                    ? "bg-ocean-cyan/15 text-foreground"
+                    : "border border-card-border bg-ocean-surface/50 text-foreground/90",
+                )}
+              >
+                {isTypingBubble ? (
+                  <span
+                    className="flex gap-1 py-0.5"
+                    aria-label="OMI está escribiendo"
+                  >
+                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.3s]" />
+                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.15s]" />
+                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan" />
+                  </span>
+                ) : (
+                  m.content
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={endRef} />
       </div>
 
@@ -111,7 +167,8 @@ export function OmiChat({ firstName }: { firstName: string }) {
               <button
                 key={s}
                 onClick={() => send(s)}
-                className="rounded-full border border-card-border bg-ocean-surface/50 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-ocean-cyan/40 hover:text-ocean-cyan"
+                disabled={streaming}
+                className="rounded-full border border-card-border bg-ocean-surface/50 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-ocean-cyan/40 hover:text-ocean-cyan disabled:opacity-50"
               >
                 {s}
               </button>
@@ -129,17 +186,19 @@ export function OmiChat({ firstName }: { firstName: string }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe a OMI…"
-            className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none placeholder:text-muted/70 focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)]"
+            disabled={streaming}
+            className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none placeholder:text-muted/70 focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60"
           />
           <button
             type="submit"
-            className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-cyan text-[var(--ocean-abyss)] transition hover:brightness-110"
+            disabled={streaming || !input.trim()}
+            className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-cyan text-[var(--ocean-abyss)] transition hover:brightness-110 disabled:opacity-50"
           >
             <Send className="size-4" />
           </button>
         </form>
         <p className="mt-2 text-center text-[0.65rem] text-muted/60">
-          Vista previa de OMI · La IA con tus fuentes autorizadas llega en el Sprint 8–9
+          OMI acompaña tu proceso · puede equivocarse, confía también en tu sentir
         </p>
       </div>
     </div>
