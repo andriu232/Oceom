@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveProvider } from "@/lib/omi/provider";
 import { getOmiUserContext } from "@/lib/omi/context";
 import { OMI_SYSTEM_PROMPT, buildUserContext } from "@/lib/omi/system-prompt";
+import { retrieveKnowledge, buildKnowledgeBlock } from "@/lib/omi/biblioteca";
 
 /* ============================================================
    POST /api/omi/chat — chat de OMI con streaming (SSE).
@@ -63,6 +64,9 @@ export async function POST(req: Request) {
   // Contexto del estudiante para personalizar.
   const ctx = await getOmiUserContext(user.id);
 
+  // Material de Valeria relevante a la consulta (Biblioteca IA → cerebro de OMI).
+  const knowledge = await retrieveKnowledge(last.content, 5);
+
   // Conversación: reutiliza la existente (si es del usuario) o crea una nueva.
   let conversationId =
     typeof b.conversationId === "string" ? b.conversationId : null;
@@ -122,6 +126,9 @@ export async function POST(req: Request) {
               cache_control: { type: "ephemeral" },
             },
             { type: "text", text: buildUserContext(ctx) },
+            ...(knowledge.length
+              ? [{ type: "text" as const, text: buildKnowledgeBlock(knowledge) }]
+              : []),
           ],
           messages,
         });
