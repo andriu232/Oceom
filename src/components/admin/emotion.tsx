@@ -1,7 +1,7 @@
 import { EMOTION_BY_KEY, TONE_STYLE } from "@/config/bitacora";
 
 /** Chip de emoción reutilizable (mismo lenguaje visual que la Bitácora del
- *  estudiante): emoji + etiqueta + color por tono. RSC-safe. */
+ *  estudiante): punto de color + etiqueta por tono, sin emojis. RSC-safe. */
 export function EmotionChip({
   emotion,
   intensity,
@@ -22,7 +22,7 @@ export function EmotionChip({
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${TONE_STYLE[tone].chip}`}
     >
-      <span aria-hidden>{def?.emoji ?? "•"}</span>
+      <span aria-hidden className={`size-1.5 rounded-full ${TONE_STYLE[tone].bar}`} />
       {def?.label ?? emotion}
       {typeof intensity === "number" ? (
         <span className="opacity-70">· {intensity}/10</span>
