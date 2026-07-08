@@ -576,13 +576,13 @@ export default function LandingPage() {
                           href={WHATSAPP_URL}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`Hablar con Valeria por WhatsApp sobre ${p.name}`}
+                          aria-label={`Hablar con tu mentora por WhatsApp sobre ${p.name}`}
                           className={buttonVariants({
                             size: "lg",
                             className: "mt-5 w-full",
                           })}
                         >
-                          <WhatsappIcon /> Hablar con Valeria
+                          <WhatsappIcon /> Hablar con tu mentora
                         </a>
                         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-foreground/45">
                           <span className="size-1.5 rounded-full bg-ocean-glow" />
