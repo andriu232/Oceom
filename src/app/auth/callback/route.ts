@@ -26,9 +26,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=oauth`);
   }
 
-  // Asocia el referido pendiente (cookie ?ref=) si el visitante llegó por un
-  // enlace de invitación antes de entrar con Google.
-  if (exchanged?.user) await attachPendingReferral(exchanged.user.id);
+  if (exchanged?.user) {
+    // Asocia el referido pendiente (cookie ?ref=) si el visitante llegó por un
+    // enlace de invitación antes de entrar con Google.
+    await attachPendingReferral(exchanged.user.id);
+
+    // Sincroniza la foto de Google en el perfil cuando aún no tiene una. Así se
+    // auto-repara para quien se registró antes del trigger de avatar, y NO pisa
+    // una foto que el usuario haya subido a mano (solo actúa si avatar_url null).
+    const meta = exchanged.user.user_metadata ?? {};
+    const googlePhoto = meta.avatar_url || meta.picture;
+    if (googlePhoto) {
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: googlePhoto })
+        .eq("id", exchanged.user.id)
+        .is("avatar_url", null);
+    }
+  }
 
   const profile = await getProfile();
   const dest = next && next.startsWith("/") ? next : homeForRole(profile?.role);
