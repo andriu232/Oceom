@@ -44,6 +44,10 @@ const SHELL = "relative mx-auto w-full max-w-[1180px] px-6";
 const CARD =
   "group relative rounded-[3px] border border-white/10 bg-ocean-surface/35 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_-42px_rgba(34,211,238,0.5)] motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
+/* WhatsApp directo de Valeria: en vez de mostrar precio, cada mentoría abre una
+   conversación para agendar/cerrar 1 a 1. */
+const WHATSAPP_URL = "https://wa.me/message/PRKZNWXFMPP2J1";
+
 const PROBLEMS = [
   {
     icon: RefreshCw,
@@ -125,8 +129,6 @@ const PROGRAMS = [
       "Reprograma creencias a nivel subconsciente",
       "Tareas entre sesiones + sesión de refuerzo",
     ],
-    price: "$2.200.000",
-    priceNote: "Acompañamiento 1:1 · pago único o en cuotas",
     badge: "Programa insignia",
     microcopy: "Cupos limitados · proceso 100% personalizado",
     featured: true,
@@ -144,8 +146,6 @@ const PROGRAMS = [
       "Sanación a distancia y psicometría",
       "Rito de maestría e integración",
     ],
-    price: "$2.750.000",
-    priceNote: "Incluye diploma de maestría",
     badge: "Formación avanzada",
     microcopy: "Requiere base emocional trabajada",
     featured: false,
@@ -247,6 +247,16 @@ function CardFrame() {
         className="pointer-events-none absolute bottom-0 right-0 size-3.5 border-b border-r border-ocean-cyan/25 transition-colors duration-300 group-hover:border-ocean-cyan/70"
       />
     </>
+  );
+}
+
+/* Glifo de WhatsApp en currentColor: hereda el color del botón (sin verde
+   genérico) para no romper la paleta oceánica. El botón lo escala a 16px. */
+function WhatsappIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+    </svg>
   );
 }
 
@@ -556,30 +566,24 @@ export default function LandingPage() {
                         ))}
                       </ul>
 
-                      {/* Precio + CTA */}
+                      {/* CTA directo: agenda por WhatsApp con Valeria (sin precio a la vista) */}
                       <div className="relative mt-7 border-t border-card-border pt-6">
-                        <p className="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-foreground/45">
-                          Inversión
+                        <p className="text-sm leading-relaxed text-foreground/60">
+                          Escríbele a Valeria para conocer la inversión, resolver tus
+                          dudas y reservar tu cupo.
                         </p>
-                        <div className="mt-1.5 flex items-baseline gap-2">
-                          <span className="font-display text-4xl font-bold text-foreground">
-                            {p.price}
-                          </span>
-                          <span className="text-sm font-medium text-ocean-cyan">
-                            COP
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-foreground/50">{p.priceNote}</p>
-
-                        <Link
-                          href="/registro"
+                        <a
+                          href={WHATSAPP_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Hablar con Valeria por WhatsApp sobre ${p.name}`}
                           className={buttonVariants({
                             size: "lg",
-                            className: "mt-6 w-full",
+                            className: "mt-5 w-full",
                           })}
                         >
-                          Comenzar mi proceso <ArrowRight className="size-4" />
-                        </Link>
+                          <WhatsappIcon /> Hablar con Valeria
+                        </a>
                         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-foreground/45">
                           <span className="size-1.5 rounded-full bg-ocean-glow" />
                           {p.microcopy}
