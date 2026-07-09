@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Send, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { streamOmi } from "@/lib/omi/stream-client";
@@ -39,6 +39,50 @@ function clean(text: string): string {
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/^\s*[-*]\s+/gm, "· ");
 }
+
+function TypingDots() {
+  return (
+    <span className="flex gap-1 py-0.5" aria-label="OMI está escribiendo">
+      <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.3s]" />
+      <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.15s]" />
+      <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan" />
+    </span>
+  );
+}
+
+/** Burbuja de mensaje. Memoizada: al streamear, solo re-renderiza el mensaje
+ *  cuyo contenido cambia (no toda la lista). */
+const MessageBubble = memo(function MessageBubble({
+  role,
+  content,
+  isTyping,
+}: {
+  role: "user" | "assistant";
+  content: string;
+  isTyping: boolean;
+}) {
+  const isUser = role === "user";
+  return (
+    <div
+      className={cn(
+        "flex gap-2.5 [animation:omi-msg-in_0.35s_cubic-bezier(0.22,1,0.36,1)_both] motion-reduce:animate-none",
+        isUser && "flex-row-reverse",
+      )}
+    >
+      {!isUser && <OmiChatAvatar className="mt-0.5 size-7" />}
+      <div
+        className={cn(
+          "whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+          isUser
+            ? "max-w-[560px] rounded-br-md bg-ocean-cyan/15 text-foreground"
+            : "max-w-[640px] rounded-bl-md border border-card-border bg-ocean-surface/45 text-foreground/90 transition-colors hover:border-ocean-cyan/25",
+        )}
+      >
+        {isTyping ? <TypingDots /> : isUser ? content : clean(content)}
+      </div>
+    </div>
+  );
+});
 
 export function OmiChat({ firstName }: { firstName: string }) {
   const [messages, setMessages] = useState<Msg[]>([
@@ -132,56 +176,30 @@ export function OmiChat({ firstName }: { firstName: string }) {
     messages[messages.length - 1].content === "";
 
   return (
-    <div className="glass flex h-[calc(100dvh-16rem)] min-h-[26rem] flex-col overflow-hidden rounded-2xl">
+    <div className="glass mx-auto flex h-[min(68vh,720px)] min-h-[24rem] w-full max-w-[960px] flex-col overflow-hidden rounded-[24px] border border-ocean-cyan/15 shadow-[0_20px_60px_-42px_rgba(34,211,238,0.35)]">
       {/* Disclaimer de seguridad */}
-      <div className="flex items-start gap-2 border-b border-card-border bg-ocean-violet/10 px-5 py-3">
+      <div className="flex items-start gap-2 border-b border-card-border bg-ocean-violet/10 px-5 py-2.5">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
-        <p className="text-xs text-muted">{DISCLAIMER}</p>
+        <p className="text-xs leading-relaxed text-muted">{DISCLAIMER}</p>
       </div>
 
-      {/* Mensajes */}
+      {/* Mensajes (scroll interno) */}
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-5"
+        className="flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-6"
       >
-        {messages.map((m, i) => {
-          const isTypingBubble = typing && i === messages.length - 1;
-          return (
-            <div
-              key={i}
-              className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}
-            >
-              {m.role === "assistant" && <OmiChatAvatar className="size-8" />}
-              <div
-                className={cn(
-                  "max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
-                  m.role === "user"
-                    ? "bg-ocean-cyan/15 text-foreground"
-                    : "border border-card-border bg-ocean-surface/50 text-foreground/90",
-                )}
-              >
-                {isTypingBubble ? (
-                  <span
-                    className="flex gap-1 py-0.5"
-                    aria-label="OMI está escribiendo"
-                  >
-                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.3s]" />
-                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan [animation-delay:-0.15s]" />
-                    <span className="size-1.5 animate-bounce rounded-full bg-ocean-cyan" />
-                  </span>
-                ) : m.role === "assistant" ? (
-                  clean(m.content)
-                ) : (
-                  m.content
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {messages.map((m, i) => (
+          <MessageBubble
+            key={i}
+            role={m.role}
+            content={m.content}
+            isTyping={typing && i === messages.length - 1}
+          />
+        ))}
       </div>
 
-      {/* Sugerencias + input */}
+      {/* Sugerencias + composer (fijo dentro del contenedor) */}
       <div className="border-t border-card-border p-4">
         {messages.length <= 1 && (
           <div className="mb-3 flex flex-wrap gap-2">
@@ -209,12 +227,13 @@ export function OmiChat({ firstName }: { firstName: string }) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe a OMI…"
             disabled={streaming}
-            className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none placeholder:text-muted/70 focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60"
+            className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted/70 focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={streaming || !input.trim()}
-            className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-cyan text-[var(--ocean-abyss)] transition hover:brightness-110 disabled:opacity-50"
+            aria-label="Enviar mensaje a OMI"
+            className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-cyan text-[var(--ocean-abyss)] transition hover:brightness-110 active:brightness-95 disabled:opacity-50"
           >
             <Send className="size-4" />
           </button>

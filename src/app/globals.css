@@ -114,6 +114,12 @@
 /* Giro muy lento para halos */
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 
+/* Entrada suave de un mensaje del chat de OMI (solo opacity/transform) */
+@keyframes omi-msg-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Partículas luminosas que ascienden como burbujas de energía */
 @keyframes rise {
   0% { transform: translateY(0) scale(0.8); opacity: 0; }

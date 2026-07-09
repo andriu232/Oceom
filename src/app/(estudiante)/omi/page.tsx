@@ -54,11 +54,11 @@ export default async function OmiPage() {
   const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-[960px] space-y-6">
       {/* Identidad de OMI */}
-      <section className="glass relative overflow-hidden rounded-2xl p-6 sm:p-8">
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-          <OmiHeroAvatar className="w-36 shrink-0 sm:w-44 lg:w-52" />
+      <section className="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
+          <OmiHeroAvatar className="w-28 shrink-0 sm:w-36 lg:w-40" />
           <div className="text-center sm:text-left">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">
               <span className="size-1.5 rounded-full bg-success" /> Online 24/7
