@@ -49,17 +49,27 @@ export function OmiChat({ firstName }: { firstName: string }) {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const convId = useRef<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Auto-scroll SOLO dentro del contenedor del chat (no la página) y SOLO si el
+  // usuario ya está abajo; si sube a leer, no lo arrastramos de vuelta.
+  const stick = useRef(true);
 
   const scrollDown = () =>
-    requestAnimationFrame(() =>
-      endRef.current?.scrollIntoView({ behavior: "smooth" }),
-    );
+    requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (el && stick.current) el.scrollTop = el.scrollHeight;
+    });
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
 
   async function send(text: string) {
     const content = text.trim();
     if (!content || streaming) return;
     setInput("");
+    stick.current = true; // el usuario mandó → seguimos su mensaje y la respuesta
 
     // Guarda de crisis: respuesta segura garantizada, sin llamar al modelo.
     if (CRISIS.some((k) => content.toLowerCase().includes(k))) {
@@ -129,7 +139,11 @@ export function OmiChat({ firstName }: { firstName: string }) {
       </div>
 
       {/* Mensajes */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-5">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-5"
+      >
         {messages.map((m, i) => {
           const isTypingBubble = typing && i === messages.length - 1;
           return (
@@ -168,7 +182,6 @@ export function OmiChat({ firstName }: { firstName: string }) {
             </div>
           );
         })}
-        <div ref={endRef} />
       </div>
 
       {/* Sugerencias + input */}
