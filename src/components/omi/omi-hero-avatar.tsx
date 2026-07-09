@@ -57,9 +57,9 @@ export function OmiHeroAvatar({ className }: { className?: string }) {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(120% 85% at 50% 22%, transparent 42%, rgba(6,20,38,0.6) 100%)," +
-              "linear-gradient(to top, rgba(4,10,22,0.92) 1%, rgba(4,10,22,0.35) 24%, transparent 46%)," +
-              "linear-gradient(to bottom, rgba(6,18,34,0.5) 0%, transparent 26%)",
+              "radial-gradient(110% 78% at 50% 34%, transparent 26%, rgba(5,15,30,0.5) 60%, rgba(4,10,22,0.92) 100%)," +
+              "linear-gradient(to top, rgba(4,10,22,0.95) 0%, rgba(4,10,22,0.45) 24%, transparent 50%)," +
+              "linear-gradient(to bottom, rgba(6,18,34,0.72) 0%, rgba(6,18,34,0.15) 16%, transparent 30%)",
           }}
         />
         {/* Scanlines holográficas muy sutiles */}
