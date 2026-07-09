@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
  *    1. Tilt 3D que sigue al mouse (springs).
  *    2. Levitación idle continua: flota en Y y oscila suavemente en rotateY,
  *       como un holograma proyectado (sin necesidad de hover).
- *    3. Cápsula glass con el retrato a translateZ(+24px) y un destello
- *       holográfico que barre el retrato cada ~7s.
- *    4. Glow "de proyección" bajo la cápsula que respira a contratiempo,
- *       vendiendo la sensación de levitación.
+ *    3. Halo de anillos a translateZ(-45) y cápsula con el retrato a
+ *       translateZ(+55): el desfase entre capas al inclinarse es el parallax
+ *       que da la profundidad.
+ *    4. Glow "de proyección" bajo la cápsula que respira, vendiendo la
+ *       levitación.
  *  Todo con transform/opacity (GPU). prefers-reduced-motion lo apaga.
  *  El arte es reemplazable: /public/omi/omi-avatar-main.png. */
 export function OmiHeroAvatar({ className }: { className?: string }) {
@@ -28,8 +29,8 @@ export function OmiHeroAvatar({ className }: { className?: string }) {
   const sx = useSpring(mx, { stiffness: 110, damping: 18, mass: 0.4 });
   const sy = useSpring(my, { stiffness: 110, damping: 18, mass: 0.4 });
 
-  const rotateY = useTransform(sx, [-0.5, 0.5], [11, -11]);
-  const rotateX = useTransform(sy, [-0.5, 0.5], [-8, 8]);
+  const rotateY = useTransform(sx, [-0.5, 0.5], [16, -16]);
+  const rotateX = useTransform(sy, [-0.5, 0.5], [-12, 12]);
 
   function onMove(e: React.MouseEvent<HTMLDivElement>) {
     if (reduce) return;
@@ -43,7 +44,7 @@ export function OmiHeroAvatar({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("relative [perspective:1000px]", className)}>
+    <div className={cn("relative [perspective:750px]", className)}>
       {/* Aura que respira detrás de la cápsula */}
       <div
         aria-hidden
@@ -78,17 +79,35 @@ export function OmiHeroAvatar({ className }: { className?: string }) {
             reduce
               ? undefined
               : {
-                  y: [0, -7, 0],
-                  rotateY: [-3.5, 3.5, -3.5],
-                  rotateZ: [-0.5, 0.5, -0.5],
+                  y: [0, -8, 0],
+                  rotateY: [-5.5, 5.5, -5.5],
+                  rotateZ: [-0.6, 0.6, -0.6],
                 }
           }
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
           className="absolute inset-0 [transform-style:preserve-3d]"
         >
+          {/* Halo trasero en Z negativo: al inclinarse, el desfase entre este
+              anillo y la cápsula frontal crea el parallax de profundidad. */}
+          <motion.div
+            aria-hidden
+            style={reduce ? undefined : { z: -45 }}
+            className="pointer-events-none absolute -inset-5"
+          >
+            <div className="absolute inset-0 rounded-full border border-ocean-cyan/25 [animation:spin-slow_42s_linear_infinite] motion-reduce:animate-none" />
+            <div className="absolute inset-[7%] rounded-full border border-ocean-violet/20 [animation:spin-slow_30s_linear_infinite_reverse] motion-reduce:animate-none" />
+            <div
+              className="absolute inset-[4%] rounded-full opacity-60 blur-xl"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(34,211,238,0.28), transparent 68%)",
+              }}
+            />
+          </motion.div>
+
           {/* Capa 3: cápsula glass con el retrato en profundidad */}
           <motion.div
-            style={reduce ? undefined : { z: 24 }}
+            style={reduce ? undefined : { z: 55 }}
             className="relative size-full overflow-hidden rounded-[1.9rem] border border-ocean-cyan/20 shadow-[0_24px_60px_-22px_rgba(34,211,238,0.55),inset_0_1px_0_rgba(255,255,255,0.09)] ring-1 ring-inset ring-white/10 [transform-style:preserve-3d]"
           >
             <Image
@@ -98,24 +117,6 @@ export function OmiHeroAvatar({ className }: { className?: string }) {
               sizes="(max-width: 640px) 45vw, 260px"
               className="object-cover object-[50%_12%]"
               priority
-            />
-            {/* Destello holográfico que barre el retrato */}
-            <motion.div
-              aria-hidden
-              initial={{ x: "-140%" }}
-              animate={reduce ? undefined : { x: ["-140%", "240%"] }}
-              transition={{
-                duration: 2.4,
-                repeat: Infinity,
-                repeatDelay: 4.6,
-                ease: "easeInOut",
-              }}
-              className="pointer-events-none absolute inset-y-0 w-1/3 opacity-40 mix-blend-screen"
-              style={{
-                background:
-                  "linear-gradient(105deg, transparent, rgba(160,245,255,0.55) 50%, transparent)",
-                transform: "skewX(-12deg)",
-              }}
             />
             {/* Fundido inferior sutil para integrar con la card */}
             <div
