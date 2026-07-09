@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Sparkles, Send, ShieldAlert } from "lucide-react";
+import { Send, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { streamOmi } from "@/lib/omi/stream-client";
+import { OmiChatAvatar } from "@/components/omi/omi-chat-avatar";
 
 interface Msg {
   role: "user" | "assistant";
@@ -151,11 +152,7 @@ export function OmiChat({ firstName }: { firstName: string }) {
               key={i}
               className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}
             >
-              {m.role === "assistant" && (
-                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-oceom-blue to-ocean-violet text-[var(--ocean-abyss)]">
-                  <Sparkles className="size-4" />
-                </div>
-              )}
+              {m.role === "assistant" && <OmiChatAvatar className="size-8" />}
               <div
                 className={cn(
                   "max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",

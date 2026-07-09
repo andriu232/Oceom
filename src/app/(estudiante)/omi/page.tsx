@@ -17,7 +17,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { OmiChat } from "@/components/omi/omi-chat";
-import { OmiAvatar } from "@/components/omi/omi-avatar";
+import { OmiHeroAvatar } from "@/components/omi/omi-hero-avatar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "OMI · OCEOM" };
@@ -58,7 +58,7 @@ export default async function OmiPage() {
       {/* Identidad de OMI */}
       <section className="glass relative overflow-hidden rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-          <OmiAvatar className="w-28 shrink-0 sm:w-36" />
+          <OmiHeroAvatar className="w-36 shrink-0 sm:w-44 lg:w-52" />
           <div className="text-center sm:text-left">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">
               <span className="size-1.5 rounded-full bg-success" /> Online 24/7
