@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "@livekit/components-styles";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import { DisconnectReason } from "livekit-client";
-import { Loader2, Video, Sparkles, PhoneOff } from "lucide-react";
+import { Loader2, Video, Sparkles, PhoneOff, RotateCcw } from "lucide-react";
 import { roomOptions, connectOptions } from "@/lib/livekit/quality";
 import { getDeviceId } from "@/lib/livekit/device";
 import { endCircleAction } from "@/lib/actions/circles";
@@ -28,7 +28,18 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
   const [ending, setEnding] = useState(false);
+  // Nº de intento de conexión: al reintentar se refresca el token y se remonta
+  // la sala (key) para partir de un estado limpio.
+  const [attempt, setAttempt] = useState(0);
   const wasConnected = useRef(false);
+
+  // Reintento manual tras un error: token nuevo + sala remontada.
+  function retry() {
+    setError(null);
+    setConn(null);
+    wasConnected.current = false;
+    setAttempt((a) => a + 1);
+  }
 
   // Finaliza el círculo (solo la mentora): lo marca terminado en la BD y cierra
   // la sala de LiveKit para desconectar a todos. Pide confirmación (es para todos).
@@ -53,21 +64,33 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
     )
       .then(async (r) => {
         const data = await r.json();
+        // 409 = el círculo ya no está en vivo → pantalla de finalizado, no error.
+        if (r.status === 409) return "ended" as const;
         if (!r.ok) throw new Error(data.error ?? "No se pudo conectar");
         return data as { token: string; url: string };
       })
-      .then((d) => active && setConn(d))
+      .then((d) => {
+        if (!active) return;
+        if (d === "ended") setEnded(true);
+        else setConn(d);
+      })
       .catch((e) => active && setError(e.message));
     return () => {
       active = false;
     };
-  }, [roomId]);
+  }, [roomId, attempt]);
 
   if (error) {
     return (
       <Frame>
         <Video className="size-7 text-muted/60" />
-        <p className="text-sm text-muted">{error}</p>
+        <p className="max-w-md px-6 text-center text-sm text-muted">{error}</p>
+        <button
+          onClick={retry}
+          className="mt-1 inline-flex items-center gap-2 rounded-xl bg-ocean-cyan px-5 py-2.5 text-sm font-semibold text-[var(--ocean-abyss)] transition hover:brightness-110"
+        >
+          <RotateCcw className="size-4" /> Reintentar
+        </button>
       </Frame>
     );
   }
@@ -151,6 +174,7 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
         </button>
       )}
       <LiveKitRoom
+        key={attempt}
         token={conn.token}
         serverUrl={conn.url}
         options={roomOptions}
@@ -173,8 +197,22 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
             reason === DisconnectReason.SERVER_SHUTDOWN ||
             reason === DisconnectReason.PARTICIPANT_REMOVED;
           if (wasConnected.current && finished) setEnded(true);
+          // La misma cuenta abrió la sala en otra pestaña/dispositivo y LiveKit
+          // cerró esta sesión: explica qué pasó y ofrece volver a entrar.
+          if (reason === DisconnectReason.DUPLICATE_IDENTITY) {
+            setError(
+              "Entraste a esta sala desde otra pestaña o dispositivo, así que esta sesión se cerró. Si quieres seguir aquí, vuelve a entrar.",
+            );
+          }
         }}
         onError={(e) => {
+          // Cancelación benigna: ocurre si algo interrumpe un connect en curso
+          // (p. ej. un remontaje). No es una falla real — LiveKit continúa o el
+          // remontaje reconecta. Mostrarla dejaba la sala en una pantalla muerta.
+          if (/client initiated/i.test(e.message)) {
+            console.warn("[LiveKit círculo] connect cancelado (benigno)", e.message);
+            return;
+          }
           console.error("[LiveKit círculo]", e);
           setError(e.message);
         }}
