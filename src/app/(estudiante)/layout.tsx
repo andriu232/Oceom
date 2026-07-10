@@ -22,6 +22,7 @@ export default async function EstudianteLayout({
         roleLabel={previewing ? "Vista estudiante" : "Estudiante"}
         canSwitch={previewing}
         viewMode="student"
+        homeHref="/santuario"
       />
       <main className="px-5 pb-28 pt-8 lg:pb-8 lg:pl-[19rem] lg:pr-8">
         <div className="mx-auto max-w-6xl">{children}</div>

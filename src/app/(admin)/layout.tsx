@@ -20,6 +20,7 @@ export default async function AdminLayout({
         roleLabel={profile.role === "super_admin" ? "Super Admin" : "Mentora"}
         canSwitch
         viewMode="admin"
+        homeHref="/panel"
       />
       <main className="px-5 pb-28 pt-8 lg:pb-8 lg:pl-[19rem] lg:pr-8">
         <div className="mx-auto max-w-6xl">{children}</div>

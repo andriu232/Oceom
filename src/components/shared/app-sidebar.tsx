@@ -20,12 +20,16 @@ export function AppSidebar({
   roleLabel,
   canSwitch = false,
   viewMode,
+  homeHref = "/santuario",
 }: {
   groups: NavGroup[];
   userName: string;
   roleLabel: string;
   canSwitch?: boolean;
   viewMode?: ViewMode;
+  /** A dónde lleva el logo DENTRO de la plataforma (Santuario o Panel), nunca
+   *  a la landing pública. */
+  homeHref?: string;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -34,7 +38,9 @@ export function AppSidebar({
     <>
       {/* Barra superior móvil */}
       <div className="glass-strong sticky top-0 z-40 flex items-center justify-between px-4 py-3 lg:hidden">
-        <Logo showBrand={false} />
+        <Link href={homeHref} aria-label="Ir al inicio">
+          <Logo showBrand={false} />
+        </Link>
         <button
           onClick={() => setOpen((v) => !v)}
           className="grid size-10 place-items-center rounded-xl text-foreground transition-colors hover:bg-white/5"
@@ -67,7 +73,7 @@ export function AppSidebar({
             className="pointer-events-none absolute -left-6 -top-6 size-24 rounded-full opacity-40 blur-2xl"
             style={{ background: "radial-gradient(circle, rgba(34,211,238,0.5), transparent 70%)" }}
           />
-          <Link href="/" onClick={() => setOpen(false)} className="relative">
+          <Link href={homeHref} onClick={() => setOpen(false)} className="relative">
             <Logo />
           </Link>
         </div>
