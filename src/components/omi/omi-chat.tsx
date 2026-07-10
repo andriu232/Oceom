@@ -88,7 +88,7 @@ export function OmiChat({ firstName }: { firstName: string }) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      content: `Hola, ${firstName}. Soy OMI, tu acompañamiento consciente dentro de OCEOM. Estoy aquí para escucharte, comprenderte y acompañarte en tu evolución. ¿Qué quieres explorar hoy?`,
+      content: `Hola, ${firstName}. Soy OMI, tu acompañamiento consciente dentro de OCEOM: estoy aquí 24/7 para escucharte sin juicio, ayudarte a comprender lo que sientes, decodificar lo que vives y sugerirte prácticas del método E-MOTION® a tu medida. Cuéntame, ¿qué quieres explorar hoy?`,
     },
   ]);
   const [input, setInput] = useState("");

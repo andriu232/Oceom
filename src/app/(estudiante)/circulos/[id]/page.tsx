@@ -44,7 +44,12 @@ export default async function CircleRoomPage({
         <h1 className="font-display text-2xl font-bold text-foreground">{circle.title}</h1>
         <p className="mt-1 flex items-center gap-2 text-sm text-muted">
           <Users className="size-4" />
-          {circle.programTitle ? `Solo ${circle.programTitle}` : "Abierto a todos"} · {whenLabel}
+          {circle.studentName
+            ? `Sesión 1:1 · ${circle.studentName}`
+            : circle.programTitle
+              ? `Solo ${circle.programTitle}`
+              : "Abierto a todos"}{" "}
+          · {whenLabel}
         </p>
         {circle.description && (
           <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground/90">

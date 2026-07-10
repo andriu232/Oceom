@@ -120,6 +120,23 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Círculos en Vivo: chat de LiveKit en móvil ──
+   El CSS de @livekit/components-styles hace el chat `position: fixed` al
+   viewport completo en <600px; como nuestra sala es una tarjeta (70vh) dentro
+   de una página con scroll y bottom-nav, el chat tapaba TODA la pantalla
+   (incluida la barra de controles) y no se podía cerrar. Lo confinamos a la
+   tarjeta de la sala (absolute dentro del wrapper relative) dejando la barra
+   de controles siempre visible para abrir/cerrar. */
+@media (max-width: 600px) {
+  .oceom-live .lk-chat {
+    position: absolute;
+    inset: 0 0 var(--lk-control-bar-height) 0;
+    width: 100%;
+    max-width: 100%;
+    z-index: 20;
+  }
+}
+
 /* Partículas luminosas que ascienden como burbujas de energía */
 @keyframes rise {
   0% { transform: translateY(0) scale(0.8); opacity: 0; }

@@ -18,6 +18,7 @@ import type { LucideIcon } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { OmiChat } from "@/components/omi/omi-chat";
 import { OmiHeroAvatar } from "@/components/omi/omi-hero-avatar";
+import { OmiChatAvatar } from "@/components/omi/omi-chat-avatar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "OMI · OCEOM" };
@@ -55,18 +56,36 @@ export default async function OmiPage() {
 
   return (
     <div className="mx-auto max-w-[960px] space-y-6">
-      {/* Identidad de OMI */}
+      {/* Barra compacta: presencia + estado. El chat queda visible de entrada;
+          la identidad completa de OMI vive DEBAJO del chat. */}
+      <section className="glass flex items-center gap-3 rounded-2xl px-4 py-3">
+        <OmiChatAvatar className="size-11" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
+              OMI
+            </h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-0.5 text-[0.65rem] font-medium text-success">
+              <span className="size-1.5 rounded-full bg-success" /> Online 24/7
+            </span>
+          </div>
+          <p className="truncate text-[0.7rem] font-medium uppercase tracking-[0.16em] text-ocean-cyan">
+            Acompañamiento Consciente Inteligente
+          </p>
+        </div>
+      </section>
+
+      {/* Chat — protagonista, listo para escribir desde el primer frame */}
+      <OmiChat firstName={firstName} />
+
+      {/* Identidad de OMI (conócela mejor) */}
       <section className="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
           <OmiHeroAvatar className="w-28 shrink-0 sm:w-36 lg:w-40" />
           <div className="text-center sm:text-left">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success">
-              <span className="size-1.5 rounded-full bg-success" /> Online 24/7
-            </span>
-            <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground">OMI</h1>
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-ocean-cyan">
-              Acompañamiento Consciente Inteligente
-            </p>
+            <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              Conoce a OMI
+            </h2>
             <p className="mt-3 max-w-xl text-muted">
               “Estoy aquí para escucharte, comprenderte y acompañarte en tu evolución.”
             </p>
@@ -83,9 +102,6 @@ export default async function OmiPage() {
           </div>
         </div>
       </section>
-
-      {/* Chat */}
-      <OmiChat firstName={firstName} />
 
       {/* Cómo te guía OMI */}
       <section>

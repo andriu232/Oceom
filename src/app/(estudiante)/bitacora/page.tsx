@@ -1,7 +1,8 @@
-import { BookOpenText, Sparkles, Lock, Trash2, CalendarDays, Gauge } from "lucide-react";
+import { BookOpenText, Sparkles, Trash2, CalendarDays, Gauge } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
 import { EntryComposer } from "@/components/bitacora/entry-composer";
+import { NotebookTabs } from "@/components/bitacora/notebook-tabs";
 import { deleteEntryAction } from "@/lib/actions/bitacora";
 import { getBitacora } from "@/lib/queries/bitacora";
 import { EMOTION_BY_KEY, TONE_STYLE, emotionLabel } from "@/config/bitacora";
@@ -42,8 +43,10 @@ export default async function BitacoraPage() {
     <div className="space-y-8">
       <PageHeader
         title="Bitácora Interior"
-        subtitle="Tu espacio privado de escritura y check-in emocional. Escribe, nombra lo que sientes y observa tu evolución."
+        subtitle="Tu espacio de escritura y check-in emocional. Escribe, nombra lo que sientes y observa tu evolución; tu mentora acompaña tu proceso leyéndote."
       />
+
+      <NotebookTabs active="bitacora" />
 
       {/* KPIs */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -140,11 +143,6 @@ export default async function BitacoraPage() {
                       {e.is_insight && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-oceom-gold/12 px-2.5 py-1 text-xs font-medium text-oceom-gold">
                           <Sparkles className="size-3" /> Insight
-                        </span>
-                      )}
-                      {e.is_private && (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted/70">
-                          <Lock className="size-3" /> Privada
                         </span>
                       )}
                     </div>

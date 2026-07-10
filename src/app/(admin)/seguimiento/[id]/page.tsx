@@ -5,11 +5,13 @@ import {
   HeartPulse,
   BookOpenText,
   MapPin,
+  MoonStar,
   Sparkles,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getStudentWellbeing } from "@/lib/queries/wellbeing";
 import { EmotionChip, fmtDateTime } from "@/components/admin/emotion";
+import { dreamTypeLabel } from "@/config/suenos";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Seguimiento del estudiante · OCEOM" };
@@ -21,7 +23,7 @@ export default async function SeguimientoEstudiantePage({
 }) {
   await requireRole("mentor", "super_admin");
   const { id } = await params;
-  const { student, checkins, entries } = await getStudentWellbeing(id);
+  const { student, checkins, entries, dreams } = await getStudentWellbeing(id);
 
   if (!student) notFound();
 
@@ -107,8 +109,7 @@ export default async function SeguimientoEstudiantePage({
           </h2>
           {entries.length === 0 ? (
             <div className="glass rounded-2xl p-6 text-sm text-muted">
-              No hay entradas de bitácora compartidas. Las entradas privadas del
-              estudiante no se muestran aquí.
+              Aún no ha escrito en su bitácora.
             </div>
           ) : (
             <ul className="space-y-3">
@@ -145,6 +146,51 @@ export default async function SeguimientoEstudiantePage({
           )}
         </section>
       </div>
+
+      {/* Diario de sueños */}
+      <section>
+        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+          <MoonStar className="size-5 text-ocean-violet" /> Diario de sueños
+        </h2>
+        {dreams.length === 0 ? (
+          <div className="glass rounded-2xl p-6 text-sm text-muted">
+            Aún no ha registrado sueños.
+          </div>
+        ) : (
+          <ul className="grid gap-3 lg:grid-cols-2">
+            {dreams.map((d) => (
+              <li key={d.id} className="glass rounded-2xl p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-ocean-violet/12 px-2.5 py-0.5 text-[0.65rem] font-medium text-ocean-violet">
+                      {dreamTypeLabel(d.dreamType)}
+                    </span>
+                    {d.emotion && (
+                      <EmotionChip emotion={d.emotion} intensity={d.intensity} />
+                    )}
+                  </div>
+                  <span className="shrink-0 text-xs text-muted/70">
+                    {fmtDateTime(d.at)}
+                  </span>
+                </div>
+                {d.title && (
+                  <p className="mt-2 font-display font-semibold text-foreground">
+                    {d.title}
+                  </p>
+                )}
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+                  {d.content}
+                </p>
+                {d.symbols && (
+                  <p className="mt-2 text-xs text-ocean-violet/90">
+                    Símbolos: {d.symbols}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

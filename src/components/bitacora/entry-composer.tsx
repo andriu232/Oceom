@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Check, Sparkles, Lock, Globe } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { createEntryAction, type BitacoraState } from "@/lib/actions/bitacora";
 import { EMOTIONS } from "@/config/bitacora";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ export function EntryComposer() {
   const [emotion, setEmotion] = useState<string>("");
   const [intensity, setIntensity] = useState<number>(5);
   const [isInsight, setIsInsight] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(true);
 
   // Envía y, si guarda bien, limpia el formulario (en el callback, no en un efecto).
   function onSubmit(formData: FormData) {
@@ -28,7 +27,6 @@ export function EntryComposer() {
         setEmotion("");
         setIntensity(5);
         setIsInsight(false);
-        setIsPrivate(true);
       }
     });
   }
@@ -42,7 +40,7 @@ export function EntryComposer() {
           name="content"
           required
           rows={4}
-          placeholder="Escribe libremente. Nadie más lee tus entradas privadas."
+          placeholder="Escribe libremente. Tu mentora acompaña tu proceso leyendo tu bitácora."
           className="w-full resize-y rounded-xl border border-card-border bg-ocean-surface/60 px-4 py-3 text-sm text-foreground placeholder:text-muted/70 outline-none transition-colors focus:border-ocean-cyan focus:ring-2 focus:ring-[var(--ring)]"
         />
       </div>
@@ -98,10 +96,9 @@ export function EntryComposer() {
         />
       </div>
 
-      {/* Toggles */}
+      {/* Insight */}
       <div className="flex flex-wrap gap-2">
         <input type="hidden" name="is_insight" value={isInsight ? "true" : "false"} />
-        <input type="hidden" name="is_private" value={isPrivate ? "true" : "false"} />
         <button
           type="button"
           onClick={() => setIsInsight((v) => !v)}
@@ -113,19 +110,6 @@ export function EntryComposer() {
           )}
         >
           <Sparkles className="size-4" /> Insight
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsPrivate((v) => !v)}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm transition-colors",
-            isPrivate
-              ? "border-card-border text-muted hover:text-foreground"
-              : "border-oceom-turquoise/40 bg-oceom-turquoise/10 text-oceom-turquoise",
-          )}
-        >
-          {isPrivate ? <Lock className="size-4" /> : <Globe className="size-4" />}
-          {isPrivate ? "Privada" : "Visible a mi mentora"}
         </button>
       </div>
 

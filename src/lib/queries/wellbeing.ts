@@ -87,7 +87,6 @@ export async function getWellbeingOverview(): Promise<WellbeingOverview> {
     supabase
       .from("journal_entries")
       .select("id, student_id, title, content, emotion, is_insight, created_at")
-      .eq("is_private", false)
       .order("created_at", { ascending: false })
       .limit(500),
   ]);
@@ -229,6 +228,16 @@ export interface StudentWellbeingDetail {
     isInsight: boolean;
     at: string;
   }[];
+  dreams: {
+    id: string;
+    title: string | null;
+    content: string;
+    emotion: string | null;
+    intensity: number | null;
+    dreamType: string;
+    symbols: string | null;
+    at: string;
+  }[];
 }
 
 export async function getStudentWellbeing(
@@ -236,7 +245,7 @@ export async function getStudentWellbeing(
 ): Promise<StudentWellbeingDetail> {
   const supabase = await createClient();
 
-  const [profRes, checkinsRes, entriesRes] = await Promise.all([
+  const [profRes, checkinsRes, entriesRes, dreamsRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, avatar_url, email")
@@ -252,7 +261,12 @@ export async function getStudentWellbeing(
       .from("journal_entries")
       .select("id, title, content, emotion, intensity, is_insight, created_at")
       .eq("student_id", studentId)
-      .eq("is_private", false)
+      .order("created_at", { ascending: false })
+      .limit(120),
+    supabase
+      .from("dream_entries")
+      .select("id, title, content, emotion, intensity, dream_type, symbols, created_at")
+      .eq("student_id", studentId)
       .order("created_at", { ascending: false })
       .limit(120),
   ]);
@@ -308,6 +322,29 @@ export async function getStudentWellbeing(
       intensity: e.intensity,
       isInsight: e.is_insight,
       at: e.created_at,
+    })),
+    // El diario de sueños puede no existir aún (migración 0013 pendiente):
+    // en ese caso data viene null y degradamos a lista vacía.
+    dreams: (
+      (dreamsRes.data ?? []) as {
+        id: string;
+        title: string | null;
+        content: string;
+        emotion: string | null;
+        intensity: number | null;
+        dream_type: string;
+        symbols: string | null;
+        created_at: string;
+      }[]
+    ).map((d) => ({
+      id: d.id,
+      title: d.title,
+      content: d.content,
+      emotion: d.emotion,
+      intensity: d.intensity,
+      dreamType: d.dream_type,
+      symbols: d.symbols,
+      at: d.created_at,
     })),
   };
 }

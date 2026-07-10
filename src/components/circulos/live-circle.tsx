@@ -161,7 +161,7 @@ export function LiveCircle({ roomId, isHost }: { roomId: string; isHost: boolean
   return (
     <div
       data-lk-theme="default"
-      className="relative h-[70vh] min-h-[420px] overflow-hidden rounded-2xl border border-card-border"
+      className="oceom-live relative h-[70vh] min-h-[420px] overflow-hidden rounded-2xl border border-card-border"
     >
       {isHost && (
         <button

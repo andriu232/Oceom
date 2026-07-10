@@ -13,7 +13,6 @@ const entrySchema = z.object({
   emotion: z.string().trim().optional(),
   intensity: z.coerce.number().int().min(0).max(10).optional(),
   is_insight: z.coerce.boolean().optional(),
-  is_private: z.coerce.boolean().optional(),
 });
 
 /** Crea una entrada de bitácora del usuario actual. */
@@ -27,7 +26,6 @@ export async function createEntryAction(
     emotion: formData.get("emotion") ?? "",
     intensity: formData.get("intensity") ?? undefined,
     is_insight: formData.get("is_insight") === "on" || formData.get("is_insight") === "true",
-    is_private: formData.get("is_private") == null ? true : formData.get("is_private") !== "false",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
@@ -49,7 +47,8 @@ export async function createEntryAction(
     emotion,
     intensity: typeof parsed.data.intensity === "number" ? parsed.data.intensity : null,
     is_insight: !!parsed.data.is_insight,
-    is_private: parsed.data.is_private !== false,
+    // La bitácora siempre es visible para la mentora (acompaña el proceso).
+    is_private: false,
   });
   if (error) return { error: "No se pudo guardar tu entrada. Inténtalo de nuevo." };
 
