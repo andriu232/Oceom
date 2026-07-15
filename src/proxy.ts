@@ -12,7 +12,7 @@ export async function proxy(request: NextRequest) {
   if (!hasSupabaseEnv()) return NextResponse.next({ request });
 
   const { pathname } = request.nextUrl;
-  const { response, user } = await updateSession(request);
+  const { response, user, supabase } = await updateSession(request);
 
   const isLanding = pathname === "/";
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
@@ -28,10 +28,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Autenticado en una página de auth -> a la landing (que muestra su CTA).
+  // Autenticado en una página de auth -> directo a SU home (Santuario/Panel).
+  // Nunca a la landing: la landing es estática y volver ahí hacía parecer que
+  // el botón "Ingresar" no hacía nada para quien ya tenía sesión.
   if (user && isAuthPage) {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = prof?.role === "student" || !prof ? "/santuario" : "/panel";
     url.search = "";
     return NextResponse.redirect(url);
   }

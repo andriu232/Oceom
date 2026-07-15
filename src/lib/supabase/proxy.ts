@@ -29,5 +29,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { response, user };
+  // Se devuelve también el cliente para consultas puntuales del proxy
+  // (p. ej. el rol, para redirigir al home correcto).
+  return { response, user, supabase };
 }
