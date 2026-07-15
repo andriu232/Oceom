@@ -78,6 +78,7 @@ export const studentGroups: NavGroup[] = [
     items: [
       { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA", primary: true, short: "OMI" },
       { label: "Comunidad", href: "/comunidad", icon: "users" },
+      { label: "Biblioteca", href: "/biblioteca", icon: "library" },
       { label: "Mis Herramientas", href: "/herramientas", icon: "tools", hidden: true },
       { label: "Bitácora Interior", href: "/bitacora", icon: "book" },
       { label: "Mapa de Visión", href: "/mapa-vision", icon: "map" },
@@ -105,6 +106,7 @@ export const adminGroups: NavGroup[] = [
       { label: "Estudiantes", href: "/estudiantes", icon: "students", primary: true, short: "Alumnos" },
       { label: "Seguimiento", href: "/seguimiento", icon: "heart", primary: true, short: "Control" },
       { label: "Programas", href: "/programas", icon: "library", primary: true, short: "Rutas" },
+      { label: "Biblioteca", href: "/biblioteca-admin", icon: "book" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
       { label: "Agenda", href: "/agenda", icon: "calendar", primary: true, short: "Agenda" },
       { label: "Círculos", href: "/circulos-admin", icon: "radio", primary: true, short: "Círculos" },

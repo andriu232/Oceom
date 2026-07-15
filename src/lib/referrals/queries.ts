@@ -41,7 +41,7 @@ export async function getReferralSettings(): Promise<ReferralSettings> {
   return (
     (data as ReferralSettings | null) ?? {
       id: 1,
-      level_1_pct: 20,
+      level_1_pct: 15,
       level_2_pct: 5,
       level_3_pct: 2,
       max_levels: 3,
