@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { emotionLabel } from "@/config/bitacora";
+import { travelerForXp, LAB_PLAYABLE } from "@/config/lab";
 
 /* ============================================================
    Contexto del estudiante para OMI. Se inyecta en el system prompt para que
@@ -25,6 +26,8 @@ export interface OmiUserContext {
   total: number;
   progressPct: number;
   recentEmotions: OmiRecentEmotion[];
+  /** Progreso en OCEOM LAB (null si aún no ha entrenado). */
+  lab: { levelName: string; xp: number; recent: string[] } | null;
 }
 
 function relative(iso: string): string {
@@ -40,7 +43,7 @@ function relative(iso: string): string {
 export async function getOmiUserContext(userId: string): Promise<OmiUserContext> {
   const supabase = await createClient();
 
-  const [profileRes, enrollmentRes, journalRes] = await Promise.all([
+  const [profileRes, enrollmentRes, journalRes, labRes, labSesRes] = await Promise.all([
     supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
     supabase
       .from("enrollments")
@@ -54,6 +57,13 @@ export async function getOmiUserContext(userId: string): Promise<OmiUserContext>
       .eq("student_id", userId)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase.from("lab_progress").select("xp").eq("user_id", userId).maybeSingle(),
+    supabase
+      .from("lab_sessions")
+      .select("game_key")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3),
   ]);
 
   const name = profileRes.data?.full_name?.trim() || "Viajero";
@@ -101,6 +111,19 @@ export async function getOmiUserContext(userId: string): Promise<OmiUserContext>
     snippet: e.content ? e.content.trim().slice(0, 140) : null,
   }));
 
+  // OCEOM LAB (degrada a null si aún no entrena o la tabla no existe).
+  const labXp = labRes.data?.xp ?? null;
+  const lab =
+    labXp != null
+      ? {
+          levelName: travelerForXp(labXp).level.name,
+          xp: labXp,
+          recent: (labSesRes.data ?? [])
+            .map((s) => LAB_PLAYABLE[s.game_key]?.name)
+            .filter((n): n is string => !!n),
+        }
+      : null;
+
   return {
     name,
     firstName,
@@ -110,5 +133,6 @@ export async function getOmiUserContext(userId: string): Promise<OmiUserContext>
     total,
     progressPct: total ? Math.round((completed / total) * 100) : 0,
     recentEmotions,
+    lab,
   };
 }

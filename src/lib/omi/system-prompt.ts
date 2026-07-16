@@ -85,6 +85,15 @@ export function buildUserContext(ctx: OmiUserContext): string {
     lines.push("Bitácora: todavía no ha registrado emociones (no lo menciones como carencia; invítala con suavidad si encaja).");
   }
 
+  if (ctx.lab) {
+    const recent = ctx.lab.recent.length
+      ? ` Últimos entrenamientos: ${ctx.lab.recent.join(", ")}.`
+      : "";
+    lines.push(
+      `OCEOM LAB (su laboratorio de percepción gamificado): es ${ctx.lab.levelName} con ${ctx.lab.xp} XP.${recent} Puedes celebrar su constancia o sugerirle un entrenamiento del LAB cuando encaje (respiración si hay ansiedad, observación si busca foco).`,
+    );
+  }
+
   lines.push(
     "Usa esto con delicadeza y solo cuando aporte. Si algo no está aquí, pregúntale en vez de suponer.",
   );

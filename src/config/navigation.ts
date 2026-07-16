@@ -27,7 +27,8 @@ export type IconName =
   | "clipboard"
   | "chart"
   | "settings"
-  | "heart";
+  | "heart"
+  | "flask";
 
 export interface NavItem {
   label: string;
@@ -77,6 +78,7 @@ export const studentGroups: NavGroup[] = [
     label: "Ecosistema",
     items: [
       { label: "OMI", href: "/omi", icon: "sparkles", hint: "IA", primary: true, short: "OMI" },
+      { label: "OCEOM LAB", href: "/lab", icon: "flask", hint: "Juego" },
       { label: "Comunidad", href: "/comunidad", icon: "users" },
       { label: "Biblioteca", href: "/biblioteca", icon: "library" },
       { label: "Mis Herramientas", href: "/herramientas", icon: "tools", hidden: true },

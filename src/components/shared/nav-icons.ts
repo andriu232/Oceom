@@ -1,4 +1,5 @@
 import {
+  FlaskConical,
   Waves,
   Compass,
   Telescope,
@@ -57,4 +58,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   chart: BarChart3,
   settings: Settings,
   heart: HeartPulse,
+  flask: FlaskConical,
 };
