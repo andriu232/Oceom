@@ -11,6 +11,8 @@ export interface LabGame {
   desc: string;
   /** Ruta jugable; si falta, se muestra como "Próximamente". */
   href?: string;
+  /** En beta: jugable SOLO para mentora/admin (los estudiantes ven "Pronto"). */
+  beta?: boolean;
   entrena: string[];
 }
 
@@ -71,12 +73,16 @@ export const LAB_WORLDS: LabWorld[] = [
         key: "simbologia",
         name: "Simbología Viva",
         desc: "Elige un símbolo y recibe una reflexión o ejercicio.",
+        href: "/lab/simbologia",
+        beta: true,
         entrena: ["imaginación", "reflexión"],
       },
       {
         key: "caja",
         name: "Caja Misteriosa",
         desc: "Describe el objeto antes de verlo y compara tu percepción.",
+        href: "/lab/caja",
+        beta: true,
         entrena: ["imaginación", "descripción"],
       },
     ],
@@ -92,6 +98,8 @@ export const LAB_WORLDS: LabWorld[] = [
         key: "remota",
         name: "Visión Remota",
         desc: "Registra lo que imaginas antes de ver la imagen y compara tu proceso.",
+        href: "/lab/remota",
+        beta: true,
         entrena: ["imaginación", "descripción", "observación"],
       },
     ],
@@ -129,6 +137,8 @@ export const LAB_WORLDS: LabWorld[] = [
         key: "punto-fijo",
         name: "Punto Fijo",
         desc: "Sostén la mirada en un punto y registra cuándo cambia.",
+        href: "/lab/punto-fijo",
+        beta: true,
         entrena: ["atención sostenida"],
       },
       {

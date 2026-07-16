@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FlaskConical, Sparkles, Gem, Shell, Lock, Play } from "lucide-react";
-import { requireStudentArea } from "@/lib/auth";
+import { requireStudentArea, isMentor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LAB_WORLDS, travelerForXp } from "@/config/lab";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ export default async function LabPage() {
   const xp = prog?.xp ?? 0;
   const traveler = travelerForXp(xp);
   const firstName = (profile.full_name ?? "Viajero").split(" ")[0];
+  // La mentora/admin puede probar los juegos en beta; el estudiante los ve "Pronto".
+  const mentora = isMentor(profile.role);
 
   return (
     <div className="space-y-8">
@@ -117,7 +119,7 @@ export default async function LabPage() {
 
               <ul className="mt-4 space-y-2">
                 {w.games.map((g) =>
-                  g.href ? (
+                  g.href && (!g.beta || mentora) ? (
                     <li key={g.key}>
                       <Link
                         href={g.href}
@@ -132,6 +134,11 @@ export default async function LabPage() {
                           </span>
                           <span className="block truncate text-xs text-muted">{g.desc}</span>
                         </span>
+                        {g.beta && (
+                          <span className="shrink-0 rounded-full bg-oceom-gold/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-oceom-gold">
+                            Beta
+                          </span>
+                        )}
                       </Link>
                     </li>
                   ) : (

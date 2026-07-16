@@ -45,6 +45,20 @@ function rewardFor(gameKey: string, metrics: Record<string, unknown>) {
     }
     case "ola-intuitiva":
       return { xp: 40, crystals: 2, pearls: 0 };
+    case "simbologia":
+      return { xp: 35, crystals: 2, pearls: 0 };
+    case "caja": {
+      const coincidencias = clamp(metrics.coincidencias, 0, 3);
+      return { xp: 30 + coincidencias * 5, crystals: 1 + coincidencias, pearls: 0 };
+    }
+    case "punto-fijo": {
+      const detectados = clamp(metrics.detectados, 0, 8);
+      return { xp: 10 + detectados * 8, crystals: detectados >= 6 ? 2 : 1, pearls: detectados === 8 ? 1 : 0 };
+    }
+    case "remota": {
+      const coincidencias = clamp(metrics.coincidencias, 0, 4);
+      return { xp: 30 + coincidencias * 5, crystals: coincidencias, pearls: 0 };
+    }
     default:
       return null;
   }
