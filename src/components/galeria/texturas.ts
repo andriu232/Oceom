@@ -64,7 +64,7 @@ function toTexture(c: HTMLCanvasElement) {
 }
 
 /** Relación alto/ancho de la etiqueta 3D (para el plano que la muestra). */
-export const LABEL_RATIO = 460 / 1200;
+export const LABEL_RATIO = 360 / 1200;
 
 /** Etiqueta 3D que flota SOBRE cada panel: índice "0X / 0Y" + título +
  *  descripción justo debajo. Fondo transparente (como la referencia). */
@@ -74,7 +74,7 @@ export function labelTexture(
   desc?: string,
 ): THREE.Texture {
   const w = 1200;
-  const h = 460;
+  const h = 360;
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
@@ -83,25 +83,25 @@ export function labelTexture(
   ctx.textAlign = "left";
 
   ctx.fillStyle = "rgba(148,220,255,0.9)";
-  ctx.font = "600 30px 'JetBrains Mono', ui-monospace, monospace";
-  ctx.fillText(numText, 8, 44);
+  ctx.font = "600 28px 'JetBrains Mono', ui-monospace, monospace";
+  ctx.fillText(numText, 8, 38);
 
   ctx.fillStyle = "#f2f6ff";
-  ctx.font = "700 74px Sora, Inter, system-ui, sans-serif";
+  ctx.font = "700 66px Sora, Inter, system-ui, sans-serif";
   ctx.shadowColor = "rgba(3,6,14,0.9)";
-  ctx.shadowBlur = 18;
+  ctx.shadowBlur = 16;
   ctx.shadowOffsetY = 3;
   const line = wrapText(ctx, title, w - 40, 2)[0] ?? title;
-  ctx.fillText(line, 8, 128);
+  ctx.fillText(line, 8, 108);
 
-  // Descripción justo debajo del título.
+  // Descripción justo debajo del título (hasta 2 líneas).
   if (desc) {
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 9;
     ctx.shadowOffsetY = 2;
-    ctx.fillStyle = "rgba(226,236,255,0.78)";
-    ctx.font = "400 37px Sora, Inter, system-ui, sans-serif";
-    wrapText(ctx, desc, w - 20, 3).forEach((l, i) =>
-      ctx.fillText(l, 8, 196 + i * 48),
+    ctx.fillStyle = "rgba(226,236,255,0.8)";
+    ctx.font = "400 35px Sora, Inter, system-ui, sans-serif";
+    wrapText(ctx, desc, w - 20, 2).forEach((l, i) =>
+      ctx.fillText(l, 8, 168 + i * 46),
     );
   }
 
