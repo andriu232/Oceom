@@ -57,12 +57,12 @@ interface Ctl {
   py: number;
 }
 
-const RADIUS_MIN = 9;
+const RADIUS_MIN = 8;
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
-const GAP = 6.2; // separación deseada entre paneles (como la referencia)
+const GAP = 4.8; // separación deseada entre paneles (como la referencia)
 const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
-const FOV = 50;
+const FOV = 48;
 
 /** Radio del anillo para que cada panel tenga una porción de arco fija
  *  (PANEL_W + GAP) sin importar cuántos haya: siempre quedan espacios grandes. */
@@ -207,7 +207,9 @@ function Panel({
     const p = focused ? c.focusP : 0;
 
     // Posición en el anillo (o viajando hacia la cámara si está enfocado).
-    const yBase = item.yOff ?? 0;
+    // El panel del frente se centra (yOff→0); los laterales conservan su
+    // dispersión — como la referencia (front protagonista, vecinos regados).
+    const yBase = (item.yOff ?? 0) * (1 - vis * 0.82);
     const rx = Math.sin(a) * radius;
     const rz = -Math.cos(a) * radius;
     if (p > 0.001) {
@@ -227,7 +229,8 @@ function Panel({
       fill = 1 + (Math.min(vw * 0.82, vh * 1.55) / PANEL_W - 1) * p;
     }
     const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
-    const target = (0.7 + 0.3 * vis) * (hover ? 1.03 : 1) * fill * mul;
+    // Curva de presencia marcada: el frente domina, los lados recogen.
+    const target = (0.55 + 1.0 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
@@ -322,12 +325,12 @@ function FrameSync({
     // dispersos a otras alturas. Se amortigua durante el foco.
     const damp = 1 - c.focusP;
     const cam = state.camera;
-    const ty = (0.5 - c.py) * 3.0 * damp;
-    const trx = (0.5 - c.py) * 0.16 * damp;
-    const trY = (0.5 - c.px) * 0.22 * damp;
-    cam.position.y += (ty - cam.position.y) * 0.055;
-    cam.rotation.x += (trx - cam.rotation.x) * 0.055;
-    cam.rotation.y += (trY - cam.rotation.y) * 0.055;
+    const ty = (0.5 - c.py) * 1.8 * damp;
+    const trx = (0.5 - c.py) * 0.1 * damp;
+    const trY = (0.5 - c.px) * 0.12 * damp;
+    cam.position.y += (ty - cam.position.y) * 0.05;
+    cam.rotation.x += (trx - cam.rotation.x) * 0.05;
+    cam.rotation.y += (trY - cam.rotation.y) * 0.05;
 
     if (count > 0) {
       const step = (Math.PI * 2) / count;
