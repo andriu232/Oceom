@@ -15,6 +15,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { labelTexture } from "@/components/galeria/texturas";
 
 /* ============================================================
    Galería orbital de OCEOM — motor 3D reutilizable inspirado en la galería
@@ -56,10 +57,18 @@ interface Ctl {
   py: number;
 }
 
-const RADIUS = 9;
+const RADIUS_MIN = 9;
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
-const DOLLY = 5.2; // cuánto viaja el panel hacia la cámara al enfocarse
+const GAP = 6.2; // separación deseada entre paneles (como la referencia)
+const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
+const FOV = 50;
+
+/** Radio del anillo para que cada panel tenga una porción de arco fija
+ *  (PANEL_W + GAP) sin importar cuántos haya: siempre quedan espacios grandes. */
+function ringRadius(count: number) {
+  return Math.max(RADIUS_MIN, (count * (PANEL_W + GAP)) / (2 * Math.PI));
+}
 
 /** Plano curvado que abraza el cilindro del anillo (radio = RADIUS). */
 function makeCurvedGeometry(w: number, h: number, r: number, segs = 40) {
@@ -115,27 +124,76 @@ const wrapAngle = (a: number) => {
 function Panel({
   item,
   angle,
+  radius,
+  index,
+  count,
   ctl,
   map,
   onOpen,
 }: {
   item: OrbitalItem;
   angle: number;
+  radius: number;
+  index: number;
+  count: number;
   ctl: React.MutableRefObject<Ctl>;
   map: THREE.Texture;
   onOpen?: (item: OrbitalItem) => void;
 }) {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
+  const label = useRef<THREE.Mesh>(null);
   const [hover, setHover] = useState(false);
-  const geometry = useMemo(() => makeCurvedGeometry(PANEL_W, PANEL_H, RADIUS), []);
-  const material = useMemo(() => makePanelMaterial(map), [map]);
-  const { camera, size } = useThree();
+  const geometry = useMemo(
+    () => makeCurvedGeometry(PANEL_W, PANEL_H, radius),
+    [radius],
+  );
+  const { gl } = useThree();
+  const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
 
-  useEffect(() => () => {
-    geometry.dispose();
-    material.dispose();
-  }, [geometry, material]);
+  // Filtrado anisotrópico: lo que quita el desenfoque en los paneles inclinados.
+  const material = useMemo(() => {
+    map.anisotropy = maxAniso;
+    map.minFilter = THREE.LinearMipmapLinearFilter;
+    map.generateMipmaps = true;
+    map.needsUpdate = true;
+    return makePanelMaterial(map);
+  }, [map, maxAniso]);
+
+  // Etiqueta 3D (índice + título) que flota sobre el panel.
+  const labelTex = useMemo(() => {
+    const t = labelTexture(
+      `${String(index + 1).padStart(2, "0")} / ${String(count).padStart(2, "0")}`,
+      item.title,
+    );
+    t.anisotropy = maxAniso;
+    return t;
+  }, [index, count, item.title, maxAniso]);
+  const labelMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: labelTex,
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    [labelTex],
+  );
+  const labelGeo = useMemo(
+    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * 0.25),
+    [],
+  );
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+      labelTex.dispose();
+      labelMat.dispose();
+      labelGeo.dispose();
+    },
+    [geometry, material, labelTex, labelMat, labelGeo],
+  );
 
   useFrame(() => {
     const c = ctl.current;
@@ -150,10 +208,10 @@ function Panel({
 
     // Posición en el anillo (o viajando hacia la cámara si está enfocado).
     const yBase = item.yOff ?? 0;
-    const rx = Math.sin(a) * RADIUS;
-    const rz = -Math.cos(a) * RADIUS;
+    const rx = Math.sin(a) * radius;
+    const rz = -Math.cos(a) * radius;
     if (p > 0.001) {
-      const fz = -(RADIUS - DOLLY);
+      const fz = -FOCUS_DIST;
       g.position.set(rx * (1 - p), yBase * (1 - p), rz + (fz - rz) * p);
       g.rotation.y = -a * (1 - p);
     } else {
@@ -164,16 +222,22 @@ function Panel({
     // Escala: presencia por cercanía al frente + hover + llenado al enfocar.
     let fill = 1;
     if (p > 0.001) {
-      const persp = camera as THREE.PerspectiveCamera;
-      const dist = RADIUS - DOLLY;
-      const vh = 2 * dist * Math.tan((persp.fov * Math.PI) / 360);
-      const vw = vh * (size.width / size.height);
-      fill = 1 + (Math.min(vw * 0.72, vh * 1.45) / PANEL_W - 1) * p;
+      const vh = 2 * FOCUS_DIST * Math.tan((FOV * Math.PI) / 360);
+      const vw = vh * (window.innerWidth / window.innerHeight);
+      fill = 1 + (Math.min(vw * 0.82, vh * 1.55) / PANEL_W - 1) * p;
     }
     const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
-    const target = (0.62 + 0.38 * vis) * (hover ? 1.03 : 1) * fill * mul;
+    const target = (0.7 + 0.3 * vis) * (hover ? 1.03 : 1) * fill * mul;
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
+
+    // Etiqueta: sobre el panel, se atenúa hacia los lados y desaparece al enfocar.
+    if (label.current) {
+      label.current.position.y = (PANEL_H / 2) * s + 0.55;
+      const lm = label.current.material as THREE.MeshBasicMaterial;
+      lm.opacity = Math.pow(vis, 1.3) * (1 - p);
+      label.current.visible = lm.opacity > 0.02;
+    }
 
     // Uniforms: desaturación por ángulo, aplanado por enfoque.
     const shader = material.userData.shader as
@@ -211,6 +275,12 @@ function Panel({
           }
         }}
       />
+      <mesh
+        ref={label}
+        geometry={labelGeo}
+        material={labelMat}
+        raycast={() => null}
+      />
     </group>
   );
 }
@@ -218,6 +288,9 @@ function Panel({
 function PhotoPanel(props: {
   item: OrbitalItem;
   angle: number;
+  radius: number;
+  index: number;
+  count: number;
   ctl: React.MutableRefObject<Ctl>;
   onOpen?: (item: OrbitalItem) => void;
 }) {
@@ -314,6 +387,7 @@ export function OrbitalGallery({
   }, [focusReleased, release]);
 
   const step = items.length > 0 ? (Math.PI * 2) / items.length : 0;
+  const radius = ringRadius(items.length);
   const frontItem = items[front];
 
   return (
@@ -347,37 +421,50 @@ export function OrbitalGallery({
       }}
     >
       <Canvas
-        dpr={[1, 1.5]}
-        camera={{ position: [0, 0, 0.001], fov: 62 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, 0.001], fov: FOV }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+        }}
         style={{ position: "absolute", inset: 0 }}
       >
         <FrameSync ctl={ctl} count={items.length} onFront={setFront} />
         {items.map((it, i) =>
           it.textureUrl ? (
             <Suspense key={it.key} fallback={null}>
-              <PhotoPanel item={it} angle={i * step} ctl={ctl} onOpen={onOpen} />
+              <PhotoPanel
+                item={it}
+                angle={i * step}
+                radius={radius}
+                index={i}
+                count={items.length}
+                ctl={ctl}
+                onOpen={onOpen}
+              />
             </Suspense>
           ) : it.texture ? (
-            <Panel key={it.key} item={it} angle={i * step} ctl={ctl} map={it.texture} onOpen={onOpen} />
+            <Panel
+              key={it.key}
+              item={it}
+              angle={i * step}
+              radius={radius}
+              index={i}
+              count={items.length}
+              ctl={ctl}
+              map={it.texture}
+              onOpen={onOpen}
+            />
           ) : null,
         )}
       </Canvas>
 
-      {/* Overlay DOM: título del panel frontal + guía */}
+      {/* Overlay DOM: solo el subtítulo del panel frontal (foto) + guía.
+          Los títulos van en 3D SOBRE cada panel (labelTexture). */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-5">
-        <div>
-          <p className="font-mono text-[0.65rem] tracking-[0.25em] text-ocean-cyan/80">
-            {String(front + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
-          </p>
-          <p className="mt-1 font-display text-2xl font-bold text-foreground drop-shadow-[0_2px_12px_rgba(3,6,14,0.9)]">
-            {frontItem?.title ?? ""}
-          </p>
-          {frontItem?.subtitle && (
-            <p className="text-sm text-foreground/65">{frontItem.subtitle}</p>
-          )}
-        </div>
-        <p className="hidden text-[0.65rem] uppercase tracking-[0.18em] text-muted/60 sm:block">
+        <p className="text-sm text-foreground/60">{frontItem?.subtitle ?? ""}</p>
+        <p className="hidden text-[0.65rem] uppercase tracking-[0.18em] text-muted/50 sm:block">
           {hint}
         </p>
       </div>

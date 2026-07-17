@@ -32,8 +32,8 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
   const orbitItems = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
     // Dispersión vertical y de tamaño (constelación, como la referencia).
-    const Y = [0.9, -0.8, 0.25, -1.15, 0.6, -0.35, 1.15, -0.6];
-    const SZ = [1, 0.9, 1.06, 0.88, 1, 0.94, 1.05, 0.9];
+    const Y = [1.5, -1.3, 0.5, -1.9, 1.0, -0.6, 1.9, -1.0];
+    const SZ = [1, 0.9, 1.08, 0.86, 1, 0.94, 1.06, 0.9];
     return items.map((it, i) => ({
       ...(it.kind === "foto" && it.file_url
         ? {

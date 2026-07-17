@@ -8,14 +8,18 @@ import * as THREE from "three";
    1024×640 (relación del panel 6.4:4). Solo cliente.
    ============================================================ */
 
+// Sistema de dibujo LÓGICO (las coordenadas se escriben en 1024×640) pero el
+// canvas se rasteriza a SCALE× para que el texto salga nítido en paneles grandes.
 const W = 1024;
 const H = 640;
+const SCALE = 2;
 
 function baseCanvas() {
   const c = document.createElement("canvas");
-  c.width = W;
-  c.height = H;
+  c.width = W * SCALE;
+  c.height = H * SCALE;
   const ctx = c.getContext("2d")!;
+  ctx.scale(SCALE, SCALE);
   const bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, "#0a1e33");
   bg.addColorStop(1, "#03060e");
@@ -53,7 +57,39 @@ function wrapText(
 function toTexture(c: HTMLCanvasElement) {
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  tex.anisotropy = 8;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  return tex;
+}
+
+/** Etiqueta 3D que flota SOBRE cada panel: índice "0X / 0Y" + título,
+ *  fondo transparente (como la galería de referencia). */
+export function labelTexture(numText: string, title: string): THREE.Texture {
+  const w = 1200;
+  const h = 320;
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d")!;
+  ctx.clearRect(0, 0, w, h);
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = "rgba(148,220,255,0.9)";
+  ctx.font = "600 30px 'JetBrains Mono', ui-monospace, monospace";
+  ctx.fillText(numText, 8, 44);
+
+  ctx.fillStyle = "#f2f6ff";
+  ctx.font = "700 74px Sora, Inter, system-ui, sans-serif";
+  ctx.shadowColor = "rgba(3,6,14,0.85)";
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 3;
+  const line = wrapText(ctx, title, w - 40, 2)[0] ?? title;
+  ctx.fillText(line, 8, 128);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
   return tex;
 }
 
