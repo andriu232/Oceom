@@ -57,18 +57,18 @@ interface Ctl {
   py: number;
 }
 
-const RADIUS_MIN = 8;
+const RADIUS = 11; // radio fijo: el panel del frente queda grande y cercano
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
-const GAP = 4.8; // separación deseada entre paneles (como la referencia)
+const STEP = 0.82; // paso angular fijo entre paneles (~47°) → gaps grandes
 const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
 const FOV = 48;
 
-/** Radio del anillo para que cada panel tenga una porción de arco fija
- *  (PANEL_W + GAP) sin importar cuántos haya: siempre quedan espacios grandes. */
-function ringRadius(count: number) {
-  return Math.max(RADIUS_MIN, (count * (PANEL_W + GAP)) / (2 * Math.PI));
-}
+/** Rotación mínima (último panel al frente). Es un RIEL acotado, no un anillo
+ *  que se infla con la cantidad: así el frente siempre es grande y con gaps
+ *  amplios, sin importar si hay 5 o 30 paneles (se navega de inicio a fin). */
+const minRot = (count: number) => -(Math.max(0, count - 1) * STEP);
+const clampRot = (r: number, count: number) => Math.min(0, Math.max(minRot(count), r));
 
 /** Plano curvado que abraza el cilindro del anillo (radio = RADIUS). */
 function makeCurvedGeometry(w: number, h: number, r: number, segs = 40) {
@@ -124,7 +124,6 @@ const wrapAngle = (a: number) => {
 function Panel({
   item,
   angle,
-  radius,
   index,
   count,
   ctl,
@@ -133,7 +132,6 @@ function Panel({
 }: {
   item: OrbitalItem;
   angle: number;
-  radius: number;
   index: number;
   count: number;
   ctl: React.MutableRefObject<Ctl>;
@@ -145,8 +143,8 @@ function Panel({
   const label = useRef<THREE.Mesh>(null);
   const [hover, setHover] = useState(false);
   const geometry = useMemo(
-    () => makeCurvedGeometry(PANEL_W, PANEL_H, radius),
-    [radius],
+    () => makeCurvedGeometry(PANEL_W, PANEL_H, RADIUS),
+    [],
   );
   const { gl } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
@@ -210,8 +208,8 @@ function Panel({
     // El panel del frente se centra (yOff→0); los laterales conservan su
     // dispersión — como la referencia (front protagonista, vecinos regados).
     const yBase = (item.yOff ?? 0) * (1 - vis * 0.82);
-    const rx = Math.sin(a) * radius;
-    const rz = -Math.cos(a) * radius;
+    const rx = Math.sin(a) * RADIUS;
+    const rz = -Math.cos(a) * RADIUS;
     if (p > 0.001) {
       const fz = -FOCUS_DIST;
       g.position.set(rx * (1 - p), yBase * (1 - p), rz + (fz - rz) * p);
@@ -291,7 +289,6 @@ function Panel({
 function PhotoPanel(props: {
   item: OrbitalItem;
   angle: number;
-  radius: number;
   index: number;
   count: number;
   ctl: React.MutableRefObject<Ctl>;
@@ -333,8 +330,7 @@ function FrameSync({
     cam.rotation.y += (trY - cam.rotation.y) * 0.05;
 
     if (count > 0) {
-      const step = (Math.PI * 2) / count;
-      const idx = ((Math.round(-c.rot / step) % count) + count) % count;
+      const idx = Math.min(count - 1, Math.max(0, Math.round(-c.rot / STEP)));
       if (idx !== last.current) {
         last.current = idx;
         onFront(idx);
@@ -389,8 +385,7 @@ export function OrbitalGallery({
     if (focusReleased) release();
   }, [focusReleased, release]);
 
-  const step = items.length > 0 ? (Math.PI * 2) / items.length : 0;
-  const radius = ringRadius(items.length);
+  const count = items.length;
   const frontItem = items[front];
 
   return (
@@ -399,7 +394,10 @@ export function OrbitalGallery({
       style={{ position: "relative", touchAction: "pan-y" }}
       onWheel={(e) => {
         if (ctl.current.focusKey) return;
-        ctl.current.target += (e.deltaY + e.deltaX) * 0.0016;
+        ctl.current.target = clampRot(
+          ctl.current.target + (e.deltaY + e.deltaX) * 0.0016,
+          count,
+        );
       }}
       onPointerDown={(e) => {
         drag.current = { on: true, x: e.clientX };
@@ -413,7 +411,7 @@ export function OrbitalGallery({
         if (!drag.current?.on || ctl.current.focusKey) return;
         const dx = e.clientX - drag.current.x;
         drag.current.x = e.clientX;
-        ctl.current.target -= dx * 0.0042;
+        ctl.current.target = clampRot(ctl.current.target - dx * 0.0042, count);
         ctl.current.dragMoved += Math.abs(dx);
       }}
       onPointerUp={() => {
@@ -433,16 +431,15 @@ export function OrbitalGallery({
         }}
         style={{ position: "absolute", inset: 0 }}
       >
-        <FrameSync ctl={ctl} count={items.length} onFront={setFront} />
+        <FrameSync ctl={ctl} count={count} onFront={setFront} />
         {items.map((it, i) =>
           it.textureUrl ? (
             <Suspense key={it.key} fallback={null}>
               <PhotoPanel
                 item={it}
-                angle={i * step}
-                radius={radius}
+                angle={i * STEP}
                 index={i}
-                count={items.length}
+                count={count}
                 ctl={ctl}
                 onOpen={onOpen}
               />
@@ -451,10 +448,9 @@ export function OrbitalGallery({
             <Panel
               key={it.key}
               item={it}
-              angle={i * step}
-              radius={radius}
+              angle={i * STEP}
               index={i}
-              count={items.length}
+              count={count}
               ctl={ctl}
               map={it.texture}
               onOpen={onOpen}
