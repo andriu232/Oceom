@@ -31,8 +31,11 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
 
   const orbitItems = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
-    return items.map((it) =>
-      it.kind === "foto" && it.file_url
+    // Dispersión vertical y de tamaño (constelación, como la referencia).
+    const Y = [0.9, -0.8, 0.25, -1.15, 0.6, -0.35, 1.15, -0.6];
+    const SZ = [1, 0.9, 1.06, 0.88, 1, 0.94, 1.05, 0.9];
+    return items.map((it, i) => ({
+      ...(it.kind === "foto" && it.file_url
         ? {
             key: it.id,
             title: it.title,
@@ -44,8 +47,10 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
             title: it.title,
             subtitle: "Poema",
             texture: poemTexture(it.title, it.content ?? ""),
-          },
-    );
+          }),
+      yOff: Y[i % Y.length],
+      sizeMul: SZ[i % SZ.length],
+    }));
   }, [items, mounted]);
 
   function close() {
@@ -58,7 +63,7 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
       {mounted && (
         <OrbitalGallery
           items={orbitItems}
-          className="h-[calc(100dvh-14rem)] min-h-[460px] w-full overflow-hidden rounded-2xl border border-card-border bg-[#03060e]"
+          className="h-[calc(100dvh-11rem)] min-h-[520px] w-full"
           onOpen={(oi) => {
             const it = items.find((x) => x.id === oi.key) ?? null;
             // Deja respirar la animación de dolly antes de abrir el lector.

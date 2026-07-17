@@ -37,6 +37,10 @@ export interface OrbitalItem {
   textureUrl?: string;
   /** Textura ya generada (poemas / mundos, via canvas). */
   texture?: THREE.Texture;
+  /** Altura del panel en el espacio (dispersión vertical, como la referencia). */
+  yOff?: number;
+  /** Multiplicador de tamaño (variedad entre paneles). */
+  sizeMul?: number;
 }
 
 /** Estado mutable compartido (sin re-renders): rotación e interacción. */
@@ -47,6 +51,9 @@ interface Ctl {
   focusP: number;
   focusTarget: number;
   dragMoved: number;
+  /** Puntero normalizado 0..1 (parallax de cámara). */
+  px: number;
+  py: number;
 }
 
 const RADIUS = 9;
@@ -142,14 +149,15 @@ function Panel({
     const p = focused ? c.focusP : 0;
 
     // Posición en el anillo (o viajando hacia la cámara si está enfocado).
+    const yBase = item.yOff ?? 0;
     const rx = Math.sin(a) * RADIUS;
     const rz = -Math.cos(a) * RADIUS;
     if (p > 0.001) {
       const fz = -(RADIUS - DOLLY);
-      g.position.set(rx * (1 - p), 0, rz + (fz - rz) * p);
+      g.position.set(rx * (1 - p), yBase * (1 - p), rz + (fz - rz) * p);
       g.rotation.y = -a * (1 - p);
     } else {
-      g.position.set(rx, 0, rz);
+      g.position.set(rx, yBase, rz);
       g.rotation.y = -a;
     }
 
@@ -162,7 +170,8 @@ function Panel({
       const vw = vh * (size.width / size.height);
       fill = 1 + (Math.min(vw * 0.72, vh * 1.45) / PANEL_W - 1) * p;
     }
-    const target = (0.62 + 0.38 * vis) * (hover ? 1.03 : 1) * fill;
+    const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
+    const target = (0.62 + 0.38 * vis) * (hover ? 1.03 : 1) * fill * mul;
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
@@ -229,11 +238,23 @@ function FrameSync({
   onFront: (i: number) => void;
 }) {
   const last = useRef(-1);
-  useFrame(() => {
+  useFrame((state) => {
     const c = ctl.current;
     c.rot += (c.target - c.rot) * 0.075;
     c.focusP += (c.focusTarget - c.focusP) * 0.09;
     if (c.focusP < 0.005 && c.focusTarget === 0) c.focusKey = null;
+
+    // Parallax de cámara con el puntero (la inmersión de la referencia):
+    // mover el mouse sube/baja y ladea la vista, revelando los paneles
+    // dispersos a otras alturas. Se amortigua durante el foco.
+    const damp = 1 - c.focusP;
+    const cam = state.camera;
+    const ty = (0.5 - c.py) * 3.0 * damp;
+    const trx = (0.5 - c.py) * 0.16 * damp;
+    const trY = (0.5 - c.px) * 0.22 * damp;
+    cam.position.y += (ty - cam.position.y) * 0.055;
+    cam.rotation.x += (trx - cam.rotation.x) * 0.055;
+    cam.rotation.y += (trY - cam.rotation.y) * 0.055;
 
     if (count > 0) {
       const step = (Math.PI * 2) / count;
@@ -274,6 +295,8 @@ export function OrbitalGallery({
     focusP: 0,
     focusTarget: 0,
     dragMoved: 0,
+    px: 0.5,
+    py: 0.5,
   });
   const [front, setFront] = useState(0);
   const drag = useRef<{ on: boolean; x: number } | null>(null);
@@ -306,6 +329,10 @@ export function OrbitalGallery({
         ctl.current.dragMoved = 0;
       }}
       onPointerMove={(e) => {
+        // Parallax: posición del puntero dentro del contenedor (0..1).
+        const r = e.currentTarget.getBoundingClientRect();
+        ctl.current.px = (e.clientX - r.left) / r.width;
+        ctl.current.py = (e.clientY - r.top) / r.height;
         if (!drag.current?.on || ctl.current.focusKey) return;
         const dx = e.clientX - drag.current.x;
         drag.current.x = e.clientX;

@@ -37,24 +37,28 @@ export function LabOrbit({ worlds }: { worlds: LabOrbitWorld[] }) {
 
   const items = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
-    return worlds.map((w) => ({
+    const Y = [0.5, -0.45, 0.2, -0.6, 0.45, -0.2, 0.6, -0.5];
+    const SZ = [1, 0.94, 1.04, 0.92, 1, 0.96, 1.03, 0.93];
+    return worlds.map((w, i) => ({
       key: String(w.n),
       title: w.name,
       subtitle: `Mundo ${w.n}`,
       texture: worldTexture(w.n, w.name, w.objetivo, ACCENTS[w.n] ?? "#22d3ee"),
+      yOff: Y[i % Y.length],
+      sizeMul: SZ[i % SZ.length],
     }));
   }, [worlds, mounted]);
 
   if (!mounted) {
     return (
-      <div className="h-72 w-full animate-pulse rounded-2xl border border-card-border bg-ocean-surface/30 sm:h-80" />
+      <div className="h-80 w-full animate-pulse rounded-2xl bg-ocean-surface/20 sm:h-96" />
     );
   }
 
   return (
     <OrbitalGallery
       items={items}
-      className="h-72 w-full overflow-hidden rounded-2xl border border-card-border bg-[#03060e] sm:h-80"
+      className="h-80 w-full sm:h-96"
       hint="Desliza para orbitar los mundos · toca para descender"
       onOpen={(item) => {
         // Dolly breve y descenso suave a la tarjeta del mundo.
