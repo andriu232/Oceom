@@ -28,7 +28,8 @@ export type IconName =
   | "chart"
   | "settings"
   | "heart"
-  | "flask";
+  | "flask"
+  | "orbit";
 
 export interface NavItem {
   label: string;
@@ -81,6 +82,7 @@ export const studentGroups: NavGroup[] = [
       { label: "OCEOM LAB", href: "/lab", icon: "flask", hint: "Juego" },
       { label: "Comunidad", href: "/comunidad", icon: "users" },
       { label: "Biblioteca", href: "/biblioteca", icon: "library" },
+      { label: "Galería Astral", href: "/galeria", icon: "orbit" },
       { label: "Mis Herramientas", href: "/herramientas", icon: "tools", hidden: true },
       { label: "Bitácora Interior", href: "/bitacora", icon: "book" },
       { label: "Mapa de Visión", href: "/mapa-vision", icon: "map" },
@@ -109,6 +111,7 @@ export const adminGroups: NavGroup[] = [
       { label: "Seguimiento", href: "/seguimiento", icon: "heart", primary: true, short: "Control" },
       { label: "Programas", href: "/programas", icon: "library", primary: true, short: "Rutas" },
       { label: "Biblioteca", href: "/biblioteca-admin", icon: "book" },
+      { label: "Galería Astral", href: "/galeria-admin", icon: "orbit" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
       { label: "Agenda", href: "/agenda", icon: "calendar", primary: true, short: "Agenda" },
       { label: "Círculos", href: "/circulos-admin", icon: "radio", primary: true, short: "Círculos" },

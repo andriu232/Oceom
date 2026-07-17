@@ -1,5 +1,6 @@
 import {
   FlaskConical,
+  Orbit,
   Waves,
   Compass,
   Telescope,
@@ -59,4 +60,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   settings: Settings,
   heart: HeartPulse,
   flask: FlaskConical,
+  orbit: Orbit,
 };
