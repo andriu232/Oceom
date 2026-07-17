@@ -60,7 +60,7 @@ interface Ctl {
 const RADIUS = 11; // radio fijo: el panel del frente queda grande y cercano
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
-const STEP = 0.98; // paso angular fijo entre paneles (~56°) → gaps grandes
+const STEP = 0.74; // paso angular fijo entre paneles (~42°) → gaps grandes
 const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
 const FOV = 48;
 
@@ -69,6 +69,10 @@ const FOV = 48;
  *  amplios, sin importar si hay 5 o 30 paneles (se navega de inicio a fin). */
 const minRot = (count: number) => -(Math.max(0, count - 1) * STEP);
 const clampRot = (r: number, count: number) => Math.min(0, Math.max(minRot(count), r));
+/** Rotación que centra el panel más cercano (encaje, como la paginación
+ *  de la referencia). */
+const snapRot = (r: number, count: number) =>
+  clampRot(Math.round(r / STEP) * STEP, count);
 
 /** Plano curvado que abraza el cilindro del anillo (radio = RADIUS). */
 function makeCurvedGeometry(w: number, h: number, r: number, segs = 40) {
@@ -372,6 +376,7 @@ export function OrbitalGallery({
   });
   const [front, setFront] = useState(0);
   const drag = useRef<{ on: boolean; x: number } | null>(null);
+  const wheelSnap = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const release = useCallback(() => {
     ctl.current.focusTarget = 0;
@@ -398,6 +403,11 @@ export function OrbitalGallery({
           ctl.current.target + (e.deltaY + e.deltaX) * 0.0016,
           count,
         );
+        // Encaje al centro cuando la rueda se detiene.
+        if (wheelSnap.current) clearTimeout(wheelSnap.current);
+        wheelSnap.current = setTimeout(() => {
+          ctl.current.target = snapRot(ctl.current.target, count);
+        }, 160);
       }}
       onPointerDown={(e) => {
         drag.current = { on: true, x: e.clientX };
@@ -415,9 +425,15 @@ export function OrbitalGallery({
         ctl.current.dragMoved += Math.abs(dx);
       }}
       onPointerUp={() => {
+        if (drag.current?.on && !ctl.current.focusKey) {
+          ctl.current.target = snapRot(ctl.current.target, count);
+        }
         drag.current = null;
       }}
       onPointerLeave={() => {
+        if (drag.current?.on && !ctl.current.focusKey) {
+          ctl.current.target = snapRot(ctl.current.target, count);
+        }
         drag.current = null;
       }}
     >
