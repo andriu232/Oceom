@@ -63,11 +63,18 @@ function toTexture(c: HTMLCanvasElement) {
   return tex;
 }
 
-/** Etiqueta 3D que flota SOBRE cada panel: índice "0X / 0Y" + título,
- *  fondo transparente (como la galería de referencia). */
-export function labelTexture(numText: string, title: string): THREE.Texture {
+/** Relación alto/ancho de la etiqueta 3D (para el plano que la muestra). */
+export const LABEL_RATIO = 460 / 1200;
+
+/** Etiqueta 3D que flota SOBRE cada panel: índice "0X / 0Y" + título +
+ *  descripción justo debajo. Fondo transparente (como la referencia). */
+export function labelTexture(
+  numText: string,
+  title: string,
+  desc?: string,
+): THREE.Texture {
   const w = 1200;
-  const h = 320;
+  const h = 460;
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
@@ -81,11 +88,22 @@ export function labelTexture(numText: string, title: string): THREE.Texture {
 
   ctx.fillStyle = "#f2f6ff";
   ctx.font = "700 74px Sora, Inter, system-ui, sans-serif";
-  ctx.shadowColor = "rgba(3,6,14,0.85)";
+  ctx.shadowColor = "rgba(3,6,14,0.9)";
   ctx.shadowBlur = 18;
   ctx.shadowOffsetY = 3;
   const line = wrapText(ctx, title, w - 40, 2)[0] ?? title;
   ctx.fillText(line, 8, 128);
+
+  // Descripción justo debajo del título.
+  if (desc) {
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "rgba(226,236,255,0.78)";
+    ctx.font = "400 37px Sora, Inter, system-ui, sans-serif";
+    wrapText(ctx, desc, w - 20, 3).forEach((l, i) =>
+      ctx.fillText(l, 8, 196 + i * 48),
+    );
+  }
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;

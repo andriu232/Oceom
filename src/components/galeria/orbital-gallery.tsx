@@ -15,7 +15,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { labelTexture } from "@/components/galeria/texturas";
+import { labelTexture, LABEL_RATIO } from "@/components/galeria/texturas";
 
 /* ============================================================
    Galería orbital de OCEOM — motor 3D reutilizable inspirado en la galería
@@ -153,15 +153,16 @@ function Panel({
     return makePanelMaterial(map);
   }, [map, maxAniso]);
 
-  // Etiqueta 3D (índice + título) que flota sobre el panel.
+  // Etiqueta 3D (índice + título + descripción) que flota sobre el panel.
   const labelTex = useMemo(() => {
     const t = labelTexture(
       `${String(index + 1).padStart(2, "0")} / ${String(count).padStart(2, "0")}`,
       item.title,
+      item.subtitle,
     );
     t.anisotropy = maxAniso;
     return t;
-  }, [index, count, item.title, maxAniso]);
+  }, [index, count, item.title, item.subtitle, maxAniso]);
   const labelMat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -173,7 +174,7 @@ function Panel({
     [labelTex],
   );
   const labelGeo = useMemo(
-    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * 0.25),
+    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * LABEL_RATIO),
     [],
   );
 
@@ -233,9 +234,12 @@ function Panel({
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
-    // Etiqueta: sobre el panel, se atenúa hacia los lados y desaparece al enfocar.
+    // Etiqueta (título + descripción): sobre el panel, con su borde inferior
+    // justo encima del borde superior del panel. Se atenúa a los lados y
+    // desaparece al enfocar.
     if (label.current) {
-      label.current.position.y = (PANEL_H / 2) * s + 0.55;
+      const labelH = PANEL_W * LABEL_RATIO;
+      label.current.position.y = (PANEL_H / 2) * s + 0.15 + labelH / 2;
       const lm = label.current.material as THREE.MeshBasicMaterial;
       lm.opacity = Math.pow(vis, 1.3) * (1 - p);
       label.current.visible = lm.opacity > 0.02;
@@ -302,16 +306,7 @@ function PhotoPanel(props: {
 
 /* ── Sincronía de frame: inercia de rotación, focus y panel frontal ── */
 
-function FrameSync({
-  ctl,
-  count,
-  onFront,
-}: {
-  ctl: React.MutableRefObject<Ctl>;
-  count: number;
-  onFront: (i: number) => void;
-}) {
-  const last = useRef(-1);
+function FrameSync({ ctl }: { ctl: React.MutableRefObject<Ctl> }) {
   useFrame((state) => {
     const c = ctl.current;
     c.rot += (c.target - c.rot) * 0.075;
@@ -327,14 +322,6 @@ function FrameSync({
     cam.rotation.y += (trY - cam.rotation.y) * 0.05;
     cam.position.y += (0 - cam.position.y) * 0.1;
     cam.rotation.x += (0 - cam.rotation.x) * 0.1;
-
-    if (count > 0) {
-      const idx = Math.min(count - 1, Math.max(0, Math.round(-c.rot / STEP)));
-      if (idx !== last.current) {
-        last.current = idx;
-        onFront(idx);
-      }
-    }
   });
   return null;
 }
@@ -369,7 +356,6 @@ export function OrbitalGallery({
     px: 0.5,
     py: 0.5,
   });
-  const [front, setFront] = useState(0);
   const drag = useRef<{ on: boolean; x: number } | null>(null);
   const wheelSnap = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -386,7 +372,6 @@ export function OrbitalGallery({
   }, [focusReleased, release]);
 
   const count = items.length;
-  const frontItem = items[front];
 
   return (
     <div
@@ -442,7 +427,7 @@ export function OrbitalGallery({
         }}
         style={{ position: "absolute", inset: 0 }}
       >
-        <FrameSync ctl={ctl} count={count} onFront={setFront} />
+        <FrameSync ctl={ctl} />
         {items.map((it, i) =>
           it.textureUrl ? (
             <Suspense key={it.key} fallback={null}>
@@ -470,10 +455,9 @@ export function OrbitalGallery({
         )}
       </Canvas>
 
-      {/* Overlay DOM: solo el subtítulo del panel frontal (foto) + guía.
-          Los títulos van en 3D SOBRE cada panel (labelTexture). */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-5">
-        <p className="text-sm text-foreground/60">{frontItem?.subtitle ?? ""}</p>
+      {/* Overlay DOM: solo la guía. El título y la descripción van en 3D
+          SOBRE cada panel (labelTexture). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end p-5">
         <p className="hidden text-[0.65rem] uppercase tracking-[0.18em] text-muted/50 sm:block">
           {hint}
         </p>
