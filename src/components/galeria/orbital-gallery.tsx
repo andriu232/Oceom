@@ -19,14 +19,14 @@ import { labelTexture } from "@/components/galeria/texturas";
 
 /* ============================================================
    Galería orbital de OCEOM — motor 3D reutilizable inspirado en la galería
-   de proyectos de lucas-aufrere.com, replicando su receta:
-   · Anillo de radio 9 alrededor de la cámara; los paneles lo abrazan
-     (geometría curvada con el mismo radio).
-   · La rueda/drag rotan el anillo con inercia (sin scroll nativo).
+   de proyectos de lucas-aufrere.com:
+   · Riel curvo (radio fijo) alrededor de la cámara; los paneles lo abrazan.
+   · Rueda/drag rotan el riel con inercia y encajan (snap) al panel más cercano.
    · Cada panel escala y se DESATURA según su distancia angular al frente
      (uniform uSaturation inyectado con onBeforeCompile).
-   · Click → el panel viaja hacia la cámara (dolly), la encara y se APLANA
-     (uniform uFlatProgress: `transformed.z *= 1.0 - uFlatProgress`).
+   · Título + descripción flotan en 3D sobre cada panel; el click abre el visor.
+   · Render bajo demanda (frameloop="demand" + bucle rAF): solo dibuja mientras
+     hay movimiento; en reposo no consume GPU.
    Lo consumen la Galería Astral y la portada de OCEOM LAB.
    ============================================================ */
 
@@ -120,6 +120,7 @@ function Panel({
   ctl,
   map,
   onOpen,
+  wake,
 }: {
   item: OrbitalItem;
   angle: number;
@@ -128,6 +129,8 @@ function Panel({
   ctl: React.MutableRefObject<Ctl>;
   map: THREE.Texture;
   onOpen?: (item: OrbitalItem) => void;
+  /** Despierta el bucle de render (para animar hover/escala). */
+  wake?: () => void;
 }) {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
@@ -138,7 +141,6 @@ function Panel({
     [],
   );
   const gl = useThree((s) => s.gl);
-  const invalidate = useThree((s) => s.invalidate);
   // 8x de anisotropía es visualmente idéntico a 16x en estos paneles y más
   // barato por fragmento durante el movimiento.
   const maxAniso = useMemo(
@@ -192,7 +194,7 @@ function Panel({
     [geometry, material, labelTex, labelMat, labelGeo],
   );
 
-  useFrame((state) => {
+  useFrame(() => {
     const c = ctl.current;
     const g = group.current;
     const m = mesh.current;
@@ -232,9 +234,6 @@ function Panel({
       | { uniforms: { uSaturation: { value: number } } }
       | undefined;
     if (shader) shader.uniforms.uSaturation.value = vis;
-
-    // Render bajo demanda: si la escala aún no se asentó, pide otro frame.
-    if (Math.abs(target - s) > 0.0008) state.invalidate();
   });
 
   return (
@@ -247,12 +246,12 @@ function Panel({
           e.stopPropagation();
           setHover(true);
           document.body.style.cursor = "pointer";
-          invalidate();
+          wake?.();
         }}
         onPointerOut={() => {
           setHover(false);
           document.body.style.cursor = "";
-          invalidate();
+          wake?.();
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -279,14 +278,15 @@ function PhotoPanel(props: {
   count: number;
   ctl: React.MutableRefObject<Ctl>;
   onOpen?: (item: OrbitalItem) => void;
+  wake?: () => void;
 }) {
   const tex = useLoader(THREE.TextureLoader, props.item.textureUrl!);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const invalidate = useThree((s) => s.invalidate);
-  // En modo demand hay que pedir un frame cuando la textura ya está lista.
+  // Cuando la textura ya está lista, despierta el render (y anima su entrada).
+  const { wake } = props;
   useEffect(() => {
-    invalidate();
-  }, [tex, invalidate]);
+    wake?.();
+  }, [tex, wake]);
   return <Panel {...props} map={tex} />;
 }
 
@@ -302,15 +302,6 @@ function FrameSync({ ctl }: { ctl: React.MutableRefObject<Ctl> }) {
     const cam = state.camera;
     const trY = (0.5 - c.px) * 0.12;
     cam.rotation.y += (trY - cam.rotation.y) * 0.05;
-
-    // Render bajo demanda: mientras algo se mueva, pide el siguiente frame; al
-    // asentarse, la escena deja de renderizar (0 GPU en reposo).
-    if (
-      Math.abs(c.target - c.rot) > 0.0002 ||
-      Math.abs(trY - cam.rotation.y) > 0.0002
-    ) {
-      state.invalidate();
-    }
   });
   return null;
 }
@@ -345,10 +336,39 @@ export function OrbitalGallery({
   const wheelSnap = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rect = useRef<DOMRect | null>(null); // rect cacheado (evita reflow por move)
   const invalidateRef = useRef<(() => void) | null>(null);
-  const kick = () => invalidateRef.current?.();
   const setInvalidate = useCallback((fn: () => void) => {
     invalidateRef.current = fn;
   }, []);
+
+  // Bucle de render bajo demanda: un rAF externo pide frames a R3F mientras
+  // haya movimiento (interacción reciente o rotación sin asentar) y se detiene
+  // solo — así ninguna animación queda a medias y en reposo no se dibuja.
+  const dirtyUntil = useRef(0);
+  const rafId = useRef(0);
+  const wake = useCallback(() => {
+    dirtyUntil.current = performance.now() + 650;
+    if (rafId.current) return;
+    const loop = () => {
+      invalidateRef.current?.();
+      const c = ctl.current;
+      if (Math.abs(c.target - c.rot) > 0.0015) {
+        dirtyUntil.current = performance.now() + 350;
+      }
+      if (performance.now() < dirtyUntil.current) {
+        rafId.current = requestAnimationFrame(loop);
+      } else {
+        rafId.current = 0;
+      }
+    };
+    rafId.current = requestAnimationFrame(loop);
+  }, []);
+
+  useEffect(() => {
+    wake(); // primera entrada (animar aparición de paneles)
+    return () => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, [wake]);
 
   const count = items.length;
 
@@ -361,12 +381,12 @@ export function OrbitalGallery({
           ctl.current.target + (e.deltaY + e.deltaX) * 0.0016,
           count,
         );
-        kick();
+        wake();
         // Encaje al centro cuando la rueda se detiene.
         if (wheelSnap.current) clearTimeout(wheelSnap.current);
         wheelSnap.current = setTimeout(() => {
           ctl.current.target = snapRot(ctl.current.target, count);
-          kick();
+          wake();
         }, 160);
       }}
       onPointerEnter={(e) => {
@@ -382,7 +402,7 @@ export function OrbitalGallery({
         const r =
           rect.current ?? (rect.current = e.currentTarget.getBoundingClientRect());
         ctl.current.px = (e.clientX - r.left) / r.width;
-        kick();
+        wake();
         if (!drag.current?.on) return;
         const dx = e.clientX - drag.current.x;
         drag.current.x = e.clientX;
@@ -392,14 +412,14 @@ export function OrbitalGallery({
       onPointerUp={() => {
         if (drag.current?.on) {
           ctl.current.target = snapRot(ctl.current.target, count);
-          kick();
+          wake();
         }
         drag.current = null;
       }}
       onPointerLeave={() => {
         if (drag.current?.on) {
           ctl.current.target = snapRot(ctl.current.target, count);
-          kick();
+          wake();
         }
         drag.current = null;
       }}
@@ -427,6 +447,7 @@ export function OrbitalGallery({
                 count={count}
                 ctl={ctl}
                 onOpen={onOpen}
+                wake={wake}
               />
             </Suspense>
           ) : it.texture ? (
@@ -439,6 +460,7 @@ export function OrbitalGallery({
               ctl={ctl}
               map={it.texture}
               onOpen={onOpen}
+              wake={wake}
             />
           ) : null,
         )}
