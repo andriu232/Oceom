@@ -38,8 +38,6 @@ export interface OrbitalItem {
   textureUrl?: string;
   /** Textura ya generada (poemas / mundos, via canvas). */
   texture?: THREE.Texture;
-  /** Altura del panel en el espacio (dispersión vertical, como la referencia). */
-  yOff?: number;
   /** Multiplicador de tamaño (variedad entre paneles). */
   sizeMul?: number;
 }
@@ -208,10 +206,9 @@ function Panel({
     g.visible = vis > 0.001 || p > 0.001;
     if (!g.visible) return;
 
-    // Posición en el anillo (o viajando hacia la cámara si está enfocado).
-    // El panel del frente se centra (yOff→0); los laterales conservan su
-    // dispersión — como la referencia (front protagonista, vecinos regados).
-    const yBase = (item.yOff ?? 0) * (1 - vis * 0.82);
+    // Riel puramente horizontal: los paneles viven en una sola fila (sin
+    // dispersión vertical, no hay contenido en ese eje).
+    const yBase = 0;
     const rx = Math.sin(a) * RADIUS;
     const rz = -Math.cos(a) * RADIUS;
     if (p > 0.001) {
@@ -321,17 +318,15 @@ function FrameSync({
     c.focusP += (c.focusTarget - c.focusP) * 0.09;
     if (c.focusP < 0.005 && c.focusTarget === 0) c.focusKey = null;
 
-    // Parallax de cámara con el puntero (la inmersión de la referencia):
-    // mover el mouse sube/baja y ladea la vista, revelando los paneles
-    // dispersos a otras alturas. Se amortigua durante el foco.
+    // Parallax SOLO horizontal: mover el mouse a los lados ladea levemente la
+    // vista (inmersión en el eje que sí tiene contenido). El eje vertical se
+    // mantiene fijo — no hay paneles arriba/abajo que revelar.
     const damp = 1 - c.focusP;
     const cam = state.camera;
-    const ty = (0.5 - c.py) * 1.8 * damp;
-    const trx = (0.5 - c.py) * 0.1 * damp;
     const trY = (0.5 - c.px) * 0.12 * damp;
-    cam.position.y += (ty - cam.position.y) * 0.05;
-    cam.rotation.x += (trx - cam.rotation.x) * 0.05;
     cam.rotation.y += (trY - cam.rotation.y) * 0.05;
+    cam.position.y += (0 - cam.position.y) * 0.1;
+    cam.rotation.x += (0 - cam.rotation.x) * 0.1;
 
     if (count > 0) {
       const idx = Math.min(count - 1, Math.max(0, Math.round(-c.rot / STEP)));

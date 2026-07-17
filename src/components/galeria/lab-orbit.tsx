@@ -37,14 +37,12 @@ export function LabOrbit({ worlds }: { worlds: LabOrbitWorld[] }) {
 
   const items = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
-    const Y = [0.5, -0.45, 0.2, -0.6, 0.45, -0.2, 0.6, -0.5];
-    const SZ = [1, 0.94, 1.04, 0.92, 1, 0.96, 1.03, 0.93];
+    const SZ = [1, 0.95, 1.04, 0.93, 1, 0.96, 1.03, 0.94];
     return worlds.map((w, i) => ({
       key: String(w.n),
       title: w.name,
       subtitle: `Mundo ${w.n}`,
       texture: worldTexture(w.n, w.name, w.objetivo, ACCENTS[w.n] ?? "#22d3ee"),
-      yOff: Y[i % Y.length],
       sizeMul: SZ[i % SZ.length],
     }));
   }, [worlds, mounted]);

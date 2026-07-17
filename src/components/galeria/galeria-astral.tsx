@@ -31,9 +31,8 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
 
   const orbitItems = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
-    // Dispersión vertical y de tamaño (constelación, como la referencia).
-    const Y = [1.5, -1.3, 0.5, -1.9, 1.0, -0.6, 1.9, -1.0];
-    const SZ = [1, 0.9, 1.08, 0.86, 1, 0.94, 1.06, 0.9];
+    // Variedad sutil de tamaño (el riel es horizontal, sin dispersión vertical).
+    const SZ = [1, 0.94, 1.06, 0.92, 1, 0.96, 1.04, 0.93];
     return items.map((it, i) => ({
       ...(it.kind === "foto" && it.file_url
         ? {
@@ -48,7 +47,6 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
             subtitle: "Poema",
             texture: poemTexture(it.title, it.content ?? ""),
           }),
-      yOff: Y[i % Y.length],
       sizeMul: SZ[i % SZ.length],
     }));
   }, [items, mounted]);
