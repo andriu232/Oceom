@@ -46,20 +46,15 @@ export interface OrbitalItem {
 interface Ctl {
   rot: number;
   target: number;
-  focusKey: string | null;
-  focusP: number;
-  focusTarget: number;
   dragMoved: number;
-  /** Puntero normalizado 0..1 (parallax de cámara). */
+  /** Puntero horizontal normalizado 0..1 (parallax lateral de cámara). */
   px: number;
-  py: number;
 }
 
 const RADIUS = 11; // radio fijo: el panel del frente queda grande y cercano
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
 const STEP = 0.74; // paso angular fijo entre paneles (~42°) → gaps grandes
-const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
 const FOV = 48;
 
 /** Rotación mínima (último panel al frente). Es un RIEL acotado, no un anillo
@@ -72,8 +67,9 @@ const clampRot = (r: number, count: number) => Math.min(0, Math.max(minRot(count
 const snapRot = (r: number, count: number) =>
   clampRot(Math.round(r / STEP) * STEP, count);
 
-/** Plano curvado que abraza el cilindro del anillo (radio = RADIUS). */
-function makeCurvedGeometry(w: number, h: number, r: number, segs = 40) {
+/** Plano curvado que abraza el cilindro del anillo (radio = RADIUS).
+ *  26 segmentos bastan para una curva suave a este radio (menos vértices). */
+function makeCurvedGeometry(w: number, h: number, r: number, segs = 26) {
   const geo = new THREE.PlaneGeometry(w, h, segs, 1);
   const pos = geo.attributes.position as THREE.BufferAttribute;
   for (let i = 0; i < pos.count; i++) {
@@ -141,8 +137,14 @@ function Panel({
     () => makeCurvedGeometry(PANEL_W, PANEL_H, RADIUS),
     [],
   );
-  const { gl } = useThree();
-  const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
+  const gl = useThree((s) => s.gl);
+  const invalidate = useThree((s) => s.invalidate);
+  // 8x de anisotropía es visualmente idéntico a 16x en estos paneles y más
+  // barato por fragmento durante el movimiento.
+  const maxAniso = useMemo(
+    () => Math.min(8, gl.capabilities.getMaxAnisotropy()),
+    [gl],
+  );
 
   // Filtrado anisotrópico: lo que quita el desenfoque en los paneles inclinados.
   const material = useMemo(() => {
@@ -190,7 +192,7 @@ function Panel({
     [geometry, material, labelTex, labelMat, labelGeo],
   );
 
-  useFrame(() => {
+  useFrame((state) => {
     const c = ctl.current;
     const g = group.current;
     const m = mesh.current;
@@ -201,39 +203,18 @@ function Panel({
     // frente dando la vuelta.
     const a = angle + c.rot;
     const vis = Math.max(0, Math.min(1, 1 - Math.abs(a) / (Math.PI / 2)));
-    const focused = c.focusKey === item.key;
-    const p = focused ? c.focusP : 0;
 
     // Fuera del arco visible: ocultar y no seguir calculando.
-    g.visible = vis > 0.001 || p > 0.001;
+    g.visible = vis > 0.001;
     if (!g.visible) return;
 
-    // Riel puramente horizontal: los paneles viven en una sola fila (sin
-    // dispersión vertical). Se bajan (sin achicarse) para dejar aire arriba al
-    // título + descripción que flotan sobre el panel — el panel sigue igual de
-    // grande y protagonista.
-    const yBase = -0.5;
-    const rx = Math.sin(a) * RADIUS;
-    const rz = -Math.cos(a) * RADIUS;
-    if (p > 0.001) {
-      const fz = -FOCUS_DIST;
-      g.position.set(rx * (1 - p), yBase * (1 - p), rz + (fz - rz) * p);
-      g.rotation.y = -a * (1 - p);
-    } else {
-      g.position.set(rx, yBase, rz);
-      g.rotation.y = -a;
-    }
+    // Riel puramente horizontal: los paneles viven en una sola fila (bajados
+    // un poco para dejar aire arriba al título + descripción).
+    g.position.set(Math.sin(a) * RADIUS, -0.5, -Math.cos(a) * RADIUS);
+    g.rotation.y = -a;
 
-    // Escala: presencia por cercanía al frente + hover + llenado al enfocar.
-    let fill = 1;
-    if (p > 0.001) {
-      const vh = 2 * FOCUS_DIST * Math.tan((FOV * Math.PI) / 360);
-      const vw = vh * (window.innerWidth / window.innerHeight);
-      fill = 1 + (Math.min(vw * 0.82, vh * 1.55) / PANEL_W - 1) * p;
-    }
-    const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
-    // Curva de presencia marcada: el frente domina, los lados recogen.
-    const target = (0.6 + 1.05 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
+    // Escala: presencia marcada por cercanía al frente + hover.
+    const target = (0.6 + 1.05 * vis * vis) * (hover ? 1.03 : 1) * (item.sizeMul ?? 1);
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
@@ -242,18 +223,18 @@ function Panel({
       const labelH = PANEL_W * labelRatio;
       label.current.position.y = (PANEL_H / 2) * s + 0.06 + labelH / 2;
       const lm = label.current.material as THREE.MeshBasicMaterial;
-      lm.opacity = Math.pow(vis, 1.3) * (1 - p);
+      lm.opacity = Math.pow(vis, 1.3);
       label.current.visible = lm.opacity > 0.02;
     }
 
-    // Uniforms: desaturación por ángulo, aplanado por enfoque.
+    // Desaturación por ángulo (uniform inyectado).
     const shader = material.userData.shader as
-      | { uniforms: { uSaturation: { value: number }; uFlatProgress: { value: number } } }
+      | { uniforms: { uSaturation: { value: number } } }
       | undefined;
-    if (shader) {
-      shader.uniforms.uSaturation.value = focused ? Math.max(vis, p) : vis;
-      shader.uniforms.uFlatProgress.value = p;
-    }
+    if (shader) shader.uniforms.uSaturation.value = vis;
+
+    // Render bajo demanda: si la escala aún no se asentó, pide otro frame.
+    if (Math.abs(target - s) > 0.0008) state.invalidate();
   });
 
   return (
@@ -266,10 +247,12 @@ function Panel({
           e.stopPropagation();
           setHover(true);
           document.body.style.cursor = "pointer";
+          invalidate();
         }}
         onPointerOut={() => {
           setHover(false);
           document.body.style.cursor = "";
+          invalidate();
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -299,28 +282,47 @@ function PhotoPanel(props: {
 }) {
   const tex = useLoader(THREE.TextureLoader, props.item.textureUrl!);
   tex.colorSpace = THREE.SRGBColorSpace;
+  const invalidate = useThree((s) => s.invalidate);
+  // En modo demand hay que pedir un frame cuando la textura ya está lista.
+  useEffect(() => {
+    invalidate();
+  }, [tex, invalidate]);
   return <Panel {...props} map={tex} />;
 }
 
-/* ── Sincronía de frame: inercia de rotación, focus y panel frontal ── */
+/* ── Sincronía de frame: inercia de rotación + parallax horizontal ── */
 
 function FrameSync({ ctl }: { ctl: React.MutableRefObject<Ctl> }) {
   useFrame((state) => {
     const c = ctl.current;
     c.rot += (c.target - c.rot) * 0.075;
-    c.focusP += (c.focusTarget - c.focusP) * 0.09;
-    if (c.focusP < 0.005 && c.focusTarget === 0) c.focusKey = null;
 
     // Parallax SOLO horizontal: mover el mouse a los lados ladea levemente la
-    // vista (inmersión en el eje que sí tiene contenido). El eje vertical se
-    // mantiene fijo — no hay paneles arriba/abajo que revelar.
-    const damp = 1 - c.focusP;
+    // vista. El eje vertical queda fijo (no hay paneles arriba/abajo).
     const cam = state.camera;
-    const trY = (0.5 - c.px) * 0.12 * damp;
+    const trY = (0.5 - c.px) * 0.12;
     cam.rotation.y += (trY - cam.rotation.y) * 0.05;
-    cam.position.y += (0 - cam.position.y) * 0.1;
-    cam.rotation.x += (0 - cam.rotation.x) * 0.1;
+
+    // Render bajo demanda: mientras algo se mueva, pide el siguiente frame; al
+    // asentarse, la escena deja de renderizar (0 GPU en reposo).
+    if (
+      Math.abs(c.target - c.rot) > 0.0002 ||
+      Math.abs(trY - cam.rotation.y) > 0.0002
+    ) {
+      state.invalidate();
+    }
   });
+  return null;
+}
+
+/** Captura la función `invalidate` de R3F para dispararla desde los handlers
+ *  del DOM (fuera del Canvas) y pinta el primer frame. */
+function Hookup({ set }: { set: (fn: () => void) => void }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    set(invalidate);
+    invalidate();
+  }, [invalidate, set]);
   return null;
 }
 
@@ -329,45 +331,24 @@ function FrameSync({ ctl }: { ctl: React.MutableRefObject<Ctl> }) {
 export function OrbitalGallery({
   items,
   onOpen,
-  onClose,
-  focusReleased,
   className,
   hint = "Desliza o arrastra para navegar · toca para abrir",
 }: {
   items: OrbitalItem[];
-  /** Al hacer click en un panel (ya inicia el dolly+aplanado). */
+  /** Al hacer click en un panel. */
   onOpen?: (item: OrbitalItem) => void;
-  /** Cerrar el foco desde afuera: llama a la función que se te entrega. */
-  onClose?: (release: () => void) => void;
-  /** Señal externa: cuando cambia a true, libera el foco. */
-  focusReleased?: boolean;
   className?: string;
   hint?: string;
 }) {
-  const ctl = useRef<Ctl>({
-    rot: 0,
-    target: 0,
-    focusKey: null,
-    focusP: 0,
-    focusTarget: 0,
-    dragMoved: 0,
-    px: 0.5,
-    py: 0.5,
-  });
+  const ctl = useRef<Ctl>({ rot: 0, target: 0, dragMoved: 0, px: 0.5 });
   const drag = useRef<{ on: boolean; x: number } | null>(null);
   const wheelSnap = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const release = useCallback(() => {
-    ctl.current.focusTarget = 0;
+  const rect = useRef<DOMRect | null>(null); // rect cacheado (evita reflow por move)
+  const invalidateRef = useRef<(() => void) | null>(null);
+  const kick = () => invalidateRef.current?.();
+  const setInvalidate = useCallback((fn: () => void) => {
+    invalidateRef.current = fn;
   }, []);
-
-  useEffect(() => {
-    onClose?.(release);
-  }, [onClose, release]);
-
-  useEffect(() => {
-    if (focusReleased) release();
-  }, [focusReleased, release]);
 
   const count = items.length;
 
@@ -376,46 +357,55 @@ export function OrbitalGallery({
       className={className}
       style={{ position: "relative", touchAction: "pan-y" }}
       onWheel={(e) => {
-        if (ctl.current.focusKey) return;
         ctl.current.target = clampRot(
           ctl.current.target + (e.deltaY + e.deltaX) * 0.0016,
           count,
         );
+        kick();
         // Encaje al centro cuando la rueda se detiene.
         if (wheelSnap.current) clearTimeout(wheelSnap.current);
         wheelSnap.current = setTimeout(() => {
           ctl.current.target = snapRot(ctl.current.target, count);
+          kick();
         }, 160);
       }}
+      onPointerEnter={(e) => {
+        rect.current = e.currentTarget.getBoundingClientRect();
+      }}
       onPointerDown={(e) => {
+        rect.current = e.currentTarget.getBoundingClientRect();
         drag.current = { on: true, x: e.clientX };
         ctl.current.dragMoved = 0;
       }}
       onPointerMove={(e) => {
-        // Parallax: posición del puntero dentro del contenedor (0..1).
-        const r = e.currentTarget.getBoundingClientRect();
+        // Parallax: posición horizontal del puntero (rect cacheado, sin reflow).
+        const r =
+          rect.current ?? (rect.current = e.currentTarget.getBoundingClientRect());
         ctl.current.px = (e.clientX - r.left) / r.width;
-        ctl.current.py = (e.clientY - r.top) / r.height;
-        if (!drag.current?.on || ctl.current.focusKey) return;
+        kick();
+        if (!drag.current?.on) return;
         const dx = e.clientX - drag.current.x;
         drag.current.x = e.clientX;
         ctl.current.target = clampRot(ctl.current.target - dx * 0.0042, count);
         ctl.current.dragMoved += Math.abs(dx);
       }}
       onPointerUp={() => {
-        if (drag.current?.on && !ctl.current.focusKey) {
+        if (drag.current?.on) {
           ctl.current.target = snapRot(ctl.current.target, count);
+          kick();
         }
         drag.current = null;
       }}
       onPointerLeave={() => {
-        if (drag.current?.on && !ctl.current.focusKey) {
+        if (drag.current?.on) {
           ctl.current.target = snapRot(ctl.current.target, count);
+          kick();
         }
         drag.current = null;
       }}
     >
       <Canvas
+        frameloop="demand"
         dpr={[1, 2]}
         camera={{ position: [0, 0, 0.001], fov: FOV }}
         gl={{
@@ -425,6 +415,7 @@ export function OrbitalGallery({
         }}
         style={{ position: "absolute", inset: 0 }}
       >
+        <Hookup set={setInvalidate} />
         <FrameSync ctl={ctl} />
         {items.map((it, i) =>
           it.textureUrl ? (

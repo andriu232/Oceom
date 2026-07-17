@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { X } from "lucide-react";
 import { OrbitalGallery, type OrbitalItem } from "@/components/galeria/orbital-gallery";
 import { poemTexture } from "@/components/galeria/texturas";
@@ -27,7 +27,6 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const [open, setOpen] = useState<AstralItemData | null>(null);
-  const releaseRef = useRef<(() => void) | null>(null);
 
   const orbitItems = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
@@ -52,7 +51,6 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
   }, [items, mounted]);
 
   function close() {
-    releaseRef.current?.();
     setOpen(null);
   }
 
@@ -65,9 +63,6 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
           onOpen={(oi) =>
             setOpen(items.find((x) => x.id === oi.key) ?? null)
           }
-          onClose={(release) => {
-            releaseRef.current = release;
-          }}
         />
       )}
 
