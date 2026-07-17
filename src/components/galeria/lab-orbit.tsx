@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { OrbitalGallery, type OrbitalItem } from "@/components/galeria/orbital-gallery";
 import { worldTexture } from "@/components/galeria/texturas";
 
@@ -33,7 +33,6 @@ const emptySubscribe = () => () => {};
 export function LabOrbit({ worlds }: { worlds: LabOrbitWorld[] }) {
   // true solo en cliente (las texturas se dibujan en <canvas>).
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const releaseRef = useRef<(() => void) | null>(null);
 
   const items = useMemo<OrbitalItem[]>(() => {
     if (!mounted) return [];
@@ -59,16 +58,10 @@ export function LabOrbit({ worlds }: { worlds: LabOrbitWorld[] }) {
       className="h-80 w-full sm:h-96"
       hint="Desliza para orbitar los mundos · toca para descender"
       onOpen={(item) => {
-        // Dolly breve y descenso suave a la tarjeta del mundo.
-        setTimeout(() => {
-          document
-            .getElementById(`mundo-${item.key}`)
-            ?.scrollIntoView({ behavior: "smooth", block: "center" });
-          setTimeout(() => releaseRef.current?.(), 700);
-        }, 520);
-      }}
-      onClose={(release) => {
-        releaseRef.current = release;
+        // Baja suave a la tarjeta del mundo.
+        document
+          .getElementById(`mundo-${item.key}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }}
     />
   );

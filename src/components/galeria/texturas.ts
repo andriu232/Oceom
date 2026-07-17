@@ -63,18 +63,31 @@ function toTexture(c: HTMLCanvasElement) {
   return tex;
 }
 
-/** Relación alto/ancho de la etiqueta 3D (para el plano que la muestra). */
-export const LABEL_RATIO = 360 / 1200;
+const LABEL_W = 1200;
+const DESC_FONT = "400 35px Sora, Inter, system-ui, sans-serif";
+const DESC_START = 168;
+const DESC_STEP = 46;
 
 /** Etiqueta 3D que flota SOBRE cada panel: índice "0X / 0Y" + título +
- *  descripción justo debajo. Fondo transparente (como la referencia). */
+ *  descripción justo debajo. Fondo transparente y ALTO AJUSTADO al contenido
+ *  (sin espacio vacío abajo → queda pegada al panel). La relación alto/ancho
+ *  se expone en `texture.userData.ratio`. */
 export function labelTexture(
   numText: string,
   title: string,
   desc?: string,
 ): THREE.Texture {
-  const w = 1200;
-  const h = 360;
+  const w = LABEL_W;
+
+  // Medir cuántas líneas ocupa la descripción para recortar el alto.
+  const meas = document.createElement("canvas").getContext("2d")!;
+  meas.font = DESC_FONT;
+  const descLines = desc ? wrapText(meas, desc, w - 20, 2) : [];
+  const lastBaseline = descLines.length
+    ? DESC_START + (descLines.length - 1) * DESC_STEP
+    : 108;
+  const h = Math.round(lastBaseline + 22); // margen inferior mínimo
+
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
@@ -91,23 +104,20 @@ export function labelTexture(
   ctx.shadowColor = "rgba(3,6,14,0.9)";
   ctx.shadowBlur = 16;
   ctx.shadowOffsetY = 3;
-  const line = wrapText(ctx, title, w - 40, 2)[0] ?? title;
-  ctx.fillText(line, 8, 108);
+  ctx.fillText(wrapText(ctx, title, w - 40, 2)[0] ?? title, 8, 108);
 
-  // Descripción justo debajo del título (hasta 2 líneas).
-  if (desc) {
+  if (descLines.length) {
     ctx.shadowBlur = 9;
     ctx.shadowOffsetY = 2;
     ctx.fillStyle = "rgba(226,236,255,0.8)";
-    ctx.font = "400 35px Sora, Inter, system-ui, sans-serif";
-    wrapText(ctx, desc, w - 20, 2).forEach((l, i) =>
-      ctx.fillText(l, 8, 168 + i * 46),
-    );
+    ctx.font = DESC_FONT;
+    descLines.forEach((l, i) => ctx.fillText(l, 8, DESC_START + i * DESC_STEP));
   }
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
+  tex.userData.ratio = h / w;
   return tex;
 }
 

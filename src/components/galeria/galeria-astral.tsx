@@ -62,66 +62,69 @@ export function GaleriaAstral({ items }: { items: AstralItemData[] }) {
         <OrbitalGallery
           items={orbitItems}
           className="h-[calc(100dvh-11rem)] min-h-[520px] w-full"
-          onOpen={(oi) => {
-            const it = items.find((x) => x.id === oi.key) ?? null;
-            // Deja respirar la animación de dolly antes de abrir el lector.
-            setTimeout(() => setOpen(it), 480);
-          }}
+          onOpen={(oi) =>
+            setOpen(items.find((x) => x.id === oi.key) ?? null)
+          }
           onClose={(release) => {
             releaseRef.current = release;
           }}
         />
       )}
 
-      {/* Lector / visor */}
+      {/* Visor / lightbox */}
       {open && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ocean-abyss/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ocean-abyss/92 p-3 backdrop-blur-md sm:p-6"
           role="dialog"
           aria-modal="true"
           onClick={close}
         >
-          <div
-            className="glass-strong relative max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-6 sm:p-8"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={close}
+            aria-label="Cerrar"
+            className="fixed right-4 top-4 z-10 grid size-11 place-items-center rounded-full bg-white/8 text-foreground/90 backdrop-blur transition-colors hover:bg-white/16"
           >
-            <button
-              onClick={close}
-              aria-label="Cerrar"
-              className="absolute right-4 top-4 grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
-            >
-              <X className="size-5" />
-            </button>
+            <X className="size-5" />
+          </button>
 
-            {open.kind === "foto" && open.file_url ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={open.file_url}
-                  alt={open.title}
-                  className="max-h-[62vh] w-full rounded-xl object-contain"
-                />
-                <h2 className="mt-4 font-display text-xl font-bold text-foreground">
+          {open.kind === "foto" && open.file_url ? (
+            <figure
+              className="flex max-h-full max-w-full flex-col items-center"
+              style={{ animation: "galeria-zoom 0.3s ease both" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={open.file_url}
+                alt={open.title}
+                className="max-h-[85vh] max-w-[95vw] rounded-lg object-contain shadow-[0_30px_90px_-30px_rgba(0,0,0,0.85)]"
+              />
+              <figcaption className="mt-3 max-w-2xl px-4 text-center">
+                <h2 className="font-display text-lg font-bold text-foreground">
                   {open.title}
                 </h2>
                 {open.description && (
-                  <p className="mt-1 text-sm text-muted">{open.description}</p>
+                  <p className="mt-0.5 text-sm text-muted">{open.description}</p>
                 )}
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ocean-violet">
-                  Poema
-                </p>
-                <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
-                  {open.title}
-                </h2>
-                <div className="mt-6 whitespace-pre-wrap text-center font-display text-lg leading-loose text-foreground/90">
-                  {open.content}
-                </div>
-              </>
-            )}
-          </div>
+              </figcaption>
+            </figure>
+          ) : (
+            <div
+              className="glass-strong relative max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-6 sm:p-8"
+              style={{ animation: "galeria-zoom 0.3s ease both" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ocean-violet">
+                Poema
+              </p>
+              <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
+                {open.title}
+              </h2>
+              <div className="mt-6 whitespace-pre-wrap text-center font-display text-lg leading-loose text-foreground/90">
+                {open.content}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

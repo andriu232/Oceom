@@ -15,7 +15,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { labelTexture, LABEL_RATIO } from "@/components/galeria/texturas";
+import { labelTexture } from "@/components/galeria/texturas";
 
 /* ============================================================
    Galería orbital de OCEOM — motor 3D reutilizable inspirado en la galería
@@ -173,9 +173,10 @@ function Panel({
       }),
     [labelTex],
   );
+  const labelRatio = (labelTex.userData.ratio as number) ?? 0.2;
   const labelGeo = useMemo(
-    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * LABEL_RATIO),
-    [],
+    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * labelRatio),
+    [labelRatio],
   );
 
   useEffect(
@@ -211,7 +212,7 @@ function Panel({
     // dispersión vertical). Se bajan (sin achicarse) para dejar aire arriba al
     // título + descripción que flotan sobre el panel — el panel sigue igual de
     // grande y protagonista.
-    const yBase = -0.6;
+    const yBase = -0.5;
     const rx = Math.sin(a) * RADIUS;
     const rz = -Math.cos(a) * RADIUS;
     if (p > 0.001) {
@@ -232,16 +233,14 @@ function Panel({
     }
     const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
     // Curva de presencia marcada: el frente domina, los lados recogen.
-    const target = (0.55 + 1.0 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
+    const target = (0.6 + 1.05 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
-    // Etiqueta (título + descripción): sobre el panel, con su borde inferior
-    // justo encima del borde superior del panel. Se atenúa a los lados y
-    // desaparece al enfocar.
+    // Etiqueta (título + descripción): pegada justo encima del panel.
     if (label.current) {
-      const labelH = PANEL_W * LABEL_RATIO;
-      label.current.position.y = (PANEL_H / 2) * s + 0.15 + labelH / 2;
+      const labelH = PANEL_W * labelRatio;
+      label.current.position.y = (PANEL_H / 2) * s + 0.06 + labelH / 2;
       const lm = label.current.material as THREE.MeshBasicMaterial;
       lm.opacity = Math.pow(vis, 1.3) * (1 - p);
       label.current.visible = lm.opacity > 0.02;
@@ -274,13 +273,10 @@ function Panel({
         }}
         onClick={(e) => {
           e.stopPropagation();
-          const c = ctl.current;
-          if (c.dragMoved > 6) return; // fue un arrastre, no un click
-          if (!c.focusKey) {
-            c.focusKey = item.key;
-            c.focusTarget = 1;
-            onOpen?.(item);
-          }
+          // Si hubo arrastre no es un click. Abre el visor directamente (el
+          // acercamiento lo hace el lightbox, sin animación 3D).
+          if (ctl.current.dragMoved > 6) return;
+          onOpen?.(item);
         }}
       />
       <mesh
