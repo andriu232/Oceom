@@ -52,10 +52,15 @@ interface Ctl {
 }
 
 const RADIUS = 11; // radio fijo: el panel del frente queda grande y cercano
-const PANEL_W = 6.4;
-const PANEL_H = 4.0;
-const STEP = 0.74; // paso angular fijo entre paneles (~42°) → gaps grandes
+const PANEL_H = 4.3; // altura FIJA de todos los paneles (fila uniforme)
+const LABEL_MIN_W = 5.5; // ancho mínimo de la etiqueta (texto legible)
+const STEP = 0.66; // paso angular fijo entre paneles → gaps grandes
 const FOV = 48;
+
+/** Ancho del panel según la proporción real de su imagen (para NO estirarla).
+ *  La altura es fija; el ancho la acompaña, acotado para casos extremos. */
+const panelWidthFor = (aspect: number) =>
+  Math.min(7.4, Math.max(2.2, PANEL_H * aspect));
 
 /** Rotación mínima (último panel al frente). Es un RIEL acotado, no un anillo
  *  que se infla con la cantidad: así el frente siempre es grande y con gaps
@@ -136,10 +141,41 @@ function Panel({
   const mesh = useRef<THREE.Mesh>(null);
   const label = useRef<THREE.Mesh>(null);
   const [hover, setHover] = useState(false);
+
+  // Proporción real de la imagen → ancho del panel (evita el estiramiento).
+  // `map.image` es el <img> (fotos) o el <canvas> (poemas/mundos); ambos dan
+  // dimensiones naturales.
+  const aspect = useMemo(() => {
+    const im = map.image as
+      | { width?: number; height?: number; naturalWidth?: number; naturalHeight?: number }
+      | undefined;
+    const w = im?.naturalWidth || im?.width || 0;
+    const h = im?.naturalHeight || im?.height || 0;
+    return w && h ? w / h : 1.5;
+  }, [map]);
+  const panelW = panelWidthFor(aspect);
   const geometry = useMemo(
-    () => makeCurvedGeometry(PANEL_W, PANEL_H, RADIUS),
+    () => makeCurvedGeometry(panelW, PANEL_H, RADIUS),
+    [panelW],
+  );
+
+  // El raycast del click solo debe pegar en paneles VISIBLES. Los ocultos, aun
+  // fuera de vista, seguían interceptando el click (abrían la imagen equivocada).
+  const canRaycast = useRef(false);
+  const raycastFn = useMemo(
+    () =>
+      function (
+        this: THREE.Mesh,
+        raycaster: THREE.Raycaster,
+        intersects: THREE.Intersection[],
+      ) {
+        if (canRaycast.current) {
+          THREE.Mesh.prototype.raycast.call(this, raycaster, intersects);
+        }
+      },
     [],
   );
+
   const gl = useThree((s) => s.gl);
   // 8x de anisotropía es visualmente idéntico a 16x en estos paneles y más
   // barato por fragmento durante el movimiento.
@@ -178,9 +214,10 @@ function Panel({
     [labelTex],
   );
   const labelRatio = (labelTex.userData.ratio as number) ?? 0.2;
+  const labelW = Math.max(panelW, LABEL_MIN_W);
   const labelGeo = useMemo(
-    () => new THREE.PlaneGeometry(PANEL_W, PANEL_W * labelRatio),
-    [labelRatio],
+    () => new THREE.PlaneGeometry(labelW, labelW * labelRatio),
+    [labelW, labelRatio],
   );
 
   useEffect(
@@ -206,8 +243,9 @@ function Panel({
     const a = angle + c.rot;
     const vis = Math.max(0, Math.min(1, 1 - Math.abs(a) / (Math.PI / 2)));
 
-    // Fuera del arco visible: ocultar y no seguir calculando.
+    // Fuera del arco visible: ocultar, quitar del raycast y no seguir calculando.
     g.visible = vis > 0.001;
+    canRaycast.current = g.visible;
     if (!g.visible) return;
 
     // Riel puramente horizontal: los paneles viven en una sola fila (bajados
@@ -222,7 +260,7 @@ function Panel({
 
     // Etiqueta (título + descripción): pegada justo encima del panel.
     if (label.current) {
-      const labelH = PANEL_W * labelRatio;
+      const labelH = labelW * labelRatio;
       label.current.position.y = (PANEL_H / 2) * s + 0.06 + labelH / 2;
       const lm = label.current.material as THREE.MeshBasicMaterial;
       lm.opacity = Math.pow(vis, 1.3);
@@ -242,6 +280,7 @@ function Panel({
         ref={mesh}
         geometry={geometry}
         material={material}
+        raycast={raycastFn}
         onPointerOver={(e) => {
           e.stopPropagation();
           setHover(true);

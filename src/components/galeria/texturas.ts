@@ -93,25 +93,26 @@ export function labelTexture(
   c.height = h;
   const ctx = c.getContext("2d")!;
   ctx.clearRect(0, 0, w, h);
-  ctx.textAlign = "left";
+  ctx.textAlign = "center";
+  const cx = w / 2;
 
   ctx.fillStyle = "rgba(148,220,255,0.9)";
   ctx.font = "600 28px 'JetBrains Mono', ui-monospace, monospace";
-  ctx.fillText(numText, 8, 38);
+  ctx.fillText(numText, cx, 38);
 
   ctx.fillStyle = "#f2f6ff";
   ctx.font = "700 66px Sora, Inter, system-ui, sans-serif";
   ctx.shadowColor = "rgba(3,6,14,0.9)";
   ctx.shadowBlur = 16;
   ctx.shadowOffsetY = 3;
-  ctx.fillText(wrapText(ctx, title, w - 40, 2)[0] ?? title, 8, 108);
+  ctx.fillText(wrapText(ctx, title, w - 40, 2)[0] ?? title, cx, 108);
 
   if (descLines.length) {
     ctx.shadowBlur = 9;
     ctx.shadowOffsetY = 2;
     ctx.fillStyle = "rgba(226,236,255,0.8)";
     ctx.font = DESC_FONT;
-    descLines.forEach((l, i) => ctx.fillText(l, 8, DESC_START + i * DESC_STEP));
+    descLines.forEach((l, i) => ctx.fillText(l, cx, DESC_START + i * DESC_STEP));
   }
 
   const tex = new THREE.CanvasTexture(c);
