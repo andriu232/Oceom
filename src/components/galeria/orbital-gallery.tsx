@@ -60,7 +60,7 @@ interface Ctl {
 const RADIUS = 11; // radio fijo: el panel del frente queda grande y cercano
 const PANEL_W = 6.4;
 const PANEL_H = 4.0;
-const STEP = 0.82; // paso angular fijo entre paneles (~47°) → gaps grandes
+const STEP = 0.98; // paso angular fijo entre paneles (~56°) → gaps grandes
 const FOCUS_DIST = 4.0; // distancia final del panel enfocado a la cámara
 const FOV = 48;
 
@@ -111,13 +111,6 @@ function makePanelMaterial(map: THREE.Texture) {
   mat.customProgramCacheKey = () => "oceom-orbital-panel";
   return mat;
 }
-
-const wrapAngle = (a: number) => {
-  let x = a % (Math.PI * 2);
-  if (x > Math.PI) x -= Math.PI * 2;
-  if (x < -Math.PI) x += Math.PI * 2;
-  return x;
-};
 
 /* ── Panel ── */
 
@@ -199,10 +192,17 @@ function Panel({
     const m = mesh.current;
     if (!g || !m) return;
 
-    const a = wrapAngle(angle + c.rot);
+    // Ángulo CRUDO (sin envolver): es un riel, no un anillo. Los paneles
+    // lejanos quedan a los lados/atrás y se ocultan — nunca reaparecen al
+    // frente dando la vuelta.
+    const a = angle + c.rot;
     const vis = Math.max(0, Math.min(1, 1 - Math.abs(a) / (Math.PI / 2)));
     const focused = c.focusKey === item.key;
     const p = focused ? c.focusP : 0;
+
+    // Fuera del arco visible: ocultar y no seguir calculando.
+    g.visible = vis > 0.001 || p > 0.001;
+    if (!g.visible) return;
 
     // Posición en el anillo (o viajando hacia la cámara si está enfocado).
     // El panel del frente se centra (yOff→0); los laterales conservan su
