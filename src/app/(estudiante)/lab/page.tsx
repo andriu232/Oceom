@@ -3,7 +3,6 @@ import { FlaskConical, Sparkles, Gem, Shell, Lock, Play } from "lucide-react";
 import { requireStudentArea, isMentor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LAB_WORLDS, travelerForXp } from "@/config/lab";
-import { LabOrbit } from "@/components/galeria/lab-orbit";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -91,16 +90,6 @@ export default async function LabPage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Órbita de mundos (galería 3D) */}
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Orbita los mundos
-        </h2>
-        <LabOrbit
-          worlds={LAB_WORLDS.map((w) => ({ n: w.n, name: w.name, objetivo: w.objetivo }))}
-        />
       </section>
 
       {/* Mapa de mundos */}

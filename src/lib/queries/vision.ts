@@ -35,6 +35,24 @@ export function normalizeGoals(raw: unknown): VisionGoal[] {
     .filter((g): g is VisionGoal => g !== null);
 }
 
+export interface VisionImage {
+  id: string;
+  area: string;
+  url: string;
+}
+
+/** Imágenes del vision board del estudiante (collage), más recientes primero. */
+export async function getVisionImages(studentId: string): Promise<VisionImage[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("vision_images")
+    .select("id, area, url")
+    .eq("student_id", studentId)
+    .order("sort", { ascending: true })
+    .order("created_at", { ascending: false });
+  return (data ?? []) as VisionImage[];
+}
+
 /** Carga el tablero de visión activo del estudiante (sin crearlo). */
 export async function getVisionBoard(studentId: string): Promise<VisionBoard> {
   const supabase = await createClient();
