@@ -208,9 +208,10 @@ function Panel({
     if (!g.visible) return;
 
     // Riel puramente horizontal: los paneles viven en una sola fila (sin
-    // dispersión vertical). Se bajan un poco para dejar aire arriba al
-    // título + descripción que flotan sobre el panel.
-    const yBase = -0.9;
+    // dispersión vertical). Se bajan (sin achicarse) para dejar aire arriba al
+    // título + descripción que flotan sobre el panel — el panel sigue igual de
+    // grande y protagonista.
+    const yBase = -0.6;
     const rx = Math.sin(a) * RADIUS;
     const rz = -Math.cos(a) * RADIUS;
     if (p > 0.001) {
@@ -231,7 +232,7 @@ function Panel({
     }
     const mul = p > 0.001 ? 1 : item.sizeMul ?? 1;
     // Curva de presencia marcada: el frente domina, los lados recogen.
-    const target = (0.5 + 0.85 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
+    const target = (0.55 + 1.0 * vis * vis) * (hover ? 1.03 : 1) * fill * mul;
     const s = m.scale.x + (target - m.scale.x) * 0.12;
     m.scale.set(s, s, s);
 
