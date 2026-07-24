@@ -92,7 +92,7 @@ export const studentGroups: NavGroup[] = [
     label: "Mi cuenta",
     items: [
       { label: "Mi Evolución", href: "/mi-evolucion", icon: "trending" },
-      { label: "Tienda", href: "/tienda", icon: "store", hidden: true },
+      { label: "Tienda", href: "/tienda", icon: "store" },
       { label: "Membresía", href: "/membresia", icon: "membership", hidden: true },
       { label: "Referidos", href: "/referidos", icon: "gift" },
       { label: "Mi Portal", href: "/mi-portal", icon: "user", primary: true, short: "Portal" },
@@ -112,6 +112,7 @@ export const adminGroups: NavGroup[] = [
       { label: "Programas", href: "/programas", icon: "library", primary: true, short: "Rutas" },
       { label: "Biblioteca", href: "/biblioteca-admin", icon: "book" },
       { label: "Galería Astral", href: "/galeria-admin", icon: "orbit" },
+      { label: "Tienda", href: "/tienda-admin", icon: "store" },
       { label: "Entregas", href: "/entregas", icon: "clipboard" },
       { label: "Agenda", href: "/agenda", icon: "calendar", primary: true, short: "Agenda" },
       { label: "Círculos", href: "/circulos-admin", icon: "radio", primary: true, short: "Círculos" },
