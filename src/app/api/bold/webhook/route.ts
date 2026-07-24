@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyBoldWebhook, type BoldWebhookEvent } from "@/lib/bold";
-import { awardReferralCommissions } from "@/lib/referrals/queries";
+import { markOrderPaidAndFulfill } from "@/lib/store/fulfill";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,59 +63,6 @@ export async function POST(req: NextRequest) {
   // Idempotencia: si ya se cumplió, no repetir.
   if (order.fulfilled) return NextResponse.json({ ok: true, already: true });
 
-  await svc
-    .from("store_orders")
-    .update({
-      status: "paid",
-      paid_at: new Date().toISOString(),
-      bold_payment_id: event.data?.payment_id ?? null,
-    })
-    .eq("id", order.id);
-
-  // ── Entrega según el tipo de producto ──
-  try {
-    if (order.product_kind === "program" && order.program_id) {
-      await svc
-        .from("enrollments")
-        .upsert(
-          { student_id: order.buyer_id, program_id: order.program_id, status: "active" },
-          { onConflict: "student_id,program_id", ignoreDuplicates: true },
-        );
-    } else if (order.product_kind === "membership" && order.membership_days) {
-      const { data: current } = await svc
-        .from("memberships")
-        .select("active_until")
-        .eq("student_id", order.buyer_id)
-        .maybeSingle();
-      const base =
-        current?.active_until && new Date(current.active_until) > new Date()
-          ? new Date(current.active_until)
-          : new Date();
-      base.setDate(base.getDate() + order.membership_days);
-      await svc
-        .from("memberships")
-        .upsert(
-          { student_id: order.buyer_id, active_until: base.toISOString() },
-          { onConflict: "student_id" },
-        );
-    }
-    // sesiones / packs: sin entrega automática (la mentora coordina).
-  } catch (e) {
-    console.error("[bold webhook] entrega", e);
-  }
-
-  // ── Comisiones de referido ──
-  try {
-    await awardReferralCommissions({
-      sourceUserId: order.buyer_id,
-      sourceType: "purchase",
-      sourceRef: order.reference,
-      sourceAmountCents: order.amount_cop,
-    });
-  } catch (e) {
-    console.error("[bold webhook] comisiones", e);
-  }
-
-  await svc.from("store_orders").update({ fulfilled: true }).eq("id", order.id);
+  await markOrderPaidAndFulfill(order, event.data?.payment_id ?? null);
   return NextResponse.json({ ok: true });
 }

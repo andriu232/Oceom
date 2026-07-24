@@ -9,7 +9,9 @@ import {
   boldApiKey,
   boldIntegritySignature,
   newOrderReference,
+  getBoldPaymentStatus,
 } from "@/lib/bold";
+import { markOrderPaidAndFulfill, type FulfillableOrder } from "@/lib/store/fulfill";
 
 /* ============================================================
    Acciones de la Tienda.
@@ -210,4 +212,35 @@ export async function startCheckoutAction(productId: string): Promise<CheckoutPa
     description: String(product.title).slice(0, 100),
     redirectionUrl: `${origin}/tienda/resultado`,
   };
+}
+
+/** Verificación ACTIVA del pago: consulta el estado en Bold y, si está
+ *  aprobado, marca la orden pagada y la cumple (red de seguridad frente a
+ *  webhooks que fallan o a PSE que tarda en confirmar). */
+export async function verifyOrderPaymentAction(
+  reference: string,
+): Promise<{ status: "paid" | "pending" | "rejected" | "not_found" }> {
+  const profile = await requireStudentArea();
+  const supabase = await createClient();
+  const { data: order } = await supabase
+    .from("store_orders")
+    .select(
+      "id, buyer_id, product_kind, program_id, membership_days, amount_cop, reference, status, fulfilled",
+    )
+    .eq("reference", reference)
+    .eq("buyer_id", profile.id)
+    .maybeSingle();
+  if (!order) return { status: "not_found" };
+  if (order.status === "paid") return { status: "paid" };
+
+  const bold = await getBoldPaymentStatus(reference);
+  if (bold?.status === "APPROVED") {
+    await markOrderPaidAndFulfill(order as FulfillableOrder, bold.transactionId ?? null);
+    return { status: "paid" };
+  }
+  if (bold && ["REJECTED", "FAILED", "VOIDED"].includes(bold.status)) {
+    await supabase.from("store_orders").update({ status: "rejected" }).eq("id", order.id);
+    return { status: "rejected" };
+  }
+  return { status: "pending" };
 }

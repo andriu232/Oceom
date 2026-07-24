@@ -3,7 +3,7 @@ import { CheckCircle2, Clock, XCircle, ArrowRight } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { getOrderByReference } from "@/lib/queries/store";
 import { formatCop } from "@/config/store";
-import { AutoRefresh } from "@/components/store/auto-refresh";
+import { VerifyPayment } from "@/components/store/verify-payment";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Resultado de tu pago · OCEOM" };
@@ -28,7 +28,7 @@ export default async function ResultadoPage({
 
   return (
     <div className="mx-auto max-w-lg py-8">
-      {pending && <AutoRefresh />}
+      {pending && reference && <VerifyPayment reference={reference} />}
       <div className="glass rounded-2xl p-8 text-center">
         {paid ? (
           <>

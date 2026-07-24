@@ -50,6 +50,28 @@ export function verifyBoldWebhook(rawBody: string, signatureHeader: string | nul
   }
 }
 
+/** Consulta ACTIVA del estado de un pago en Bold por referencia (data-order-id).
+ *  Devuelve payment_status: APPROVED | REJECTED | FAILED | VOIDED | PENDING |
+ *  PROCESSING | NO_TRANSACTION_FOUND, o null si falla la consulta. */
+export async function getBoldPaymentStatus(
+  reference: string,
+): Promise<{ status: string; transactionId?: string } | null> {
+  const apiKey = boldApiKey();
+  if (!apiKey) return null;
+  try {
+    const r = await fetch(
+      `https://payments.api.bold.co/v2/payment-voucher/${encodeURIComponent(reference)}`,
+      { headers: { Authorization: `x-api-key ${apiKey}` }, cache: "no-store" },
+    );
+    if (!r.ok) return null;
+    const j = (await r.json()) as { payment_status?: string; transaction_id?: string };
+    if (!j.payment_status) return null;
+    return { status: j.payment_status, transactionId: j.transaction_id };
+  } catch {
+    return null;
+  }
+}
+
 /** Referencia única para una orden (data-order-id de Bold, ≤ 60 chars). */
 export function newOrderReference(slug: string): string {
   const clean = slug.replace(/[^a-zA-Z0-9]/g, "").slice(0, 16) || "prod";
