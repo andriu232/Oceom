@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { MessageCircle, Pin } from "lucide-react";
+import { MessageCircle, Pin, Sparkles } from "lucide-react";
 import type { CommunityPost } from "@/lib/community/types";
 import { isFounder } from "@/lib/community/types";
 import { Avatar } from "./avatar";
 import { TimeAgo } from "./time-ago";
 import { LikeButton } from "./like-button";
 import { DeletePostButton, PinButton } from "./post-actions";
+import { WeeklyQuestionAnalysis } from "./weekly-question-analysis";
 
 export function PostCard({
   post,
@@ -43,6 +44,11 @@ export function PostCard({
             <TimeAgo iso={post.created_at} />
           </p>
         </div>
+        {post.kind === "pregunta_semanal" && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-ocean-violet/15 px-2 py-0.5 text-[0.65rem] font-semibold text-ocean-violet">
+            <Sparkles className="size-3" /> Pregunta semanal
+          </span>
+        )}
         {post.is_pinned && (
           <span className="inline-flex items-center gap-1 rounded-full bg-ocean-cyan/12 px-2 py-0.5 text-[0.65rem] font-medium text-ocean-cyan">
             <Pin className="size-3" /> Anclado
@@ -87,6 +93,10 @@ export function PostCard({
           </span>
         )}
       </div>
+
+      {post.kind === "pregunta_semanal" && isFounderViewer && (
+        <WeeklyQuestionAnalysis postId={post.id} />
+      )}
     </article>
   );
 }

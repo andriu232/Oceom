@@ -11,6 +11,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { SpacesSidebar } from "@/components/community/spaces-sidebar";
 import { PostComposer } from "@/components/community/post-composer";
+import { WeeklyQuestionComposer } from "@/components/community/weekly-question-composer";
 import { PostCard } from "@/components/community/post-card";
 import { RealtimeRefresh } from "@/components/community/realtime-refresh";
 import { Avatar } from "@/components/community/avatar";
@@ -48,14 +49,15 @@ export default async function SpaceFeedPage({
     <div className="space-y-6">
       <RealtimeRefresh spaceId={space.id} />
       <PageHeader
-        title={space.name}
-        subtitle={space.description ?? "Conversación de la comunidad."}
+        title="Comunidad"
+        subtitle="Círculo de inteligencia colectiva"
       />
 
       <div className="grid gap-6 lg:grid-cols-[220px_1fr_260px]">
         <SpacesSidebar spaces={spaces} currentSlug={space.slug} />
 
         <div>
+          {founder && <WeeklyQuestionComposer spaceId={space.id} />}
           <PostComposer
             spaceId={space.id}
             authorName={profile.full_name}

@@ -10,6 +10,7 @@ import { Logo } from "@/components/brand/logo";
 import { ModeSwitcher } from "@/components/shared/mode-switcher";
 import { ICONS } from "@/components/shared/nav-icons";
 import { LiveNavBadge } from "@/components/circulos/live-nav-badge";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { signOutAction } from "@/lib/actions/auth";
 import type { NavGroup } from "@/config/navigation";
 import type { ViewMode } from "@/lib/auth/mode";
@@ -76,6 +77,11 @@ export function AppSidebar({
           <Link href={homeHref} onClick={() => setOpen(false)} className="relative">
             <Logo />
           </Link>
+        </div>
+
+        {/* Notificaciones */}
+        <div className="mt-2 px-1">
+          <NotificationBell />
         </div>
 
         {/* Switcher de modo (solo mentora/super admin) */}

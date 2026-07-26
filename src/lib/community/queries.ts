@@ -61,6 +61,7 @@ type PostRow = {
   body: string;
   image_url: string | null;
   is_pinned: boolean;
+  kind: string;
   created_at: string;
 };
 
@@ -118,6 +119,7 @@ async function hydratePosts(
     body: p.body,
     image_url: p.image_url,
     is_pinned: p.is_pinned,
+    kind: p.kind,
     created_at: p.created_at,
     author: authorFrom(profMap.get(p.author_id), p.author_id),
     likes_count: likeCount.get(p.id) ?? 0,
@@ -134,7 +136,7 @@ export async function listSpacePosts(
   const me = (await supabase.auth.getUser()).data.user?.id ?? null;
   const { data: posts } = await supabase
     .from("community_posts")
-    .select("id, space_id, author_id, body, image_url, is_pinned, created_at")
+    .select("id, space_id, author_id, body, image_url, is_pinned, kind, created_at")
     .eq("space_id", spaceId)
     .eq("is_deleted", false)
     .order("is_pinned", { ascending: false })
@@ -150,7 +152,7 @@ export async function getPostById(
   const me = (await supabase.auth.getUser()).data.user?.id ?? null;
   const { data: post } = await supabase
     .from("community_posts")
-    .select("id, space_id, author_id, body, image_url, is_pinned, created_at")
+    .select("id, space_id, author_id, body, image_url, is_pinned, kind, created_at")
     .eq("id", postId)
     .eq("is_deleted", false)
     .maybeSingle();

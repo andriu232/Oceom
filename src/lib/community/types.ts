@@ -24,6 +24,8 @@ export interface CommunityPost {
   body: string;
   image_url: string | null;
   is_pinned: boolean;
+  /** 'post' normal | 'pregunta_semanal' (la publica la mentora). */
+  kind: string;
   created_at: string;
   author: CommunityAuthor;
   likes_count: number;
