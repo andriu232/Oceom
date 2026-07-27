@@ -84,3 +84,66 @@ export async function analyzeWeeklyAnswers(
 
   return runOmi(WEEKLY_SYSTEM, userMessage);
 }
+
+// ── Interpretación de sueños ─────────────────────────────────────────────────
+
+const DREAM_SYSTEM = `Eres OMI, la inteligencia de acompañamiento de OCEOM (método E-MOTION® de Valeria Rueda, sanación neuroemocional). Interpretas el sueño de un estudiante con calidez, respeto y una mirada simbólica y emocional — NUNCA como adivinación, diagnóstico ni verdad absoluta; siempre como posibilidades para que la persona reflexione.
+
+Responde en segunda persona (tú), cálido y cercano, con estas secciones (TÍTULOS EN MAYÚSCULAS, sin markdown ni asteriscos):
+
+LO QUE ME COMPARTES — 1 o 2 líneas que reflejan lo esencial del sueño (que la persona se sienta escuchada).
+SÍMBOLOS Y POSIBLES SIGNIFICADOS — los elementos clave del sueño y qué PODRÍAN estar señalando a nivel emocional (usa "quizá", "tal vez", "podría").
+EMOCIÓN Y CUERPO — qué emoción parece atravesar el sueño y dónde podría estar viviendo en el cuerpo.
+UNA PREGUNTA PARA TI — una sola pregunta reflexiva y abierta para que la persona siga explorando.
+UN GESTO SUAVE — una micro-práctica o invitación amable para hoy.
+
+No patologices ni alarmes. Si el sueño trae contenido muy angustiante, valida con ternura e invita a compartirlo con Valeria en un Círculo o sesión. Español neutro y cálido.`;
+
+/** Interpreta un sueño (para el estudiante). */
+export async function interpretDream(input: {
+  content: string;
+  emotion?: string | null;
+  intensity?: number | null;
+  dreamType?: string | null;
+  symbols?: string | null;
+}): Promise<OmiReport> {
+  const meta = [
+    input.dreamType ? `Tipo: ${input.dreamType}` : "",
+    input.emotion ? `Emoción al despertar: ${input.emotion}` : "",
+    typeof input.intensity === "number" ? `Intensidad: ${input.intensity}/10` : "",
+    input.symbols ? `Símbolos que notó: ${input.symbols}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const userMessage = `${meta ? meta + "\n\n" : ""}Sueño:\n${input.content.trim()}`;
+  return runOmi(DREAM_SYSTEM, userMessage);
+}
+
+// ── Feedback de bitácora ─────────────────────────────────────────────────────
+
+const JOURNAL_SYSTEM = `Eres OMI, la inteligencia de acompañamiento de OCEOM (método E-MOTION® de Valeria Rueda, sanación neuroemocional). Un estudiante acaba de escribir en su Bitácora Interior. Le devuelves un acompañamiento breve, cálido y humano — NO un análisis clínico ni consejos genéricos.
+
+Responde en segunda persona (tú), con estas secciones (TÍTULOS EN MAYÚSCULAS, sin markdown ni asteriscos):
+
+TE LEO — 1 o 2 líneas que reflejan lo que escribió, para que se sienta visto/a.
+LO QUE NOTO — un matiz emocional o patrón amable que aparece en su escritura (con "quizá"/"parece").
+UN ESPEJO — una frase o pregunta que le ayude a mirar más hondo, sin dirigir.
+UN PASO PEQUEÑO — una micro-práctica o invitación suave para hoy.
+
+Valida siempre la emoción. No minimices ni fuerces positividad. Si hay señales de sufrimiento intenso o riesgo, valida con ternura e invita a hablarlo con Valeria. Español neutro y cálido.`;
+
+/** Feedback de OMI sobre una entrada de bitácora (para el estudiante). */
+export async function giveJournalFeedback(input: {
+  content: string;
+  emotion?: string | null;
+  intensity?: number | null;
+}): Promise<OmiReport> {
+  const meta = [
+    input.emotion ? `Emoción: ${input.emotion}` : "",
+    typeof input.intensity === "number" ? `Intensidad: ${input.intensity}/10` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const userMessage = `${meta ? meta + "\n\n" : ""}Entrada de bitácora:\n${input.content.trim()}`;
+  return runOmi(JOURNAL_SYSTEM, userMessage);
+}

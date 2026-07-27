@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { EMOTION_BY_KEY } from "@/config/bitacora";
+import { giveJournalFeedback } from "@/lib/omi/analyze";
 
 export type BitacoraState = { ok?: boolean; error?: string } | undefined;
 
@@ -54,6 +55,41 @@ export async function createEntryAction(
 
   revalidatePath("/bitacora");
   return { ok: true };
+}
+
+/** OMI da feedback sobre una entrada de bitácora y lo guarda en la entrada. */
+export async function journalFeedbackAction(
+  id: string,
+): Promise<{ ok: boolean; text?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Tu sesión expiró." };
+
+  const { data: entry } = await supabase
+    .from("journal_entries")
+    .select("content, emotion, intensity")
+    .eq("id", id)
+    .eq("student_id", user.id)
+    .maybeSingle();
+  if (!entry) return { ok: false, error: "No encontramos esa entrada." };
+
+  const res = await giveJournalFeedback({
+    content: entry.content as string,
+    emotion: entry.emotion as string | null,
+    intensity: entry.intensity as number | null,
+  });
+  if (!res.ok) return { ok: false, error: res.message };
+
+  await supabase
+    .from("journal_entries")
+    .update({ omi_feedback: res.report, omi_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("student_id", user.id);
+
+  revalidatePath("/bitacora");
+  return { ok: true, text: res.report };
 }
 
 /** Borra una entrada del usuario actual (RLS garantiza que sea suya). */
