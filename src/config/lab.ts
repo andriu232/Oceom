@@ -85,6 +85,13 @@ export const LAB_WORLDS: LabWorld[] = [
         beta: true,
         entrena: ["imaginación", "descripción"],
       },
+      {
+        key: "telepatia",
+        name: "Cartas de Telepatía",
+        desc: "Una carta oculta con una figura. Siente cuál es antes de revelarla. Al final ves tu acierto frente al azar.",
+        href: "/lab/telepatia",
+        entrena: ["intuición", "percepción extrasensorial"],
+      },
     ],
   },
   {

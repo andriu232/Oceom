@@ -43,6 +43,11 @@ function rewardFor(gameKey: string, metrics: Record<string, unknown>) {
       const ciclos = clamp(metrics.ciclos, 1, 10);
       return { xp: ciclos * 8, crystals: 1, pearls: 1 };
     }
+    case "telepatia": {
+      const aciertos = clamp(metrics.aciertos, 0, 7);
+      // Siempre premia el intento; más recompensa al superar el azar.
+      return { xp: 20 + aciertos * 12, crystals: aciertos, pearls: aciertos >= 3 ? 1 : 0 };
+    }
     case "ola-intuitiva":
       return { xp: 40, crystals: 2, pearls: 0 };
     case "simbologia":
