@@ -14,11 +14,15 @@ export interface OmiReport {
   message?: string;
 }
 
-/** Ejecuta una consulta puntual a OMI y devuelve el texto. */
+/** Ejecuta una consulta puntual a OMI y devuelve el texto.
+ *  Nota: Kimi K2.6 es un modelo de razonamiento (emite un bloque `thinking`
+ *  antes del `text`), y esos tokens cuentan para max_tokens. Por eso el límite
+ *  es holgado: si es muy bajo, gasta el presupuesto "pensando" y el texto final
+ *  sale vacío/truncado. */
 async function runOmi(
   system: string,
   userMessage: string,
-  maxTokens = 1200,
+  maxTokens = 4000,
 ): Promise<OmiReport> {
   const provider = resolveProvider();
   if (!provider)
