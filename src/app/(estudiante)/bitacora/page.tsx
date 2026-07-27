@@ -3,6 +3,7 @@ import { requireStudentArea } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
 import { EntryComposer } from "@/components/bitacora/entry-composer";
 import { NotebookTabs } from "@/components/bitacora/notebook-tabs";
+import { OmiEntryPanel } from "@/components/bitacora/omi-entry-panel";
 import { deleteEntryAction } from "@/lib/actions/bitacora";
 import { getBitacora } from "@/lib/queries/bitacora";
 import { EMOTION_BY_KEY, TONE_STYLE, emotionLabel } from "@/config/bitacora";
@@ -169,6 +170,11 @@ export default async function BitacoraPage() {
                     </p>
                   )}
                   <p className="mt-3 text-xs text-muted/70">{fmtDate(e.created_at)}</p>
+                  <OmiEntryPanel
+                    kind="journal"
+                    entryId={e.id}
+                    initial={e.omi_feedback}
+                  />
                 </article>
               );
             })}

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotebookTabs } from "@/components/bitacora/notebook-tabs";
 import { DreamComposer } from "@/components/bitacora/dream-composer";
+import { OmiEntryPanel } from "@/components/bitacora/omi-entry-panel";
 import { deleteDreamAction } from "@/lib/actions/suenos";
 import { EMOTION_BY_KEY, TONE_STYLE } from "@/config/bitacora";
 import { DREAM_TYPE_BY_KEY } from "@/config/suenos";
@@ -20,6 +21,7 @@ interface DreamRow {
   intensity: number | null;
   dream_type: string;
   symbols: string | null;
+  omi_interpretation: string | null;
   created_at: string;
 }
 
@@ -36,7 +38,7 @@ export default async function SuenosPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("dream_entries")
-    .select("id, title, content, emotion, intensity, dream_type, symbols, created_at")
+    .select("id, title, content, emotion, intensity, dream_type, symbols, omi_interpretation, created_at")
     .eq("student_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -153,6 +155,11 @@ export default async function SuenosPage() {
                     </p>
                   )}
                   <p className="mt-3 text-xs text-muted/70">{fmtDate(d.created_at)}</p>
+                  <OmiEntryPanel
+                    kind="dream"
+                    entryId={d.id}
+                    initial={d.omi_interpretation}
+                  />
                 </article>
               );
             })}

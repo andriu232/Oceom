@@ -8,6 +8,7 @@ export interface JournalEntry {
   intensity: number | null;
   is_insight: boolean;
   is_private: boolean;
+  omi_feedback: string | null;
   created_at: string;
 }
 
@@ -30,7 +31,7 @@ export async function getBitacora(studentId: string, limit = 60): Promise<Bitaco
   const supabase = await createClient();
   const { data } = await supabase
     .from("journal_entries")
-    .select("id, title, content, emotion, intensity, is_insight, is_private, created_at")
+    .select("id, title, content, emotion, intensity, is_insight, is_private, omi_feedback, created_at")
     .eq("student_id", studentId)
     .order("created_at", { ascending: false })
     .limit(limit);
