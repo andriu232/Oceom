@@ -12,6 +12,7 @@ import {
 import { requireRole } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAdminMetrics } from "@/lib/queries/metrics";
+import { EmotionalMetrics } from "@/components/admin/emotional-metrics";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Métricas · OCEOM" };
@@ -262,6 +263,9 @@ export default async function MetricasPage() {
           </Panel>
         </div>
       </section>
+
+      {/* Bienestar emocional (Sueños + Bitácora + OMI) */}
+      <EmotionalMetrics />
 
       {/* Próximas sesiones */}
       <Panel
