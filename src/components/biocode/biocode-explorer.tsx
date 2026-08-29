@@ -105,7 +105,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [door, setDoor] = useState<string | null>(null);
-  const [showBody, setShowBody] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -227,30 +227,17 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
           </div>
         </div>
 
-        {showBody && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground">
-                  Tu cuerpo
-                </h2>
-                <p className="mt-0.5 text-sm text-muted">
-                  Gira, acerca y toca una zona para explorarla.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowBody(false);
-                  setDoor(null);
-                }}
-                className="text-xs text-muted underline transition hover:text-ocean-violet"
-              >
-                Cerrar
-              </button>
-            </div>
-            <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
+        <div ref={bodyRef} className="space-y-3">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Tu cuerpo
+            </h2>
+            <p className="mt-0.5 text-sm text-muted">
+              Gíralo, acércate y toca una zona para explorarla.
+            </p>
           </div>
-        )}
+          <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
+        </div>
 
         {/* Las 7 puertas de entrada */}
         <div>
@@ -268,7 +255,8 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                   key={d.key}
                   onClick={() => {
                     setDoor(d.key);
-                    if (d.key === "cuerpo") setShowBody(true);
+                    if (d.key === "cuerpo")
+                      bodyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                     else send(d.question, d.key);
                   }}
                   className="glass group flex items-start gap-3 rounded-2xl p-4 text-left transition hover:border-ocean-violet/40"

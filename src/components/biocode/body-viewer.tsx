@@ -38,28 +38,40 @@ export function BodyViewer({
   const [selected, setSelected] = useState<Structure | null>(null);
   const controller = useVanatomeController();
   const mounted = useRef(true);
+  const atlasRef = useRef(false);
 
   const catalogUrl = process.env.NEXT_PUBLIC_ANATOMY_CATALOG_URL;
 
   useEffect(() => {
     mounted.current = true;
-    if (!catalogUrl) {
-      setError("Falta configurar la ruta del atlas anatómico.");
-      return;
-    }
+    if (!catalogUrl) return;
+    const timeout = setTimeout(() => {
+      if (mounted.current && !atlasRef.current)
+        setError(
+          "El modelo del cuerpo está tardando demasiado. Recarga la página o revisa tu conexión.",
+        );
+    }, 45_000);
+
     const loader = createOfficialHumanAtlas({ catalogUrl });
     loader
       .loadProfile("full-body")
       .then((res: { atlas: VanatomeAtlas }) => {
-        if (mounted.current) setAtlas(res.atlas);
+        if (!mounted.current) return;
+        atlasRef.current = true;
+        setAtlas(res.atlas);
       })
       .catch((e: unknown) => {
         console.error("[biocode] atlas", e);
         if (mounted.current)
-          setError("No pude cargar el modelo del cuerpo. Revisa tu conexión.");
+          setError(
+            `No pude cargar el modelo del cuerpo: ${
+              e instanceof Error ? e.message : "error desconocido"
+            }`,
+          );
       });
     return () => {
       mounted.current = false;
+      clearTimeout(timeout);
     };
   }, [catalogUrl]);
 
@@ -72,12 +84,21 @@ export function BodyViewer({
   }, [atlas]);
 
   const nodeSlug = selected ? resolveNodeSlug(selected.id, selected.system) : null;
+  const shownError =
+    error ??
+    (catalogUrl ? null : "Falta configurar la ruta del atlas anatómico.");
 
-  if (error) {
+  if (shownError) {
     return (
       <div className="glass flex h-[420px] flex-col items-center justify-center gap-3 rounded-2xl p-6 text-center">
         <AlertTriangle className="size-6 text-danger" />
-        <p className="text-sm text-muted">{error}</p>
+        <p className="max-w-md text-sm text-muted">{shownError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="h-9 rounded-xl border border-card-border px-4 text-sm text-foreground transition hover:border-ocean-violet/40"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -97,6 +118,12 @@ export function BodyViewer({
           displayMode="ghost"
           className="h-[min(60vh,560px)] w-full"
           ariaLabel="Cuerpo interactivo de BIOCODE"
+          onError={(err: { message?: string }) => {
+            console.error("[biocode] visor", err);
+            setError(
+              `El visor 3D no pudo iniciar: ${err?.message ?? "revisa la consola"}`,
+            );
+          }}
           onLoadProgress={(p: { loaded?: number; total?: number }) => {
             if (p.total) setProgress(Math.round(((p.loaded ?? 0) / p.total) * 100));
           }}
