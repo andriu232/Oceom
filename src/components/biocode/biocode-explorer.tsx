@@ -182,12 +182,13 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   if (!started) {
     return (
       <div className="mx-auto w-full max-w-[1000px] space-y-8">
-        {/* El cuerpo es la experiencia principal: primero y a pantalla ancha. */}
-        <div ref={bodyRef} className="space-y-3">
-          <p className="text-sm text-muted">
+        {/* El cuerpo es la experiencia principal: sin marco, flotando sobre
+            el fondo del santuario. */}
+        <div ref={bodyRef} className="-mx-2 sm:-mx-6">
+          <p className="px-2 text-center text-sm text-muted sm:px-6">
             Hola, {firstName}. Tu cuerpo no es un enemigo que combatir: es un
             territorio que puedes aprender a escuchar. Gíralo, acércate y toca
-            una zona para empezar.
+            una zona para verla por dentro.
           </p>
           <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
         </div>
