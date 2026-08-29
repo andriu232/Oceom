@@ -1,6 +1,5 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { resolveProvider } from "@/lib/omi/provider";
+import { resolveProvider, modelParams, createModelClient } from "@/lib/omi/provider";
 import { EMOTIONS } from "@/config/bitacora";
 
 /* ============================================================
@@ -106,7 +105,7 @@ export async function classifyAndReply(
   const provider = resolveProvider();
   if (!provider) return degraded();
 
-  const client = new Anthropic({ apiKey: provider.apiKey, baseURL: provider.baseURL });
+  const client = createModelClient(provider);
 
   const system = opts.firstName
     ? `${SYSTEM}\n\nLa persona con la que hablas se llama ${opts.firstName}.`
@@ -114,13 +113,10 @@ export async function classifyAndReply(
 
   try {
     const res = await client.messages.create({
-      model: provider.model,
+      ...modelParams(provider),
       max_tokens: 900,
       temperature: 0.6,
       system,
-      // Sin razonamiento: esto corre dentro del webhook y la persona está
-      // mirando el chat. Prima responder rápido sobre analizar hondo.
-      thinking: { type: "disabled" as const },
       messages: [
         ...history.slice(-6).map((t) => ({ role: t.role, content: t.content })),
         { role: "user" as const, content: message },

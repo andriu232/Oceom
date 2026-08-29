@@ -1,6 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { resolveProvider } from "@/lib/omi/provider";
+import {
+  resolveProvider,
+  modelParams,
+  createModelClient,
+  modelErrorMessage,
+} from "@/lib/omi/provider";
 import { getOmiUserContext } from "@/lib/omi/context";
 import { OMI_SYSTEM_PROMPT, buildUserContext } from "@/lib/omi/system-prompt";
 import { retrieveKnowledge, buildKnowledgeBlock } from "@/lib/omi/biblioteca";
@@ -98,10 +102,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const client = new Anthropic({
-    apiKey: provider.apiKey,
-    baseURL: provider.baseURL,
-  });
+  const client = createModelClient(provider);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -116,8 +117,10 @@ export async function POST(req: Request) {
         send("start", { conversationId });
 
         const modelStream = client.messages.stream({
-          model: provider.model,
-          max_tokens: 1024,
+          ...modelParams(provider),
+          // 1024 se quedaba corto cuando la respuesta se alargaba; con el
+          // razonamiento desactivado el gasto real ronda los 300 tokens.
+          max_tokens: 1400,
           temperature: 0.7,
           system: [
             {
@@ -157,10 +160,7 @@ export async function POST(req: Request) {
         send("done", { conversationId });
       } catch (err) {
         console.error("[omi] stream error", err);
-        send("error", {
-          message:
-            "OMI tuvo un problema para responder. Respira un momento e inténtalo de nuevo.",
-        });
+        send("error", { message: modelErrorMessage(err, "OMI") });
       } finally {
         controller.close();
       }

@@ -1,6 +1,10 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
-import { resolveProvider } from "./provider";
+import {
+  resolveProvider,
+  modelParams,
+  createModelClient,
+  modelErrorMessage,
+} from "./provider";
 
 /* ============================================================
    OMI — informes (no streaming). Reusa el mismo provider que el chat
@@ -15,16 +19,17 @@ export interface OmiReport {
 }
 
 /** Ejecuta una consulta puntual a OMI y devuelve el texto.
- *  Kimi K2.6 razona por defecto (emite un bloque `thinking` antes del `text`),
- *  lo que agrega ~30s. Con `fast` desactivamos ese razonamiento → responde ~3x
- *  más rápido (ideal para el feedback de sueños/bitácora, que no necesita análisis
- *  profundo). Sin `fast` se mantiene el razonamiento (p. ej. el informe de la
- *  comunidad, donde conviene detectar patrones y señales de alerta), con un
- *  max_tokens holgado porque el thinking también consume tokens. */
+ *
+ *  Antes había una opción para desactivar el razonamiento de Kimi solo en
+ *  sueños y bitácora, dejándolo activo en el informe semanal "porque conviene
+ *  detectar patrones". Medido, era al revés: razonando, el informe tardaba
+ *  86 s —más que el tiempo máximo de ejecución— y llegaba cortado a la mitad,
+ *  justo por donde va SEÑALES DE ALERTA. Sin razonar sale en 15 s, completo y
+ *  más largo. Ahora no razona nunca; el ajuste vive en `modelParams`. */
 async function runOmi(
   system: string,
   userMessage: string,
-  opts: { fast?: boolean; maxTokens?: number } = {},
+  opts: { maxTokens?: number } = {},
 ): Promise<OmiReport> {
   const provider = resolveProvider();
   if (!provider)
@@ -33,20 +38,17 @@ async function runOmi(
       message: "OMI aún no está configurada (falta la API key del modelo).",
     };
 
-  const client = new Anthropic({
-    apiKey: provider.apiKey,
-    baseURL: provider.baseURL,
-  });
+  const client = createModelClient(provider);
 
-  const maxTokens = opts.maxTokens ?? (opts.fast ? 1200 : 4000);
+  // Sin razonamiento, el informe más largo que se midió gastó 679 tokens.
+  const maxTokens = opts.maxTokens ?? 2000;
   try {
     const msg = await client.messages.create({
-      model: provider.model,
+      ...modelParams(provider),
       max_tokens: maxTokens,
       temperature: 0.4,
       system,
       messages: [{ role: "user", content: userMessage }],
-      ...(opts.fast ? { thinking: { type: "disabled" as const } } : {}),
     });
     const report = msg.content
       .filter((b) => b.type === "text")
@@ -57,7 +59,7 @@ async function runOmi(
     return { ok: true, report };
   } catch (e) {
     console.error("[omi analyze]", e);
-    return { ok: false, message: "OMI no pudo generar el informe. Inténtalo de nuevo." };
+    return { ok: false, message: modelErrorMessage(e, "OMI") };
   }
 }
 
@@ -120,7 +122,7 @@ export async function interpretDream(input: {
     .filter(Boolean)
     .join(" · ");
   const userMessage = `${meta ? meta + "\n\n" : ""}Sueño:\n${input.content.trim()}`;
-  return runOmi(DREAM_SYSTEM, userMessage, { fast: true });
+  return runOmi(DREAM_SYSTEM, userMessage);
 }
 
 // ── Feedback de bitácora ─────────────────────────────────────────────────────
@@ -149,5 +151,5 @@ export async function giveJournalFeedback(input: {
     .filter(Boolean)
     .join(" · ");
   const userMessage = `${meta ? meta + "\n\n" : ""}Entrada de bitácora:\n${input.content.trim()}`;
-  return runOmi(JOURNAL_SYSTEM, userMessage, { fast: true });
+  return runOmi(JOURNAL_SYSTEM, userMessage);
 }
