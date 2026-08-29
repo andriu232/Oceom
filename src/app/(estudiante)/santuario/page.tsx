@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { getStudentRoute } from "@/lib/queries/route";
-import { OceomOrb } from "@/components/brand/oceom-orb";
+import { OceomEnergyOrb } from "@/components/brand/oceom-energy-orb";
 import { OceomButton } from "@/components/ui/oceom-button";
 import { OceomProgressBar } from "@/components/ui/oceom-progress";
 import {
@@ -50,7 +50,7 @@ export default async function SantuarioPage() {
           />
 
           {/* Orbe oceánico flotante */}
-          <OceomOrb className="pointer-events-none absolute -right-10 -top-8 w-52 opacity-90 sm:right-2 sm:top-1/2 sm:w-64 sm:-translate-y-1/2 lg:w-72" />
+          <OceomEnergyOrb className="pointer-events-none absolute -right-20 -top-24 w-64 opacity-45 sm:-right-4 sm:top-1/2 sm:w-[22rem] sm:-translate-y-1/2 sm:opacity-90 lg:w-[25rem]" />
 
           <div className="relative max-w-2xl">
             <SectionLabel>Tu Santuario</SectionLabel>

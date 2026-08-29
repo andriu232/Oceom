@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     // El bridge de Hermes es un servicio Node aparte, con su propio ciclo
     // de vida: no lo cubre la config de Next.
     "hermes-bridge/**",
+    // Fuente registrada de ThreeUI (bundle energy-orb), copiada literalmente y
+    // verificada por SHA-256: no se reformatea ni se corrige, así que tampoco
+    // se linta.
+    "src/shaders/**",
   ]),
 ]);
 
