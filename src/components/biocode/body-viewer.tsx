@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { VanatomeViewer, useVanatomeController } from "@vixotic/vanatome-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  VanatomeViewer,
+  useVanatomeController,
+  getRelatedStructureIds,
+} from "@vixotic/vanatome-react";
 import type { VanatomeAtlas } from "@vixotic/vanatome-react";
+import { _roots } from "@react-three/fiber";
+import type * as THREE from "three";
 import { createOfficialHumanAtlas } from "@vixotic/vanatome-atlas";
 import { Loader2, RotateCcw, AlertTriangle, Undo2 } from "lucide-react";
 import {
   resolveNodeSlug,
   openingMessage,
+  prettyStructureName,
+  NODE_LABELS,
   ATLAS_ATTRIBUTION,
 } from "@/lib/biocode/anatomy-map";
 
@@ -31,14 +39,25 @@ interface Structure {
   parentId?: string;
 }
 
-/** Apariencia: sin pulso en la selección (obliga a repintar cada cuadro). */
+/** Apariencia: sin pulso en la selección (obliga a repintar cada cuadro).
+ *
+ *  El visor enciende las hijas de lo señalado a 0.55 de la intensidad de
+ *  hover, así que señalar el estómago enciende también sus partes. */
 const APPEARANCE = {
   ghostOpacity: 0.26,
   parentContextOpacity: 0.16,
-  selectedEmissiveIntensity: 0.9,
-  hoverEmissiveIntensity: 0.35,
+  selectedEmissiveIntensity: 1.0,
+  hoverEmissiveIntensity: 1.6,
   pulseSelection: false,
 };
+
+/** Violeta saturado para el resaltado. NO es el `--ocean-violet` de la marca
+ *  (#818cf8): ese es un violeta claro y, multiplicado por la intensidad
+ *  emisiva, se satura hacia el blanco — que es justo el problema que se
+ *  quería resolver. Este mantiene el tono al encenderse, y contrasta con el
+ *  cian con que el visor pinta esqueleto y silueta.
+ *  Ver `paintHover`: el color no se puede pasar como prop al visor. */
+const HOVER_COLOR = "#7c3aed";
 
 export function BodyViewer({
   onExplore,
@@ -50,11 +69,14 @@ export function BodyViewer({
   const [progress, setProgress] = useState(0);
   const [modelReady, setModelReady] = useState(false);
   const [selected, setSelected] = useState<Structure | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const controller = useVanatomeController();
   const mounted = useRef(true);
   const loaded = useRef(false);
   const hostRef = useRef<HTMLDivElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef<{ x: number; y: number } | null>(null);
 
   const catalogUrl = process.env.NEXT_PUBLIC_ANATOMY_CATALOG_URL;
 
@@ -110,6 +132,22 @@ export function BodyViewer({
     return map;
   }, [atlas]);
 
+  /* Cuerpo andrógino. El atlas es un cuerpo masculino —su sistema
+     reproductivo son 21 estructuras, todas masculinas— y no existe versión
+     femenina (Z-Anatomy parte de BodyParts3D, que es un conjunto de datos
+     masculino). Ocultar ese sistema deja una figura neutra, que es lo
+     honesto mientras no haya un modelo femenino: nadie tiene que verse
+     representado en un cuerpo que no es el suyo para poder explorar su
+     espalda. No se pierde nada tocable: la zona pélvica no tiene nodo
+     anclado, y `ciclo-hormonal` se busca por texto. */
+  const hiddenIds = useMemo(
+    () =>
+      (atlas?.structures ?? [])
+        .filter((s) => (s as Structure & { system?: string }).system === "reproductive")
+        .map((s) => s.id),
+    [atlas],
+  );
+
   const nodeSlug = selected ? resolveNodeSlug(selected.id, selected.system) : null;
   const shownError =
     error ?? (catalogUrl ? null : "Falta configurar la ruta del atlas anatómico.");
@@ -142,6 +180,90 @@ export function BodyViewer({
     setSelected(null);
   }
 
+  /** Lo que hay bajo el cursor. El visor solo avisa de estructuras
+   *  seleccionables, así que el `body-shell` (la silueta exterior) no
+   *  aparece por aquí. */
+  const hovered = hoveredId ? (index.get(hoveredId) ?? null) : null;
+  const hoveredSlug = hovered ? resolveNodeSlug(hovered.id, hovered.system) : null;
+  const hoveredZone = hoveredSlug ? NODE_LABELS[hoveredSlug] : null;
+
+  /* ----------------------------------------------------------
+     Resaltado en violeta.
+
+     El visor pinta el hover haciendo `emissive.copy(material.color)`, y las
+     mallas de Z-Anatomy son de color hueso: el resaltado salía blanco sobre
+     un cuerpo ya blanquecino. El paquete no expone un color de hover (0.1.6
+     es la última versión), así que se repinta la emisiva sobre la escena ya
+     montada, un cuadro después de que el visor la escriba.
+
+     No hay que deshacerlo: el visor recorre TODAS las mallas cada vez que
+     cambia el hover, así que al salir de una estructura él mismo la devuelve
+     a su color. Si algún día `_roots` deja de existir, esto no rompe nada:
+     el resaltado vuelve a ser blanco.
+     ---------------------------------------------------------- */
+  useEffect(() => {
+    if (!hoveredId || !atlas) return;
+    const family = getRelatedStructureIds(atlas.structures, hoveredId);
+
+    const paintHover = () => {
+      const canvas = hostRef.current?.querySelector("canvas");
+      if (!canvas) return;
+      const scene = _roots.get(canvas)?.store.getState().scene;
+      if (!scene) return;
+
+      scene.traverse((object: THREE.Object3D) => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.isMesh) return;
+
+        // El id anatómico puede estar en la malla o en algún ancestro.
+        let node: THREE.Object3D | null = object;
+        let id: string | undefined;
+        while (node && !id) {
+          const own = node.userData?.anatomyId;
+          if (typeof own === "string") id = own;
+          node = node.parent;
+        }
+        if (!id || !family.has(id)) return;
+
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const material of materials) {
+          const emissive = (material as THREE.MeshStandardMaterial).emissive;
+          if (!emissive) continue;
+          emissive.set(HOVER_COLOR);
+          material.needsUpdate = true;
+        }
+      });
+    };
+
+    // Se repinta tres veces seguidas y con temporizador, no con
+    // requestAnimationFrame: el visor escribe la emisiva en su propio efecto,
+    // dentro del árbol del canvas, y ese commit no está sincronizado con
+    // este. Un solo repintado se perdía cuando el suyo llegaba después.
+    const timers = [0, 60, 160].map((ms) => window.setTimeout(paintHover, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [hoveredId, atlas]);
+
+  /** La etiqueta se mueve escribiendo el transform directamente: seguir al
+   *  cursor con estado de React repinta el árbol en cada pixel. */
+  function moveTip() {
+    const tip = tipRef.current;
+    const host = hostRef.current;
+    const point = pointerRef.current;
+    if (!tip || !host || !point) return;
+    const box = host.getBoundingClientRect();
+    const x = point.x - box.left;
+    const y = point.y - box.top;
+    const left = Math.min(Math.max(8, x + 16), Math.max(8, box.width - tip.offsetWidth - 8));
+    const top = Math.min(Math.max(8, y + 18), Math.max(8, box.height - tip.offsetHeight - 8));
+    tip.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  }
+
+  /* Al aparecer hay que colocarla ya: el movimiento que la dispara ocurre
+     antes de que exista en el DOM, y sin esto nace en la esquina. */
+  useLayoutEffect(() => {
+    if (hovered) moveTip();
+  });
+
   const shell = "h-[min(82vh,860px)] min-h-[28rem] w-full";
 
   if (shownError) {
@@ -160,27 +282,39 @@ export function BodyViewer({
   }
 
   return (
-    <div ref={hostRef} className="relative">
+    <div
+      ref={hostRef}
+      className="relative"
+      onPointerMove={(event) => {
+        pointerRef.current = { x: event.clientX, y: event.clientY };
+        moveTip();
+      }}
+    >
       {atlas && visible ? (
         <VanatomeViewer
           atlas={atlas}
           selectedId={controller.selectedId}
+          hoveredId={hoveredId}
+          onHover={setHoveredId}
           isolation={controller.isolation}
+          hiddenIds={hiddenIds}
           onSelect={pick}
           focusRequestKey={controller.focusRequestKey}
           resetViewKey={controller.resetViewKey}
           displayMode="ghost"
           appearance={APPEARANCE}
-          initialCameraPosition={[0, 0, 3.3]}
+          initialCameraPosition={[0, 0, 2.4]}
           initialCameraTarget={[0, 0, 0]}
-          modelPosition={[0, -1, 0]}
+          modelPosition={[0, -0.9, 0]}
           minDistance={0.35}
           maxDistance={9}
           enablePan
           focusDistance={0.5}
           focusPadding={1.35}
           cameraAnimationDuration={700}
-          className={`${shell} outline-none [&>div]:outline-none [&_canvas]:outline-none [&>div]:h-full [&>div>div]:h-full [&_canvas]:!h-full [&_canvas]:!w-full`}
+          className={`${shell} outline-none [&>div]:outline-none [&_canvas]:outline-none [&>div]:h-full [&>div>div]:h-full [&_canvas]:!h-full [&_canvas]:!w-full ${
+            hoveredId ? "[&_canvas]:cursor-pointer" : "[&_canvas]:cursor-grab"
+          }`}
           ariaLabel="Cuerpo interactivo de BIOCODE"
           onLoadProgress={(p: { percentage?: number; loaded?: number; total?: number }) =>
             setProgress(
@@ -231,6 +365,24 @@ export function BodyViewer({
           >
             <RotateCcw className="size-3.5" /> Reiniciar vista
           </button>
+        </div>
+      )}
+
+      {/* Qué estás señalando. Primero la zona en español (a dónde lleva) y
+          debajo el nombre anatómico del atlas, que va en inglés. */}
+      {hovered && modelReady && (
+        <div
+          ref={tipRef}
+          className="pointer-events-none absolute left-0 top-0 z-10 max-w-[16rem] rounded-xl border border-card-border bg-ocean-surface/90 px-3 py-2 shadow-lg backdrop-blur"
+        >
+          <p className="text-sm font-medium leading-tight text-foreground">
+            {hoveredZone ?? prettyStructureName(hovered.name)}
+          </p>
+          <p className="mt-0.5 text-[0.68rem] leading-snug text-muted">
+            {hoveredZone
+              ? prettyStructureName(hovered.name)
+              : "Aún sin material propio — igual puedo acompañarte"}
+          </p>
         </div>
       )}
 

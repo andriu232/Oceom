@@ -23,6 +23,37 @@ export const STRUCTURE_TO_NODE: Record<string, string> = {
   "rotator-cuff-muscles": "cuello-hombros",
   "deltoid-muscles": "cuello-hombros",
 
+  // Garganta. El atlas no trae laringe ni faringe como estructuras propias:
+  // lo que hay en esa zona es la tiroides, las amígdalas y el grupo de
+  // músculos hioideos, así que la garganta se toca por ahí.
+  "thyroid-gland": "garganta-expresion",
+  "parathyroid-glands": "garganta-expresion",
+  "lymphoid-organs-palatine-tonsil-left": "garganta-expresion",
+  "lymphoid-organs-palatine-tonsil-right": "garganta-expresion",
+  "neck-muscles-sternohyoid-muscle-left": "garganta-expresion",
+  "neck-muscles-sternohyoid-muscle-right": "garganta-expresion",
+  "neck-muscles-thyrohyoid-muscle-left": "garganta-expresion",
+  "neck-muscles-thyrohyoid-muscle-right": "garganta-expresion",
+  "neck-muscles-mylohyoid-muscle-left": "garganta-expresion",
+  "neck-muscles-mylohyoid-muscle-right": "garganta-expresion",
+  "neck-muscles-geniohyoid-muscle-left": "garganta-expresion",
+  "neck-muscles-geniohyoid-muscle-right": "garganta-expresion",
+
+  // Pecho: corazón y pulmones
+  heart: "pecho-corazon",
+  "cardiovascular-system": "pecho-corazon",
+  "cardiac-internal-structures": "pecho-corazon",
+  "pulmonary-arteries": "pecho-corazon",
+  "pulmonary-veins": "pecho-corazon",
+  lungs: "respiracion-ansiedad",
+  trachea: "respiracion-ansiedad",
+  "respiratory-system": "respiracion-ansiedad",
+
+  // Riñones y vejiga
+  kidneys: "rinones-vejiga",
+  bladder: "rinones-vejiga",
+  "urinary-system": "rinones-vejiga",
+
   // Espalda y columna
   skeleton: "dolor-espalda",
   "skeletal-system": "dolor-espalda",
@@ -80,6 +111,18 @@ const PREFIX_TO_NODE: Array<[string, string]> = [
   ["deep-gluteal-muscles-", "dolor-espalda"],
   ["superficial-gluteal-muscles-", "dolor-espalda"],
   ["deltoid-muscles-", "cuello-hombros"],
+  ["heart-", "pecho-corazon"],
+  ["cardiac-internal-structures-", "pecho-corazon"],
+  ["pulmonary-arteries-", "pecho-corazon"],
+  ["pulmonary-veins-", "pecho-corazon"],
+  ["lungs-", "respiracion-ansiedad"],
+  ["kidneys-", "rinones-vejiga"],
+  // Rodilla: el atlas no tiene una estructura "rodilla", solo los huesos que
+  // la forman. Rótula, fémur y tibia llevan al mismo nodo.
+  ["appendicular-skeleton-patella-", "rodillas"],
+  ["appendicular-skeleton-femur-", "rodillas"],
+  ["appendicular-skeleton-tibia-", "rodillas"],
+  ["parathyroid-glands-", "garganta-expresion"],
 ];
 
 /** Sistema del atlas → nodo, como último recurso. */
@@ -87,6 +130,9 @@ const SYSTEM_TO_NODE: Record<string, string> = {
   digestive: "digestivo-estomago",
   nervous: "migrana",
   skeletal: "dolor-espalda",
+  cardiovascular: "pecho-corazon",
+  respiratory: "respiracion-ansiedad",
+  urinary: "rinones-vejiga",
 };
 
 /** Resuelve a qué nodo de BIOCODE lleva una estructura del atlas. */
@@ -111,6 +157,34 @@ export function resolveNodeSlug(
 
 /** Ids que el visor deja seleccionar: los que llevan a algún sitio. */
 export const SELECTABLE_IDS = Object.keys(STRUCTURE_TO_NODE);
+
+/** Nombre en español del nodo al que lleva cada zona, para poder decirle a la
+ *  persona hacia dónde va ANTES de que haga clic. El atlas nombra sus 807
+ *  estructuras en inglés y en jerga anatómica ("Eighth rib.l"): ese nombre
+ *  sirve de precisión, pero no de invitación. */
+export const NODE_LABELS: Record<string, string> = {
+  migrana: "Migraña",
+  "dolor-espalda": "Dolor de espalda",
+  "digestivo-estomago": "Estómago y digestión",
+  "cuello-hombros": "Cuello y hombros",
+  insomnio: "Dificultad para dormir",
+  "garganta-expresion": "Garganta y expresión",
+  "pecho-corazon": "Corazón y pecho",
+  "respiracion-ansiedad": "Respiración corta y falta de aire",
+  rodillas: "Rodillas",
+  "rinones-vejiga": "Riñones y vejiga",
+};
+
+/** Limpia el nombre crudo del atlas: los sufijos `.l` / `.r` marcan lado y los
+ *  paréntesis envuelven nombres alternativos. */
+export function prettyStructureName(name: string): string {
+  return name
+    .replace(/\.l$/i, " (izq.)")
+    .replace(/\.r$/i, " (der.)")
+    .replace(/^\((.+)\)$/, "$1")
+    .replace(/\*/g, "")
+    .trim();
+}
 
 /** Texto que abre la exploración cuando se toca una zona del cuerpo. */
 export function openingMessage(structureName: string, nodeSlug: string | null): string {
