@@ -1,0 +1,3 @@
+# El bridge de Hermes NO se despliega en Vercel: es un proceso permanente
+# que vive en Railway/Fly (ver hermes-bridge/README.md).
+hermes-bridge

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // El bridge de Hermes es un servicio Node aparte, con su propio ciclo
+    // de vida: no lo cubre la config de Next.
+    "hermes-bridge/**",
   ]),
 ]);
 

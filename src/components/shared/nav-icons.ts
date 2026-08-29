@@ -26,6 +26,7 @@ import {
   Gift,
   AudioLines,
   CalendarDays,
+  MessageCircle,
   HeartPulse,
   type LucideIcon,
 } from "lucide-react";
@@ -63,4 +64,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   flask: FlaskConical,
   orbit: Orbit,
   biocode: Activity,
+  hermes: MessageCircle,
 };

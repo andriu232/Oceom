@@ -30,7 +30,8 @@ export type IconName =
   | "heart"
   | "flask"
   | "orbit"
-  | "biocode";
+  | "biocode"
+  | "hermes";
 
 export interface NavItem {
   label: string;
@@ -124,6 +125,7 @@ export const adminGroups: NavGroup[] = [
     items: [
       { label: "Biblioteca IA", href: "/biblioteca-ia", icon: "sparkles" },
       { label: "Mapa BIOCODE", href: "/biocode", icon: "biocode", hint: "Beta" },
+      { label: "Hermes (WhatsApp)", href: "/hermes-admin", icon: "hermes" },
       { label: "Métricas", href: "/metricas", icon: "chart" },
     ],
   },
