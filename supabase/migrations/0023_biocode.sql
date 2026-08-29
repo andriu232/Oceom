@@ -1,3 +1,8 @@
+-- ⚠️ OJO AL REAPLICAR: esta migración crea `biocode_nodes_tsv_update` y
+-- `match_biocode_nodes` con `create or replace`. Si se vuelve a correr
+-- después de la 0025, pisa las versiones buenas (alias + búsqueda por OR)
+-- y la búsqueda deja de encontrar frases naturales. Corre siempre la 0027
+-- al final del lote.
 -- ============================================================
 -- OCEOM by E-MOTION® — MAPA BIOCODE
 -- Buscador de exploración cuerpo–emoción. Tres piezas:

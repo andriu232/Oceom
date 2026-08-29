@@ -1,3 +1,6 @@
+-- ⚠️ La 0023 vuelve a crear estas dos funciones con `create or replace`:
+-- si se reaplica después de esta, se pierde el arreglo. La 0027 las
+-- restaura y debe ser la última del lote.
 -- ============================================================
 -- OCEOM by E-MOTION® — BIOCODE: arreglo de la búsqueda.
 --
