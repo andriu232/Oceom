@@ -174,6 +174,15 @@ export async function POST(req: Request) {
           model: provider.model,
           max_tokens: 1400,
           temperature: 0.7,
+          // Kimi K2.6 razona antes de escribir y su bloque de pensamiento
+          // consume el mismo presupuesto de tokens. Medido contra Moonshot con
+          // este mismo prompt: dejándolo pensar, la primera palabra visible
+          // tardaba 40 s, se agotaban los 1400 tokens y llegaban 29 caracteres
+          // truncados — con maxDuration en 60 s, a un paso de no responder
+          // nunca. Desactivado: primera palabra en 1 s y respuesta completa en
+          // 9 s con ~320 tokens. Acotarlo (`budget_tokens`) no sirve: Moonshot
+          // ignora el presupuesto. Mismo ajuste que ya usa Hermes.
+          thinking: { type: "disabled" as const },
           system: [
             {
               type: "text",
