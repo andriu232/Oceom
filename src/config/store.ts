@@ -1,7 +1,7 @@
 /** Tipos de producto de la Tienda (serializable, server-safe). Los íconos se
  *  resuelven en el cliente por `iconKey`. */
 
-export type ProductKind = "program" | "session" | "pack" | "membership";
+export type ProductKind = "program" | "session" | "pack" | "membership" | "product";
 
 export interface ProductKindDef {
   key: ProductKind;
@@ -15,6 +15,7 @@ export const PRODUCT_KINDS: ProductKindDef[] = [
   { key: "session", label: "Sesión 1:1", iconKey: "calendar", hint: "Sesión individual con Valeria." },
   { key: "pack", label: "Pack / Experiencia", iconKey: "package", hint: "Deep Waves, retiros, experiencias." },
   { key: "membership", label: "Membresía", iconKey: "crown", hint: "Otorga acceso por una cantidad de días." },
+  { key: "product", label: "Producto", iconKey: "shopping-bag", hint: "Producto suelto (libro, kit, ebook…). La entrega la coordinas tú." },
 ];
 
 export const PRODUCT_KIND_LABEL: Record<ProductKind, string> = Object.fromEntries(

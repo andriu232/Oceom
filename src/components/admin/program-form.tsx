@@ -73,8 +73,28 @@ export function ProgramForm({ program }: { program: ProgramEditorData["program"]
           </select>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="cover_image_url">Imagen de portada (URL)</Label>
-          <Input id="cover_image_url" name="cover_image_url" defaultValue={program.cover_image_url ?? ""} placeholder="https://…" />
+          <Label htmlFor="cover_image">Imagen de portada</Label>
+          {program.cover_image_url && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={program.cover_image_url}
+              alt="Portada actual"
+              className="h-28 w-auto rounded-xl border border-card-border object-cover"
+            />
+          )}
+          <input
+            id="cover_image"
+            name="cover_image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="block w-full rounded-xl border border-card-border bg-ocean-surface/60 px-4 py-2.5 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-ocean-cyan/15 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ocean-cyan"
+          />
+          <p className="text-xs text-muted">
+            JPG, PNG o WEBP (máx. 4 MB).{" "}
+            {program.cover_image_url ? "Deja vacío para conservar la actual." : ""}
+          </p>
+          {/* Se conserva la URL actual si no se sube archivo nuevo. */}
+          <input type="hidden" name="cover_image_url" value={program.cover_image_url ?? ""} />
         </div>
       </div>
 

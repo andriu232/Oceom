@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag, Library, Calendar, Package, Crown, ArrowRight } from "lucide-react";
+import { ShoppingBag, Library, Calendar, Package, Crown, ArrowRight, Gift } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { PageHeader } from "@/components/shared/page-header";
@@ -15,6 +15,7 @@ const KIND_ICON: Record<ProductKind, LucideIcon> = {
   session: Calendar,
   pack: Package,
   membership: Crown,
+  product: Gift,
 };
 
 export default async function TiendaPage() {

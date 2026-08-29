@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, Library, Calendar, Package, Crown } from "lucide-react";
+import { ArrowLeft, Check, Library, Calendar, Package, Crown, Gift } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { requireStudentArea } from "@/lib/auth";
 import { getProductBySlug } from "@/lib/queries/store";
@@ -15,6 +15,7 @@ const KIND_ICON: Record<ProductKind, LucideIcon> = {
   session: Calendar,
   pack: Package,
   membership: Crown,
+  product: Gift,
 };
 
 export default async function ProductPage({

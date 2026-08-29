@@ -29,7 +29,8 @@ export type IconName =
   | "settings"
   | "heart"
   | "flask"
-  | "orbit";
+  | "orbit"
+  | "biocode";
 
 export interface NavItem {
   label: string;
@@ -122,6 +123,7 @@ export const adminGroups: NavGroup[] = [
     label: "IA & Datos",
     items: [
       { label: "Biblioteca IA", href: "/biblioteca-ia", icon: "sparkles" },
+      { label: "Mapa BIOCODE", href: "/biocode", icon: "biocode", hint: "Beta" },
       { label: "Métricas", href: "/metricas", icon: "chart" },
     ],
   },

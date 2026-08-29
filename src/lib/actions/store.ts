@@ -23,7 +23,7 @@ import { markOrderPaidAndFulfill, type FulfillableOrder } from "@/lib/store/fulf
 const BUCKET = "productos";
 const IMG_MAX = 6_291_456; // 6 MB
 const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const KINDS = ["program", "session", "pack", "membership"] as const;
+const KINDS = ["program", "session", "pack", "membership", "product"] as const;
 
 export type StoreState = { ok?: boolean; error?: string; slug?: string } | undefined;
 

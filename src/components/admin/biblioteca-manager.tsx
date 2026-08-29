@@ -18,11 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import {
   addTextDocumentAction,
-  uploadDocumentAction,
+  createBibliotecaUpload,
+  refreshBibliotecaAction,
   deleteDocumentAction,
   toggleDocumentAction,
   type BibliotecaState,
 } from "@/lib/actions/biblioteca";
+import { createClient } from "@/lib/supabase/client";
 
 export interface DocRow {
   id: string;
@@ -107,18 +109,73 @@ export function BibliotecaManager({
 
 /* ── Formularios ── */
 
+const BIBLIOTECA_BUCKET = "omi-biblioteca";
+const MAX_UPLOAD_BYTES = 26_214_400; // 25 MB
+
+/** Subida en 3 pasos: firmar ruta → subir DIRECTO a Storage → indexar.
+ *  El archivo no pasa por la Server Action (su cuerpo va topado muy por
+ *  debajo de lo que pesa un PDF de libro). */
 function FileForm() {
-  const [state, action, pending] = useActionState<BibliotecaState, FormData>(
-    uploadDocumentAction,
-    undefined,
-  );
+  const router = useRouter();
   const ref = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (state?.ok) ref.current?.reset();
-  }, [state?.ok]);
+  const [state, setState] = useState<BibliotecaState>(undefined);
+  const [pending, setPending] = useState(false);
+  const [step, setStep] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const title = String(fd.get("title") ?? "").trim();
+    const file = fd.get("file");
+
+    setState(undefined);
+    if (!(file instanceof File) || file.size === 0)
+      return setState({ error: "Selecciona un archivo." });
+    if (file.size > MAX_UPLOAD_BYTES)
+      return setState({ error: "El archivo supera los 25 MB." });
+
+    setPending(true);
+    try {
+      setStep("Preparando la subida…");
+      const signed = await createBibliotecaUpload(file.name, file.size);
+      if ("error" in signed) return setState({ error: signed.error });
+
+      setStep("Subiendo el archivo…");
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(BIBLIOTECA_BUCKET)
+        .uploadToSignedUrl(signed.path, signed.token, file, {
+          contentType: file.type || undefined,
+        });
+      if (upErr) return setState({ error: `No se pudo subir: ${upErr.message}` });
+
+      setStep("Leyendo e indexando para OMI…");
+      const res = await fetch("/api/biblioteca/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: signed.path, title, fileName: file.name }),
+      });
+      const json = (await res.json()) as { error?: string; chunks?: number };
+      if (!res.ok || json.error)
+        return setState({ error: json.error ?? "No se pudo indexar el documento." });
+
+      form.reset();
+      setState({ ok: true });
+      await refreshBibliotecaAction();
+      router.refresh();
+    } catch (err) {
+      setState({
+        error: err instanceof Error ? err.message : "Algo falló durante la subida.",
+      });
+    } finally {
+      setPending(false);
+      setStep(null);
+    }
+  }
 
   return (
-    <form ref={ref} action={action} className="space-y-3">
+    <form ref={ref} onSubmit={onSubmit} className="space-y-3">
       <div>
         <label className="text-xs font-medium text-muted">Título (opcional)</label>
         <input
@@ -128,7 +185,7 @@ function FileForm() {
         />
       </div>
       <div>
-        <label className="text-xs font-medium text-muted">Archivo · PDF, TXT o MD (máx. 10 MB)</label>
+        <label className="text-xs font-medium text-muted">Archivo · PDF, TXT o MD (máx. 25 MB)</label>
         <input
           name="file"
           type="file"
@@ -137,7 +194,7 @@ function FileForm() {
           className="mt-1 block w-full rounded-xl border border-card-border bg-ocean-surface/50 px-3 py-2.5 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-ocean-cyan/15 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ocean-cyan hover:file:bg-ocean-cyan/25"
         />
       </div>
-      <SubmitRow pending={pending} state={state} label="Subir e indexar" />
+      <SubmitRow pending={pending} state={state} label="Subir e indexar" pendingLabel={step} />
     </form>
   );
 }
@@ -182,10 +239,13 @@ function SubmitRow({
   pending,
   state,
   label,
+  pendingLabel,
 }: {
   pending: boolean;
   state: BibliotecaState;
   label: string;
+  /** Texto del paso en curso (subiendo, indexando…). */
+  pendingLabel?: string | null;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -196,7 +256,7 @@ function SubmitRow({
       >
         {pending ? (
           <>
-            <Loader2 className="size-4 animate-spin" /> Indexando…
+            <Loader2 className="size-4 animate-spin" /> {pendingLabel ?? "Indexando…"}
           </>
         ) : (
           label

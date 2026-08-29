@@ -1,4 +1,5 @@
 import {
+  Activity,
   FlaskConical,
   Orbit,
   Waves,
@@ -61,4 +62,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   heart: HeartPulse,
   flask: FlaskConical,
   orbit: Orbit,
+  biocode: Activity,
 };

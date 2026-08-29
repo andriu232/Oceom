@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { programSchema, lessonSchema } from "@/lib/validations/content";
+import { uploadPublicImage } from "@/lib/storage/images";
 
 export type FormState = { error?: string; ok?: boolean } | undefined;
 
@@ -49,10 +50,24 @@ export async function updateProgramAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos no válidos" };
   }
+
+  // Portada: si la mentora adjuntó un archivo, se sube y reemplaza la URL.
+  const cover = formData.get("cover_image");
+  let coverUrl = parsed.data.cover_image_url;
+  if (cover instanceof File && cover.size > 0) {
+    const up = await uploadPublicImage("programas", id, cover);
+    if ("error" in up) return { error: up.error };
+    coverUrl = up.url;
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("programs")
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .update({
+      ...parsed.data,
+      cover_image_url: coverUrl,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
   if (error) {
     return {
