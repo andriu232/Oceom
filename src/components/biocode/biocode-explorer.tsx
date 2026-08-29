@@ -27,6 +27,8 @@ import { ENTRY_DOORS } from "@/lib/biocode/system-prompt";
 import { BodyViewerLazy } from "@/components/biocode/body-viewer-lazy";
 import { Constelacion } from "@/components/biocode/constelacion";
 import { Ficha } from "@/components/biocode/ficha";
+import { SelectorEmocional } from "@/components/biocode/selector-emocional";
+import type { Emocion, ZonaCuerpo } from "@/lib/biocode/emociones";
 import Link from "next/link";
 import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
 import type { BiocodeNode } from "@/lib/biocode/nodes";
@@ -164,6 +166,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   const [verChat, setVerChat] = useState(false);
   const [buscando, empezarBusqueda] = useTransition();
   const [sinNodo, setSinNodo] = useState<string | null>(null);
+  const [verEmociones, setVerEmociones] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef<string | null>(null);
@@ -255,6 +258,30 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     });
   }
 
+  /** Desde el selector emocional (§8): la emoción y la zona donde se siente.
+   *  El mapa nace con las dos elecciones puestas, que es el vínculo
+   *  EMOCIÓN → CUERPO que pide el manual. Si la emoción no tiene nodo propio
+   *  —las agradables no lo tienen— la exploración se centra en la zona. */
+  function desdeLaEmocion(emocion: Emocion, zona: ZonaCuerpo) {
+    empezarBusqueda(async () => {
+      const slug = emocion.slug ?? zona.slug;
+      const n = slug ? await nodoPorSlug(slug) : null;
+      if (!n) {
+        setVerEmociones(false);
+        send(
+          `Estoy sintiendo ${emocion.label.toLowerCase()} y lo noto ${zona.slug ? `en ${zona.label.toLowerCase()}` : zona.label.toLowerCase()}.`,
+          "emocion",
+        );
+        return;
+      }
+      abrirNodo(n);
+      setVerEmociones(false);
+      let inicial = alternarEnMapa(MAPA_VACIO, n.slug, "emociones", emocion.label);
+      if (zona.slug) inicial = alternarEnMapa(inicial, n.slug, "cuerpo", zona.label);
+      setMapa(inicial);
+    });
+  }
+
   /** Desde el buscador: se busca el nodo y, si no hay, conversa. */
   function buscar(texto: string) {
     const q = texto.trim();
@@ -275,6 +302,17 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
 
   const dims = nodo ? dimensionesDe(nodo) : [];
   const dim = dims.find((d) => d.key === activa) ?? null;
+
+  /* ══════════════ Puerta de la emoción (§8) ══════════════ */
+  if (verEmociones && !nodo) {
+    return (
+      <SelectorEmocional
+        onElegido={desdeLaEmocion}
+        onVolver={() => setVerEmociones(false)}
+        cargando={buscando}
+      />
+    );
+  }
 
   /* ══════════════ Entrar (§1, §2) ══════════════ */
   if (!nodo && messages.length === 0) {
@@ -354,6 +392,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                     setDoor(d.key);
                     if (d.key === "cuerpo")
                       bodyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    else if (d.key === "emocion") setVerEmociones(true);
                     else send(d.question, d.key);
                   }}
                   className="glass group flex items-start gap-3 rounded-2xl p-4 text-left transition hover:border-ocean-violet/40"
@@ -482,7 +521,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                         background: `${d.color}12`,
                       }}
                     >
-                      {d.label}
+                      {d.panel ?? d.label}
                     </button>
                   ))}
                 </div>
@@ -492,7 +531,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full" style={{ background: dim.color }} />
                   <h2 className="font-display text-lg font-semibold text-foreground">
-                    {dim.label}
+                    {dim.panel ?? dim.label}
                   </h2>
                 </div>
                 <p className="mt-1 text-sm text-muted">{dim.pregunta}</p>

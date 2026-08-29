@@ -30,6 +30,10 @@ export interface Dimension {
   >;
   /** Lo que se le pregunta a la persona al abrirla. */
   pregunta: string;
+  /** Título dentro del panel, cuando el manual lo nombra distinto que en la
+   *  constelación: el satélite es "Cuerpo" (§4) y el panel se titula
+   *  "Información corporal" (§3). */
+  panel?: string;
   /** Para las de conversación: con qué mensaje arranca la IA. */
   arranque?: string;
 }
@@ -37,7 +41,8 @@ export interface Dimension {
 export const DIMENSIONES: Dimension[] = [
   {
     key: "cuerpo",
-    label: "Información corporal",
+    label: "Cuerpo",
+    panel: "Información corporal",
     modo: "lectura",
     color: "#22d3ee",
     pregunta: "Lo que se sabe de esta zona",

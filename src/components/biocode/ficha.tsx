@@ -54,7 +54,9 @@ export function Ficha({
   const [error, setError] = useState<string | null>(null);
 
   const datos: FichaDatos = {
-    zona: nodo.name,
+    // Si se entró por la puerta de la emoción, el centro del mapa es la
+    // emoción y la zona es la que la persona señaló en su cuerpo.
+    zona: elegidasDe(mapa, "cuerpo")[0] ?? nodo.name,
     emocion: elegidasDe(mapa, "emociones")[0],
     creencia: elegidasDe(mapa, "creencias")[0],
     patron: elegidasDe(mapa, "patrones")[0],
