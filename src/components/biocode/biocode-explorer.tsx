@@ -18,6 +18,7 @@ import {
   Sparkles,
   Loader2,
   AlertTriangle,
+  Map,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import { ENTRY_DOORS } from "@/lib/biocode/system-prompt";
 import { BodyViewerLazy } from "@/components/biocode/body-viewer-lazy";
 import { Constelacion } from "@/components/biocode/constelacion";
 import { Ficha } from "@/components/biocode/ficha";
+import Link from "next/link";
 import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
 import type { BiocodeNode } from "@/lib/biocode/nodes";
 import {
@@ -374,6 +376,15 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/biocode/mi-mapa"
+            className="inline-flex items-center gap-2 rounded-xl border border-card-border bg-ocean-surface/60 px-4 py-2 text-sm text-foreground/85 transition hover:border-ocean-violet/40 hover:text-ocean-violet"
+          >
+            <Map className="size-4" /> Ver mi mapa
+          </Link>
+        </div>
+
         <div className="flex items-start gap-2 rounded-2xl border border-card-border bg-ocean-violet/8 px-4 py-3">
           <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
           <p className="text-xs leading-relaxed text-muted">{DISCLAIMER}</p>
@@ -399,6 +410,12 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
           <ArrowLeft className="size-3.5" /> Volver al cuerpo
         </button>
         {nodo && <Evidencia nivel={nodo.evidence_level} />}
+        <Link
+          href="/biocode/mi-mapa"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-ocean-surface/60 px-3 py-1.5 text-xs text-foreground/85 transition hover:text-ocean-violet"
+        >
+          <Map className="size-3.5" /> Ver mi mapa
+        </Link>
         {mapa.nodos.length > 0 && (
           <button
             onClick={() => setVerFicha((v) => !v)}

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getNodeBySlug, retrieveNodes, type BiocodeNode } from "@/lib/biocode/nodes";
 import type { Mapa } from "@/lib/biocode/dimensiones";
@@ -74,4 +75,47 @@ export async function guardarExploracion(input: {
   }
   if (!data) return { ok: false, error: "Esa exploración ya no existe." };
   return { ok: true, numero: data.numero ?? undefined };
+}
+
+/* ── Privacidad (§26): la persona manda sobre lo suyo ── */
+
+/** Borra una exploración y todo lo que colgaba de ella. */
+export async function borrarExploracion(id: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Tu sesión expiró. Entra de nuevo." };
+
+  // Los mensajes se van solos: la tabla los tiene con `on delete cascade`.
+  const { error } = await supabase
+    .from("biocode_sessions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("[biocode] borrar exploración", error.message);
+    return { ok: false, error: "No pude borrarla. Inténtalo otra vez." };
+  }
+  revalidatePath("/biocode/mi-mapa");
+  return { ok: true };
+}
+
+/** Borra el mapa entero. Es destructivo y no se deshace: la pantalla lo
+ *  confirma antes de llamar aquí. */
+export async function borrarMiMapa(): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Tu sesión expiró. Entra de nuevo." };
+
+  const { error } = await supabase.from("biocode_sessions").delete().eq("user_id", user.id);
+  if (error) {
+    console.error("[biocode] borrar mapa", error.message);
+    return { ok: false, error: "No pude borrar tu mapa. Inténtalo otra vez." };
+  }
+  revalidatePath("/biocode/mi-mapa");
+  return { ok: true };
 }
