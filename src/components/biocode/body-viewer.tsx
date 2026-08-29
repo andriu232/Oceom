@@ -103,11 +103,22 @@ export function BodyViewer({
     );
   }
 
+  if (!atlas) {
+    return (
+      <div className="glass flex h-[min(76vh,760px)] min-h-[26rem] flex-col items-center justify-center gap-3 rounded-2xl">
+        <Loader2 className="size-6 animate-spin text-ocean-violet" />
+        <p className="text-sm text-muted">
+          Cargando tu cuerpo{progress > 0 ? ` · ${progress}%` : "…"}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="glass relative overflow-hidden rounded-2xl border border-ocean-violet/15">
         <VanatomeViewer
-          atlas={atlas ?? undefined!}
+          atlas={atlas}
           selectedId={controller.selectedId}
           onSelect={(id) => {
             controller.select(id);
@@ -116,7 +127,10 @@ export function BodyViewer({
           focusRequestKey={controller.focusRequestKey}
           resetViewKey={controller.resetViewKey}
           displayMode="ghost"
-          className="h-[min(76vh,760px)] min-h-[26rem] w-full"
+          initialCameraPosition={[0, 0, 3.3]}
+          initialCameraTarget={[0, 0, 0]}
+          modelPosition={[0, -1, 0]}
+          className="h-[min(76vh,760px)] min-h-[26rem] w-full [&>div]:h-full [&>div>div]:h-full [&_canvas]:!h-full [&_canvas]:!w-full"
           ariaLabel="Cuerpo interactivo de BIOCODE"
           onError={(err: { message?: string }) => {
             console.error("[biocode] visor", err);
@@ -127,18 +141,9 @@ export function BodyViewer({
           onLoadProgress={(p: { loaded?: number; total?: number }) => {
             if (p.total) setProgress(Math.round(((p.loaded ?? 0) / p.total) * 100));
           }}
-          loadingFallback={
-            <div className="flex h-full flex-col items-center justify-center gap-3">
-              <Loader2 className="size-6 animate-spin text-ocean-violet" />
-              <p className="text-sm text-muted">
-                Cargando tu cuerpo… {progress > 0 ? `${progress}%` : ""}
-              </p>
-            </div>
-          }
         />
 
-        {atlas && (
-          <button
+        <button
             onClick={() => {
               controller.reset();
               setSelected(null);
@@ -146,8 +151,7 @@ export function BodyViewer({
             className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-ocean-surface/80 px-3 py-1.5 text-xs text-foreground/80 backdrop-blur transition hover:text-ocean-violet"
           >
             <RotateCcw className="size-3.5" /> Reiniciar vista
-          </button>
-        )}
+        </button>
       </div>
 
       {/* Zona seleccionada */}

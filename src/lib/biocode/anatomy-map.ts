@@ -25,8 +25,25 @@ export const STRUCTURE_TO_NODE: Record<string, string> = {
 
   // Espalda y columna
   skeleton: "dolor-espalda",
-  "quadratus-lumborum": "dolor-espalda",
   "skeletal-system": "dolor-espalda",
+
+  // Pared abdominal: es lo que se toca al pulsar el vientre en la vista
+  // exterior, mucho antes que el estómago. Lleva a la zona digestiva.
+  "rectus-abdominis": "digestivo-estomago",
+  "linea-alba": "digestivo-estomago",
+  "external-abdominal-obliques": "digestivo-estomago",
+  "internal-abdominal-obliques": "digestivo-estomago",
+  "transversus-abdominis": "digestivo-estomago",
+  "pyramidalis-muscles": "digestivo-estomago",
+  "inguinal-ligaments": "digestivo-estomago",
+
+  // Cara y cabeza en la vista exterior
+  "facial-expression-muscles": "migrana",
+
+  // Zona lumbar y glúteos: lo que se toca al pulsar la espalda baja
+  "quadratus-lumborum": "dolor-espalda",
+  "deep-gluteal-muscles": "dolor-espalda",
+  "superficial-gluteal-muscles": "dolor-espalda",
 
   // Digestivo
   stomach: "digestivo-estomago",
@@ -55,6 +72,14 @@ const PREFIX_TO_NODE: Array<[string, string]> = [
   ["cerebrum-", "migrana"],
   ["brainstem-", "migrana"],
   ["cerebellum-", "migrana"],
+  ["facial-expression-muscles-", "migrana"],
+  ["rectus-abdominis-", "digestivo-estomago"],
+  ["external-abdominal-obliques-", "digestivo-estomago"],
+  ["internal-abdominal-obliques-", "digestivo-estomago"],
+  ["transversus-abdominis-", "digestivo-estomago"],
+  ["deep-gluteal-muscles-", "dolor-espalda"],
+  ["superficial-gluteal-muscles-", "dolor-espalda"],
+  ["deltoid-muscles-", "cuello-hombros"],
 ];
 
 /** Sistema del atlas → nodo, como último recurso. */
