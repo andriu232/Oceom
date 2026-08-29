@@ -27,6 +27,7 @@ import {
   AudioLines,
   CalendarDays,
   MessageCircle,
+  Mail,
   HeartPulse,
   type LucideIcon,
 } from "lucide-react";
@@ -65,4 +66,5 @@ export const ICONS: Record<IconName, LucideIcon> = {
   orbit: Orbit,
   biocode: Activity,
   hermes: MessageCircle,
+  mail: Mail,
 };

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
 import { PasswordSettingsForm } from "@/components/settings/password-settings-form";
 import { HermesSettings } from "@/components/hermes/hermes-settings";
+import { MailSettings } from "@/components/settings/mail-settings";
 import { hermesEnabled } from "@/lib/hermes/config";
 
 export const metadata = { title: "Ajustes · OCEOM" };
@@ -25,6 +26,18 @@ export default async function AjustesPage() {
           fullName={profile.full_name ?? ""}
           email={profile.email ?? ""}
           avatarUrl={profile.avatar_url ?? ""}
+        />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted/70">
+          Correo
+        </h2>
+        <MailSettings
+          email={profile.email ?? ""}
+          optIn={profile.mail_opt_in ?? true}
+          hour={profile.mail_hour ?? 20}
+          tz={profile.mail_tz ?? "America/Bogota"}
         />
       </section>
 

@@ -3,6 +3,10 @@
     {
       "path": "/api/hermes/cron",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/correos/cron",
+      "schedule": "0 * * * *"
     }
   ]
 }

@@ -50,4 +50,10 @@ export interface Profile {
   hermes_cadence?: string;
   hermes_tz?: string;
   hermes_last_reminder_at?: string | null;
+  /* --- Correos de OCEOM (migración 0029). --- */
+  mail_opt_in?: boolean;
+  mail_hour?: number;
+  mail_tz?: string;
+  /** Credencial del enlace de baja. Nunca mandarla al cliente de otra persona. */
+  mail_token?: string;
 }
