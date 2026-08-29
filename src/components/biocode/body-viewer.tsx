@@ -132,14 +132,14 @@ export function BodyViewer({
     return map;
   }, [atlas]);
 
-  /* Cuerpo andrógino. El atlas es un cuerpo masculino —su sistema
-     reproductivo son 21 estructuras, todas masculinas— y no existe versión
-     femenina (Z-Anatomy parte de BodyParts3D, que es un conjunto de datos
-     masculino). Ocultar ese sistema deja una figura neutra, que es lo
-     honesto mientras no haya un modelo femenino: nadie tiene que verse
-     representado en un cuerpo que no es el suyo para poder explorar su
-     espalda. No se pierde nada tocable: la zona pélvica no tiene nodo
-     anclado, y `ciclo-hormonal` se busca por texto. */
+  /* Cuerpo andrógino (1 de 2): los ÓRGANOS masculinos.
+     El atlas es un cuerpo masculino —su sistema reproductivo son 21
+     estructuras, todas masculinas— y no existe versión femenina (Z-Anatomy
+     parte de BodyParts3D, que es un conjunto de datos masculino). Ocultar ese
+     sistema es lo honesto mientras no haya modelo femenino: nadie debería
+     tener que verse en un cuerpo que no es el suyo para explorar su espalda.
+     No se pierde nada tocable: la zona pélvica no tiene nodo anclado y
+     `ciclo-hormonal` se encuentra por búsqueda de texto. */
   const hiddenIds = useMemo(
     () =>
       (atlas?.structures ?? [])
@@ -186,6 +186,43 @@ export function BodyViewer({
   const hovered = hoveredId ? (index.get(hoveredId) ?? null) : null;
   const hoveredSlug = hovered ? resolveNodeSlug(hovered.id, hovered.system) : null;
   const hoveredZone = hoveredSlug ? NODE_LABELS[hoveredSlug] : null;
+
+  /* ----------------------------------------------------------
+     Cuerpo andrógino (2 de 2): los genitales EXTERNOS.
+
+     No están en el sistema reproductivo, sino dentro de la malla de piel
+     (`body-shell`), como las piezas `Urogenital region.l/.r` y `Pubic
+     hairs`. Ocultarlas con `hiddenIds` no sirve: ese mecanismo trabaja por
+     estructura del atlas y las tres comparten el id `body-shell` con el
+     resto de la piel — se iría el cuerpo entero. Y poner `visible = false`
+     tampoco: el visor reescribe la visibilidad de TODAS las mallas cada vez
+     que cambia el hover, así que volverían a aparecer al primer movimiento.
+     Por eso se sacan de la escena, una sola vez, cuando el modelo carga.
+     ---------------------------------------------------------- */
+  useEffect(() => {
+    if (!modelReady) return;
+    // El patrón va contra el nombre YA saneado por three: al cargar el glTF
+    // los espacios pasan a "_" y los puntos desaparecen, así que
+    // "body-shell__Urogenital region.l" llega como
+    // "body-shell__Urogenital_regionl". Por eso se corta en la primera
+    // palabra en vez de escribir el nombre completo.
+    const quitar = /^body-shell__(Urogenital|Pubic)/i;
+
+    const podar = () => {
+      const canvas = hostRef.current?.querySelector("canvas");
+      if (!canvas) return;
+      const scene = _roots.get(canvas)?.store.getState().scene;
+      if (!scene) return;
+      const sobran: THREE.Object3D[] = [];
+      scene.traverse((object: THREE.Object3D) => {
+        if (quitar.test(object.name)) sobran.push(object);
+      });
+      for (const object of sobran) object.removeFromParent();
+    };
+
+    const timers = [0, 120, 400].map((ms) => window.setTimeout(podar, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [modelReady]);
 
   /* ----------------------------------------------------------
      Resaltado en violeta.
