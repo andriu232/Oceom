@@ -1,6 +1,6 @@
 /* Subconjunto de src/shaders/threeui.css (ThreeUI shared-style, SHA-256
    efe4447139f1358dd8e9be68edf6fa46cbefbd1de423a4d6c439ca61d2c8eccf) con las
-   únicas reglas que aplican al variant energy-orb. Copiadas literalmente.
+   únicas reglas que aplican a los variants que usamos (energy-orb y elements). Copiadas literalmente.
    El archivo completo se conserva en src/shaders/threeui.css para provenance:
    no se importa porque declara un @font-face hacia ./fonts/fragment-mono.woff2
    (asset de otros componentes que no forma parte de este bundle) y Next

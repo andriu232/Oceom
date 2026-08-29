@@ -1,7 +1,7 @@
 "use client";
 
 import { GlobeCollection } from "@/shaders/globe/GlobeCollection";
-import "@/shaders/threeui.energy-orb.css";
+import "@/shaders/threeui.subset.css";
 import { cn } from "@/lib/utils";
 
 /**

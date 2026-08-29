@@ -22,7 +22,6 @@ import {
   AtSign,
   Mail,
 } from "lucide-react";
-import { SacredOceanBackdrop } from "@/components/brand/sacred-ocean-backdrop";
 import { Reveal } from "@/components/marketing/reveal";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
@@ -272,7 +271,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 export default function LandingPage() {
   return (
     <div className="relative">
-      <SacredOceanBackdrop fullWidth />
 
       {/* Header */}
       <header className="sticky top-0 z-40 px-4 pt-3">
