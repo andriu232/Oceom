@@ -10,7 +10,7 @@ export const BodyViewerLazy = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="glass flex h-[420px] flex-col items-center justify-center gap-3 rounded-2xl">
+      <div className="glass flex h-[min(76vh,760px)] min-h-[26rem] flex-col items-center justify-center gap-3 rounded-2xl">
         <Loader2 className="size-6 animate-spin text-ocean-violet" />
         <p className="text-sm text-muted">Preparando el cuerpo…</p>
       </div>

@@ -181,19 +181,28 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   /* ── Estado inicial: buscador + puertas ── */
   if (!started) {
     return (
-      <div className="mx-auto w-full max-w-[900px] space-y-8">
-        <div className="glass rounded-[24px] border border-ocean-violet/15 p-6 sm:p-8">
+      <div className="mx-auto w-full max-w-[1000px] space-y-8">
+        {/* El cuerpo es la experiencia principal: primero y a pantalla ancha. */}
+        <div ref={bodyRef} className="space-y-3">
           <p className="text-sm text-muted">
             Hola, {firstName}. Tu cuerpo no es un enemigo que combatir: es un
-            territorio que puedes aprender a escuchar. Empieza por donde quieras.
+            territorio que puedes aprender a escuchar. Gíralo, acércate y toca
+            una zona para empezar.
           </p>
+          <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
+        </div>
 
+        {/* Buscador: la otra forma de entrar */}
+        <div className="glass rounded-[24px] border border-ocean-violet/15 p-6 sm:p-8">
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            O dime con tus palabras
+          </h2>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               send(input);
             }}
-            className="mt-5 flex items-center gap-2"
+            className="mt-4 flex items-center gap-2"
           >
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted/70" />
@@ -225,18 +234,6 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
               </button>
             ))}
           </div>
-        </div>
-
-        <div ref={bodyRef} className="space-y-3">
-          <div>
-            <h2 className="font-display text-lg font-semibold text-foreground">
-              Tu cuerpo
-            </h2>
-            <p className="mt-0.5 text-sm text-muted">
-              Gíralo, acércate y toca una zona para explorarla.
-            </p>
-          </div>
-          <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
         </div>
 
         {/* Las 7 puertas de entrada */}

@@ -90,7 +90,7 @@ export function BodyViewer({
 
   if (shownError) {
     return (
-      <div className="glass flex h-[420px] flex-col items-center justify-center gap-3 rounded-2xl p-6 text-center">
+      <div className="glass flex h-[min(76vh,760px)] min-h-[26rem] flex-col items-center justify-center gap-3 rounded-2xl p-6 text-center">
         <AlertTriangle className="size-6 text-danger" />
         <p className="max-w-md text-sm text-muted">{shownError}</p>
         <button
@@ -116,7 +116,7 @@ export function BodyViewer({
           focusRequestKey={controller.focusRequestKey}
           resetViewKey={controller.resetViewKey}
           displayMode="ghost"
-          className="h-[min(60vh,560px)] w-full"
+          className="h-[min(76vh,760px)] min-h-[26rem] w-full"
           ariaLabel="Cuerpo interactivo de BIOCODE"
           onError={(err: { message?: string }) => {
             console.error("[biocode] visor", err);
