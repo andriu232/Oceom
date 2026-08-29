@@ -1,4 +1,4 @@
-import { APP_URL, shell, linkButton, esc } from "../layout";
+import { APP_URL, shell, personal, linkButton, esc } from "../layout";
 
 /* ============================================================
    El texto de las campañas. Vive en el código a propósito: la redacción de
@@ -20,6 +20,10 @@ export interface RenderCtx {
 export interface RenderedMail {
   subject: string;
   html: string;
+  /** Versión en texto plano. NO es opcional: un correo solo-HTML es una de
+   *  las señales de spam más viejas y más fáciles de evitar. Gmail compara
+   *  las dos partes, así que tiene que decir lo mismo que el HTML. */
+  text: string;
 }
 
 /** Día del año. */
@@ -40,6 +44,25 @@ function footer(unsubUrl: string, extra?: string): string {
     ${extra ? extra + "<br>" : ""}
     <a href="${unsubUrl}" style="color:#8aa0c6;text-decoration:underline">No quiero más estos correos</a>
     · <a href="${APP_URL}/ajustes" style="color:#8aa0c6;text-decoration:underline">Cambiar la hora</a>`;
+}
+
+/** Convierte el cuerpo HTML de una variante en su equivalente en texto. */
+function aTexto(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+/** El pie en texto plano. */
+function pieTexto(unsubUrl: string): string {
+  return `\n\n—\nOCEOM · Donde el océano interior despierta\nSi no quieres más estos correos: ${unsubUrl}\nCambiar la hora: ${APP_URL}/ajustes`;
 }
 
 function parrafo(html: string): string {
@@ -90,13 +113,21 @@ const BITACORA = [
 
 function renderBitacora(ctx: RenderCtx): RenderedMail {
   const v = BITACORA[dayOfYear(ctx.day) % BITACORA.length];
+  const nombre = esc(ctx.firstName);
+  const url = `${APP_URL}/bitacora`;
+
+  // Un enlace dentro de la frase, no un botón: el botón es la señal más
+  // clara de "esto es publicidad" que lee Gmail.
   const inner = `
-    ${parrafo(v.body(esc(ctx.firstName)))}
-    ${linkButton(`${APP_URL}/bitacora?utm=recordatorio`, v.cta)}
-    <p style="color:#8aa0c6;font-size:12px;margin-top:22px">
-      También puedes contárselo a Hermes por WhatsApp y queda guardado igual.
-    </p>`;
-  return { subject: v.subject, html: shell(v.title, inner, footer(ctx.unsubUrl)) };
+    <p style="margin:0 0 16px">${v.body(nombre)}</p>
+    <p style="margin:0 0 16px"><a href="${url}" style="color:#0e7490">${v.cta.toLowerCase()}</a>, o cuéntaselo a Hermes por WhatsApp y queda guardado igual.</p>
+    <p style="margin:0">— Valeria</p>`;
+
+  const pie = `Recibes esto porque estás en OCEOM. <a href="${ctx.unsubUrl}" style="color:#9ca3af">Dejar de recibirlo</a> · <a href="${APP_URL}/ajustes" style="color:#9ca3af">cambiar la hora</a>`;
+
+  const text = `${aTexto(v.body(ctx.firstName))}\n\n${v.cta}: ${url}\nO cuéntaselo a Hermes por WhatsApp y queda guardado igual.\n\n— Valeria${pieTexto(ctx.unsubUrl)}`;
+
+  return { subject: v.subject, html: personal(inner, pie), text };
 }
 
 /* ============================================================
@@ -166,9 +197,11 @@ function renderPoema(ctx: RenderCtx): RenderedMail {
       Para ${esc(ctx.firstName)}, de parte de OCEOM. No hay nada que hacer con esto:
       solo leerlo dos veces.
     </p>`;
+  const text = `${p.titulo}\n\n${aTexto(p.texto)}\n\nPara ${ctx.firstName}, de parte de OCEOM. No hay nada que hacer con esto: solo leerlo dos veces.${pieTexto(ctx.unsubUrl)}`;
   return {
     subject: `${p.titulo} · el poema de la semana`,
     html: shell("Tu poema de esta semana", inner, footer(ctx.unsubUrl)),
+    text,
   };
 }
 
@@ -241,8 +274,9 @@ function renderValor(ctx: RenderCtx): RenderedMail {
       <p style="color:#5eead4;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px">Hoy</p>
       <p style="color:#dbe6fb;font-size:14px;line-height:1.7;margin:0">${v.gesto}</p>
     </div>
-    ${linkButton(`${APP_URL}/bitacora?utm=valor`, "Anotarlo en mi bitácora")}`;
-  return { subject: v.subject, html: shell(v.title, inner, footer(ctx.unsubUrl)) };
+    ${linkButton(`${APP_URL}/bitacora`, "Anotarlo en mi bitácora")}`;
+  const text = `Hola ${ctx.firstName},\n\n${aTexto(v.idea)}\n\nHOY: ${aTexto(v.gesto)}\n\nAnotarlo en tu bitácora: ${APP_URL}/bitacora${pieTexto(ctx.unsubUrl)}`;
+  return { subject: v.subject, html: shell(v.title, inner, footer(ctx.unsubUrl)), text };
 }
 
 /* ============================================================
@@ -266,10 +300,12 @@ function renderPregunta(ctx: RenderCtx): RenderedMail {
     ${parrafo(`${esc(ctx.firstName)}, una sola pregunta. Nada más.`)}
     <p style="color:#e8eefb;font-size:21px;line-height:1.5;margin:26px 0;font-weight:600">${q}</p>
     ${parrafo("No hace falta que la respondas hoy. A veces basta con cargarla un rato.")}
-    ${linkButton(`${APP_URL}/bitacora?utm=pregunta`, "Responder escribiendo")}`;
+    ${linkButton(`${APP_URL}/bitacora`, "Responder escribiendo")}`;
+  const text = `${ctx.firstName}, una sola pregunta. Nada más.\n\n${q}\n\nNo hace falta que la respondas hoy. A veces basta con cargarla un rato.\n\nResponder escribiendo: ${APP_URL}/bitacora${pieTexto(ctx.unsubUrl)}`;
   return {
     subject: q,
     html: shell("Una pregunta para sentarse", inner, footer(ctx.unsubUrl)),
+    text,
   };
 }
 

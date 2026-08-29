@@ -287,6 +287,8 @@ async function correrCampana(
       to: p.email as string,
       subject: mail.subject,
       html: mail.html,
+      text: mail.text,
+      replyTo: process.env.EMAIL_REPLY_TO || undefined,
       headers: {
         // Sin esto, un correo recurrente a todo el grupo acaba en spam. El
         // "One-Click" hace que Gmail muestre su propio botón de baja.

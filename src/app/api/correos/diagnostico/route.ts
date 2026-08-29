@@ -60,6 +60,8 @@ export async function GET(req: NextRequest) {
     to,
     subject: mail.subject,
     html: mail.html,
+    text: mail.text,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
     headers: {
       "List-Unsubscribe": `<${unsubUrlFor(token)}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

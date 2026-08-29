@@ -131,6 +131,8 @@ export async function sendTestAction(
     to: me.email,
     subject: `[Prueba] ${mail.subject}`,
     html: mail.html,
+    text: mail.text,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
     headers: {
       "List-Unsubscribe": `<${unsubUrl}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

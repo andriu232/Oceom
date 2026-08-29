@@ -5,6 +5,8 @@ export interface SendEmailInput {
   to: string;
   subject: string;
   html: string;
+  /** Alternativa en texto plano. Un correo solo-HTML es señal de spam. */
+  text?: string;
   replyTo?: string;
   /** Contenido .ics a adjuntar (se codifica en base64). */
   icsContent?: string;
@@ -39,6 +41,7 @@ export async function sendEmailDetailed(input: SendEmailInput): Promise<SendResu
     subject: input.subject,
     html: input.html,
   };
+  if (input.text) body.text = input.text;
   if (input.replyTo) body.reply_to = input.replyTo;
   if (input.headers && Object.keys(input.headers).length > 0) {
     body.headers = input.headers;

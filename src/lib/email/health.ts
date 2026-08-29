@@ -26,6 +26,9 @@ export interface ResendHealth {
   usingTestDomain: boolean;
   /** null si no se pudo consultar (sin key, o la API no respondió). */
   domains: ResendDomain[] | null;
+  /** true si la key existe pero solo tiene permiso de envío: no puede listar
+   *  dominios. Es lo normal y RECOMENDADO; no es un fallo. */
+  sendOnlyKey: boolean;
   /** true si el dominio del From aparece verificado en la cuenta. */
   fromVerified: boolean;
   error: string | null;
@@ -53,6 +56,7 @@ export async function checkResend(): Promise<ResendHealth> {
     fromDomain,
     usingTestDomain: fromDomain === "resend.dev",
     domains: null,
+    sendOnlyKey: false,
     fromVerified: false,
     error: null,
   };
@@ -69,10 +73,16 @@ export async function checkResend(): Promise<ResendHealth> {
     });
 
     if (!res.ok) {
-      health.error =
-        res.status === 401 || res.status === 400
-          ? "La API key de Resend no es válida."
-          : `Resend respondió ${res.status}.`;
+      if (res.status === 401 || res.status === 403 || res.status === 422) {
+        // Una key con permiso de solo envío no puede listar dominios. Eso no
+        // rompe nada: manda correo igual. Decir "key inválida" aquí manda a
+        // cualquiera a rotar una key que estaba perfecta.
+        health.sendOnlyKey = true;
+        health.error =
+          "La key solo tiene permiso de envío, así que no se puede listar los dominios desde aquí. Los envíos funcionan igual.";
+      } else {
+        health.error = `Resend respondió ${res.status}.`;
+      }
       return health;
     }
 

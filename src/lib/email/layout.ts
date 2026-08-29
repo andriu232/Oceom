@@ -52,3 +52,24 @@ export function esc(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+/* ============================================================
+   La cáscara "personal".
+
+   Gmail no decide Principal vs Promociones por el remitente, sino por cómo
+   se ve el correo: cabecera de marca, fondo oscuro, botón grande y mucho
+   HTML leen como boletín, y van a Promociones aunque la autenticación sea
+   perfecta. Esto es lo contrario — texto, fondo claro, un enlace normal
+   dentro de la frase, cero imágenes. Se parece a un correo escrito a mano
+   porque, en el fondo, eso es lo que el recordatorio diario pretende ser.
+
+   Los correos que SÍ son boletín (el poema, la info de valor) siguen usando
+   `shell`: ahí Promociones es su sitio natural y el diseño vale la pena.
+   ============================================================ */
+export function personal(inner: string, footerHtml: string): string {
+  return `
+  <div style="font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:#1f2937;max-width:520px;margin:0 auto;padding:8px 4px">
+    ${inner}
+    <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:28px 0 0">${footerHtml}</p>
+  </div>`;
+}
