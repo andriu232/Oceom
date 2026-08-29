@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef, useState } from "react";
+import { memo, useRef, useState, useTransition } from "react";
 import {
   Search,
   Send,
@@ -13,16 +13,39 @@ import {
   Clock,
   TreeDeciduous,
   Compass,
+  ArrowLeft,
+  MessageCircle,
+  Sparkles,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { streamBiocode } from "@/lib/biocode/stream-client";
 import { ENTRY_DOORS } from "@/lib/biocode/system-prompt";
 import { BodyViewerLazy } from "@/components/biocode/body-viewer-lazy";
+import { Constelacion } from "@/components/biocode/constelacion";
+import { Ficha } from "@/components/biocode/ficha";
+import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
+import type { BiocodeNode } from "@/lib/biocode/nodes";
+import {
+  dimensionesDe,
+  opcionesDe,
+  alternarEnMapa,
+  elegidasDe,
+  MAPA_VACIO,
+  type Mapa,
+} from "@/lib/biocode/dimensiones";
 
 /* ============================================================
-   MAPA BIOCODE — la exploración. Dos estados: el buscador con las 7 puertas
-   de entrada (antes de empezar) y la conversación (una vez que arranca).
+   MAPA BIOCODE — la exploración.
+
+   Tres momentos, siguiendo el manual de experiencia de Valeria:
+   · Entrar: el cuerpo interactivo y el buscador (§1, §2).
+   · Explorar: la constelación de la zona, donde cada elección de la persona
+     se cuelga del mapa (§4, §7). La IA acompaña cuando ella la llama (§22),
+     no antes: el mapa se dibuja con la red de conocimiento, al instante.
+   · Cerrar: la ficha "Lo que he descubierto" (§18) con su ejercicio (§19).
    ============================================================ */
 
 interface Msg {
@@ -40,15 +63,27 @@ const DOOR_ICON: Record<string, LucideIcon> = {
   tree: TreeDeciduous,
 };
 
+/** La nota que el manual pide fija en la interfaz (§27). */
 const DISCLAIMER =
-  "MAPA BIOCODE es una herramienta de exploración y autoconocimiento: no diagnostica, no predice enfermedades y no sustituye atención médica ni psicológica. Si algo en tu cuerpo te preocupa, consúltalo con un profesional.";
+  "MAPA BIOCODE es una herramienta educativa y de autoconocimiento. Las interpretaciones emocionales y simbólicas no constituyen diagnósticos médicos ni establecen que una emoción sea la causa de una enfermedad.";
+
+/** La aclaración obligatoria antes de cualquier lectura simbólica (§6). */
+const ACLARACION_SIMBOLICA =
+  "Estos temas pertenecen a una exploración emocional y simbólica. No significan que una emoción sea la causa de una enfermedad.";
 
 const EJEMPLOS = [
-  "Me duele la espalda",
-  "Siento mucha culpa",
-  "Me cuesta recibir",
-  "Siempre termino cuidando a todos",
+  "Migraña",
+  "Dolor de espalda",
+  "No merezco recibir",
+  "Siempre repito el mismo tipo de pareja",
 ];
+
+const EVIDENCIA: Record<BiocodeNode["evidence_level"], { label: string; color: string }> = {
+  consolidada: { label: "Evidencia consolidada", color: "#4ade80" },
+  investigacion: { label: "En investigación", color: "#fbbf24" },
+  complementario: { label: "Enfoque complementario", color: "#fb923c" },
+  reflexion: { label: "Reflexión OCEOM", color: "#60a5fa" },
+};
 
 /** Limpia markdown ligero para mantener el texto conversacional. */
 function clean(text: string): string {
@@ -65,6 +100,19 @@ function TypingDots() {
       <span className="size-1.5 animate-bounce rounded-full bg-ocean-violet [animation-delay:-0.3s]" />
       <span className="size-1.5 animate-bounce rounded-full bg-ocean-violet [animation-delay:-0.15s]" />
       <span className="size-1.5 animate-bounce rounded-full bg-ocean-violet" />
+    </span>
+  );
+}
+
+function Evidencia({ nivel }: { nivel: BiocodeNode["evidence_level"] }) {
+  const e = EVIDENCIA[nivel];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-medium"
+      style={{ background: `${e.color}1a`, color: e.color }}
+    >
+      <span className="size-1.5 rounded-full" style={{ background: e.color }} />
+      {e.label}
     </span>
   );
 }
@@ -105,12 +153,20 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [door, setDoor] = useState<string | null>(null);
+
+  /* La exploración en curso */
+  const [nodo, setNodo] = useState<BiocodeNode | null>(null);
+  const [mapa, setMapa] = useState<Mapa>(MAPA_VACIO);
+  const [activa, setActiva] = useState<string | null>(null);
+  const [verFicha, setVerFicha] = useState(false);
+  const [verChat, setVerChat] = useState(false);
+  const [buscando, empezarBusqueda] = useTransition();
+  const [sinNodo, setSinNodo] = useState<string | null>(null);
+
   const bodyRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
-
-  const started = messages.length > 0;
 
   const scrollDown = () =>
     requestAnimationFrame(() => {
@@ -127,6 +183,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     const content = text.trim();
     if (!content || streaming) return;
     setInput("");
+    setVerChat(true);
     stick.current = true;
 
     const userMsg: Msg = { role: "user", content };
@@ -172,36 +229,77 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     );
   }
 
+  /** Abre la constelación de una zona o de un tema. */
+  function abrirNodo(n: BiocodeNode) {
+    setNodo(n);
+    setMapa(MAPA_VACIO);
+    setActiva(null);
+    setVerFicha(false);
+    setSinNodo(null);
+  }
+
+  /** Desde el cuerpo 3D: la estructura ya viene resuelta a un nodo. */
+  function desdeElCuerpo(mensaje: string, estructura: string, slug: string | null) {
+    if (!slug) {
+      // No hay material propio de esa zona: la IA acompaña igual.
+      setSinNodo(estructura);
+      send(mensaje, "cuerpo");
+      return;
+    }
+    empezarBusqueda(async () => {
+      const n = await nodoPorSlug(slug);
+      if (n) abrirNodo(n);
+      else send(mensaje, "cuerpo");
+    });
+  }
+
+  /** Desde el buscador: se busca el nodo y, si no hay, conversa. */
+  function buscar(texto: string) {
+    const q = texto.trim();
+    if (!q) return;
+    setInput("");
+    empezarBusqueda(async () => {
+      const n = await nodoPorTexto(q);
+      if (n) abrirNodo(n);
+      else send(q);
+    });
+  }
+
   const typing =
     streaming &&
     messages.length > 0 &&
     messages[messages.length - 1].role === "assistant" &&
     messages[messages.length - 1].content === "";
 
-  /* ── Estado inicial: buscador + puertas ── */
-  if (!started) {
+  const dims = nodo ? dimensionesDe(nodo) : [];
+  const dim = dims.find((d) => d.key === activa) ?? null;
+
+  /* ══════════════ Entrar (§1, §2) ══════════════ */
+  if (!nodo && messages.length === 0) {
     return (
       <div className="mx-auto w-full max-w-[1000px] space-y-8">
-        {/* El cuerpo es la experiencia principal: sin marco, flotando sobre
-            el fondo del santuario. */}
         <div ref={bodyRef} className="-mx-2 sm:-mx-6">
-          <p className="px-2 text-center text-sm text-muted sm:px-6">
-            Hola, {firstName}. Tu cuerpo no es un enemigo que combatir: es un
-            territorio que puedes aprender a escuchar. Gíralo, acércate y toca
-            una zona para verla por dentro.
-          </p>
-          <BodyViewerLazy onExplore={(message) => send(message, "cuerpo")} />
+          <div className="px-2 text-center sm:px-6">
+            <p className="font-display text-base leading-relaxed text-foreground/90">
+              Tu cuerpo tiene un territorio. Tus emociones tienen un lenguaje.
+              <br className="hidden sm:block" /> Tu historia tiene patrones.
+            </p>
+            <p className="mt-1.5 text-sm text-muted">
+              {firstName}, ¿qué quieres explorar de ti hoy? Gira el cuerpo, acércate y toca
+              una zona.
+            </p>
+          </div>
+          <BodyViewerLazy onExplore={desdeElCuerpo} />
         </div>
 
-        {/* Buscador: la otra forma de entrar */}
         <div className="glass rounded-[24px] border border-ocean-violet/15 p-6 sm:p-8">
           <h2 className="font-display text-lg font-semibold text-foreground">
-            O dime con tus palabras
+            O búscalo con tus palabras
           </h2>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              send(input);
+              buscar(input);
             }}
             className="mt-4 flex items-center gap-2"
           >
@@ -210,17 +308,17 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="¿Qué quieres explorar de ti?"
+                placeholder="Escribe un síntoma, emoción, parte del cuerpo, pensamiento o situación…"
                 className="h-12 w-full rounded-xl border border-card-border bg-ocean-surface/60 pl-11 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted/70 focus:border-ocean-violet focus:ring-2 focus:ring-[var(--ring)]"
               />
             </div>
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || buscando}
               aria-label="Explorar"
               className="grid size-12 shrink-0 place-items-center rounded-xl bg-ocean-violet text-white transition hover:brightness-110 disabled:opacity-50"
             >
-              <Send className="size-4" />
+              {buscando ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
             </button>
           </form>
 
@@ -228,7 +326,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
             {EJEMPLOS.map((s) => (
               <button
                 key={s}
-                onClick={() => send(s)}
+                onClick={() => buscar(s)}
                 className="rounded-full border border-card-border bg-ocean-surface/50 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-ocean-violet/40 hover:text-ocean-violet"
               >
                 {s}
@@ -237,7 +335,6 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
           </div>
         </div>
 
-        {/* Las 7 puertas de entrada */}
         <div>
           <h2 className="font-display text-lg font-semibold text-foreground">
             O entra por una puerta
@@ -285,57 +382,244 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     );
   }
 
-  /* ── Conversación ── */
+  /* ══════════════ Explorar (§3, §4, §7) ══════════════ */
   return (
-    <div className="glass mx-auto flex h-[min(68vh,720px)] min-h-[24rem] w-full max-w-[900px] flex-col overflow-hidden rounded-[24px] border border-ocean-violet/15">
-      <div className="flex items-start gap-2 border-b border-card-border bg-ocean-violet/10 px-5 py-2.5">
-        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
-        <p className="text-xs leading-relaxed text-muted">{DISCLAIMER}</p>
-      </div>
-
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-6"
-      >
-        {messages.map((m, i) => (
-          <MessageBubble
-            key={i}
-            role={m.role}
-            content={m.content}
-            isTyping={typing && i === messages.length - 1}
-          />
-        ))}
-      </div>
-
-      <div className="border-t border-card-border p-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
+    <div className="mx-auto w-full max-w-[1100px] space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => {
+            setNodo(null);
+            setMessages([]);
+            setVerFicha(false);
+            setVerChat(false);
+            sessionId.current = null;
           }}
-          className="flex items-center gap-2"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-ocean-surface/60 px-3 py-1.5 text-xs text-foreground/85 transition hover:text-ocean-violet"
         >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Sigue explorando…"
-            disabled={streaming}
-            className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted/70 focus:border-ocean-violet focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60"
-          />
+          <ArrowLeft className="size-3.5" /> Volver al cuerpo
+        </button>
+        {nodo && <Evidencia nivel={nodo.evidence_level} />}
+        {mapa.nodos.length > 0 && (
           <button
-            type="submit"
-            disabled={streaming || !input.trim()}
-            aria-label="Enviar"
-            className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-violet text-white transition hover:brightness-110 disabled:opacity-50"
+            onClick={() => setVerFicha((v) => !v)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-ocean-violet/40 bg-ocean-violet/12 px-3 py-1.5 text-xs text-ocean-violet transition hover:bg-ocean-violet/20"
           >
-            <Send className="size-4" />
+            <Sparkles className="size-3.5" />
+            {verFicha ? "Volver al mapa" : "Lo que he descubierto"}
           </button>
-        </form>
-        <p className="mt-2 text-center text-[0.65rem] text-muted/60">
-          Exploración simbólica y educativa · no es un diagnóstico
-        </p>
+        )}
       </div>
+
+      {sinNodo && (
+        <div className="flex items-start gap-2 rounded-2xl border border-card-border bg-ocean-surface/50 px-4 py-3">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
+          <p className="text-xs leading-relaxed text-muted">
+            Todavía no hay material propio sobre {sinNodo}, así que aquí no hay mapa que
+            dibujar. Te acompaño con preguntas.
+          </p>
+        </div>
+      )}
+
+      {nodo && verFicha && (
+        <Ficha
+          nodo={nodo}
+          mapa={mapa}
+          sessionId={sessionId.current}
+          onSeguir={() => setVerFicha(false)}
+        />
+      )}
+
+      {nodo && !verFicha && (
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+          {/* El mapa radial */}
+          <div className="glass rounded-[24px] border border-ocean-violet/15 p-4 sm:p-6">
+            <Constelacion
+              centro={nodo.name}
+              dimensiones={dims}
+              mapa={mapa}
+              activa={activa}
+              onAbrir={(k) => setActiva((a) => (a === k ? null : k))}
+            />
+            <p className="mt-2 text-center text-xs text-muted">
+              Toca una dimensión para explorarla. Lo que elijas se queda en tu mapa.
+            </p>
+          </div>
+
+          {/* El panel de la dimensión abierta (§3) */}
+          <div className="glass rounded-[24px] border border-ocean-violet/15 p-6">
+            {!dim ? (
+              <div>
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  {nodo.name}
+                </h2>
+                <p className="mt-1 text-sm text-muted">¿Qué quieres explorar?</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {dims.map((d) => (
+                    <button
+                      key={d.key}
+                      onClick={() => setActiva(d.key)}
+                      className="rounded-full border px-3.5 py-1.5 text-xs transition hover:brightness-125"
+                      style={{
+                        borderColor: `${d.color}55`,
+                        color: d.color,
+                        background: `${d.color}12`,
+                      }}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full" style={{ background: dim.color }} />
+                  <h2 className="font-display text-lg font-semibold text-foreground">
+                    {dim.label}
+                  </h2>
+                </div>
+                <p className="mt-1 text-sm text-muted">{dim.pregunta}</p>
+
+                {dim.modo === "lectura" && (
+                  <div className="mt-4 space-y-4">
+                    {nodo.scientific_info && (
+                      <p className="text-sm leading-relaxed text-foreground/90">
+                        {nodo.scientific_info}
+                      </p>
+                    )}
+                    {nodo.warning_signs.length > 0 && (
+                      <div className="rounded-2xl border border-danger/25 bg-danger/8 p-4">
+                        <p className="text-[0.7rem] uppercase tracking-wider text-danger">
+                          Cuándo consultar
+                        </p>
+                        <ul className="mt-1.5 space-y-1">
+                          {nodo.warning_signs.map((w) => (
+                            <li key={w} className="text-xs leading-relaxed text-foreground/85">
+                              · {w}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {nodo.complementary_info && (
+                      <div className="rounded-2xl border border-card-border bg-ocean-surface/40 p-4">
+                        <Evidencia nivel="complementario" />
+                        <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+                          {nodo.complementary_info}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {dim.modo === "opciones" && (
+                  <div className="mt-4">
+                    {dim.key !== "reflexion" && dim.key !== "ejercicio" && (
+                      <p className="mb-3 rounded-xl border border-card-border bg-ocean-surface/40 px-3 py-2 text-[0.7rem] leading-relaxed text-muted">
+                        {ACLARACION_SIMBOLICA}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {opcionesDe(nodo, dim).map((op) => {
+                        const puesta = elegidasDe(mapa, dim.key).includes(op);
+                        return (
+                          <button
+                            key={op}
+                            onClick={() =>
+                              setMapa((m) => alternarEnMapa(m, nodo.slug, dim.key, op))
+                            }
+                            aria-pressed={puesta}
+                            className="rounded-xl border px-3 py-2 text-left text-xs leading-snug transition"
+                            style={{
+                              borderColor: puesta ? dim.color : "var(--card-border)",
+                              background: puesta ? `${dim.color}20` : "transparent",
+                              color: puesta ? dim.color : "var(--foreground)",
+                            }}
+                          >
+                            {op}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {dim.modo === "conversacion" && (
+                  <button
+                    onClick={() => send(dim.arranque ?? dim.pregunta, dim.key)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-ocean-violet px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
+                  >
+                    <MessageCircle className="size-4" /> Explorar conmigo
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!verChat && (
+              <button
+                onClick={() => send(`Quiero explorar ${nodo.name.toLowerCase()}.`)}
+                className="mt-6 inline-flex items-center gap-2 rounded-xl border border-ocean-violet/40 bg-ocean-violet/10 px-4 py-2.5 text-sm text-ocean-violet transition hover:bg-ocean-violet/20"
+              >
+                <MessageCircle className="size-4" /> Explorar conmigo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* La conversación (§22): una pregunta a la vez */}
+      {verChat && (
+        <div className="glass flex h-[min(52vh,560px)] min-h-[20rem] w-full flex-col overflow-hidden rounded-[24px] border border-ocean-violet/15">
+          <div className="flex items-start gap-2 border-b border-card-border bg-ocean-violet/10 px-5 py-2.5">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0 text-ocean-violet" />
+            <p className="text-xs leading-relaxed text-muted">{DISCLAIMER}</p>
+          </div>
+
+          <div
+            ref={scrollRef}
+            onScroll={onScroll}
+            className="flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-6"
+          >
+            {messages.map((m, i) => (
+              <MessageBubble
+                key={i}
+                role={m.role}
+                content={m.content}
+                isTyping={typing && i === messages.length - 1}
+              />
+            ))}
+          </div>
+
+          <div className="border-t border-card-border p-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                send(input);
+              }}
+              className="flex items-center gap-2"
+            >
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Sigue explorando…"
+                disabled={streaming}
+                className="h-11 flex-1 rounded-xl border border-card-border bg-ocean-surface/60 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted/70 focus:border-ocean-violet focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={streaming || !input.trim()}
+                aria-label="Enviar"
+                className="grid size-11 shrink-0 place-items-center rounded-xl bg-ocean-violet text-white transition hover:brightness-110 disabled:opacity-50"
+              >
+                <Send className="size-4" />
+              </button>
+            </form>
+            <p className="mt-2 text-center text-[0.65rem] text-muted/60">
+              Exploración simbólica y educativa · no es un diagnóstico
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

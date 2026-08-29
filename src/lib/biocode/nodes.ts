@@ -52,6 +52,25 @@ export async function retrieveNodes(query: string, limit = 5): Promise<BiocodeNo
   return (data ?? []) as BiocodeNode[];
 }
 
+/** Trae un nodo completo por su slug: es lo que dibuja la constelación de la
+ *  zona (§4 del manual), sin pasar por el modelo. */
+export async function getNodeBySlug(slug: string): Promise<BiocodeNode | null> {
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from("biocode_nodes")
+    .select(
+      "slug,name,category,body_zone,organ,scientific_info,complementary_info,symbolic_themes,emotions,beliefs,patterns,behaviors,questions,exercises,warning_signs,oceom_resource,oceom_link,evidence_level",
+    )
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) {
+    console.error("[biocode] nodo", error.message);
+    return null;
+  }
+  return (data as BiocodeNode) ?? null;
+}
+
 function list(label: string, items: string[]): string | null {
   return items.length ? `${label}: ${items.join("; ")}.` : null;
 }

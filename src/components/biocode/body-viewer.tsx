@@ -62,7 +62,9 @@ const HOVER_COLOR = "#7c3aed";
 export function BodyViewer({
   onExplore,
 }: {
-  onExplore: (message: string, structureName: string) => void;
+  /** El slug es el nodo de la red al que lleva esa estructura, o null si
+   *  BIOCODE aún no tiene material propio sobre ella. */
+  onExplore: (message: string, structureName: string, nodeSlug: string | null) => void;
 }) {
   const [atlas, setAtlas] = useState<VanatomeAtlas | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -439,7 +441,9 @@ export function BodyViewer({
             )}
           </div>
           <button
-            onClick={() => onExplore(openingMessage(selected.name, nodeSlug), selected.name)}
+            onClick={() =>
+              onExplore(openingMessage(selected.name, nodeSlug), selected.name, nodeSlug)
+            }
             className="h-10 shrink-0 rounded-xl bg-ocean-violet px-4 text-sm font-medium text-white transition hover:brightness-110"
           >
             Explorar esta zona
