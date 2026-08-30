@@ -29,6 +29,8 @@ import { Constelacion } from "@/components/biocode/constelacion";
 import { Ficha } from "@/components/biocode/ficha";
 import { SelectorEmocional } from "@/components/biocode/selector-emocional";
 import type { Emocion, ZonaCuerpo } from "@/lib/biocode/emociones";
+import { PuertaGuiada } from "@/components/biocode/puerta-guiada";
+import { PUERTAS, type OpcionPuerta } from "@/lib/biocode/puertas";
 import Link from "next/link";
 import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
 import type { BiocodeNode } from "@/lib/biocode/nodes";
@@ -80,6 +82,15 @@ const EJEMPLOS = [
   "Dolor de espalda",
   "No merezco recibir",
   "Siempre repito el mismo tipo de pareja",
+];
+
+/** Los saltos del botón "Profundizar" (§24). */
+const PROFUNDIZAR = [
+  { label: "Explorar infancia", slug: "historia-infancia" },
+  { label: "Explorar pareja", slug: "pareja" },
+  { label: "Explorar familia", slug: "arbol-familiar" },
+  { label: "Explorar trabajo", slug: "trabajo-agotamiento" },
+  { label: "Explorar merecimiento", slug: "merecimiento" },
 ];
 
 const EVIDENCIA: Record<BiocodeNode["evidence_level"], { label: string; color: string }> = {
@@ -167,9 +178,20 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   const [buscando, empezarBusqueda] = useTransition();
   const [sinNodo, setSinNodo] = useState<string | null>(null);
   const [verEmociones, setVerEmociones] = useState(false);
+  const [puerta, setPuerta] = useState<string | null>(null);
+  const [entrada, setEntrada] = useState<string | null>(null);
 
   const bodyRef = useRef<HTMLDivElement>(null);
-  const sessionId = useRef<string | null>(null);
+  /* El id de la exploración vive en dos sitios a propósito: el estado es el
+     que puede leer el render (la ficha lo necesita) y el ref es el que leen
+     los callbacks del stream, que se disparan fuera del ciclo de React y
+     tomarían un valor viejo del cierre. */
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const sessionRef = useRef<string | null>(null);
+  const setSession = (id: string | null) => {
+    sessionRef.current = id;
+    setSessionId(id);
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
 
@@ -207,13 +229,13 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
 
     await streamBiocode(
       {
-        conversationId: sessionId.current,
+        conversationId: sessionRef.current,
         entryDoor: entryDoor ?? door,
         messages: history.map((m) => ({ role: m.role, content: m.content })),
       },
       {
         onStart: (id) => {
-          if (id) sessionId.current = id;
+          if (id) setSession(id);
         },
         onToken: (t) => {
           acc += t;
@@ -221,7 +243,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
           scrollDown();
         },
         onDone: (id) => {
-          if (id) sessionId.current = id;
+          if (id) setSession(id);
           setStreaming(false);
           scrollDown();
         },
@@ -237,6 +259,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   /** Abre la constelación de una zona o de un tema. */
   function abrirNodo(n: BiocodeNode) {
     setNodo(n);
+    setEntrada(null);
     setMapa(MAPA_VACIO);
     setActiva(null);
     setVerFicha(false);
@@ -282,6 +305,26 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     });
   }
 
+  /** Desde una puerta guiada (§9, §10, §12, §13): la respuesta abre el nodo
+   *  que corresponda y la conversación arranca sabiendo por dónde entró. */
+  function desdeLaPuerta(key: string, respuesta: string, opcion: OpcionPuerta | null) {
+    const p = PUERTAS[key];
+    empezarBusqueda(async () => {
+      const n = opcion?.slug
+        ? await nodoPorSlug(opcion.slug)
+        : await nodoPorTexto(respuesta);
+      setPuerta(null);
+      setDoor(key);
+      if (!n) {
+        send(p.arranque(respuesta), key);
+        return;
+      }
+      abrirNodo(n);
+      setEntrada(respuesta);
+      send(p.arranque(respuesta), key);
+    });
+  }
+
   /** Desde el buscador: se busca el nodo y, si no hay, conversa. */
   function buscar(texto: string) {
     const q = texto.trim();
@@ -302,6 +345,18 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
 
   const dims = nodo ? dimensionesDe(nodo) : [];
   const dim = dims.find((d) => d.key === activa) ?? null;
+
+  /* ══════════════ Puertas guiadas (§9, §10, §12, §13) ══════════════ */
+  if (puerta && PUERTAS[puerta] && !nodo) {
+    return (
+      <PuertaGuiada
+        puerta={PUERTAS[puerta]}
+        onElegido={(r, o) => desdeLaPuerta(puerta, r, o)}
+        onVolver={() => setPuerta(null)}
+        cargando={buscando}
+      />
+    );
+  }
 
   /* ══════════════ Puerta de la emoción (§8) ══════════════ */
   if (verEmociones && !nodo) {
@@ -393,6 +448,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                     if (d.key === "cuerpo")
                       bodyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                     else if (d.key === "emocion") setVerEmociones(true);
+                    else if (PUERTAS[d.key]) setPuerta(d.key);
                     else send(d.question, d.key);
                   }}
                   className="glass group flex items-start gap-3 rounded-2xl p-4 text-left transition hover:border-ocean-violet/40"
@@ -412,6 +468,31 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            Módulos del método
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Dos exploraciones guiadas, con las preguntas del método E-MOTION®.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {["merecimiento", "proposito"].map((k) => (
+              <button
+                key={k}
+                onClick={() => setPuerta(k)}
+                className="glass rounded-2xl p-4 text-left transition hover:border-ocean-violet/40"
+              >
+                <span className="block font-medium text-foreground">
+                  {PUERTAS[k].titulo}
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                  {PUERTAS[k].pregunta}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -442,7 +523,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
             setMessages([]);
             setVerFicha(false);
             setVerChat(false);
-            sessionId.current = null;
+            setSession(null);
           }}
           className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-ocean-surface/60 px-3 py-1.5 text-xs text-foreground/85 transition hover:text-ocean-violet"
         >
@@ -480,7 +561,8 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
         <Ficha
           nodo={nodo}
           mapa={mapa}
-          sessionId={sessionId.current}
+          entrada={entrada}
+          sessionId={sessionId}
           onSeguir={() => setVerFicha(false)}
         />
       )}
@@ -610,6 +692,28 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 )}
               </div>
             )}
+
+            <div className="mt-6 border-t border-card-border pt-4">
+              <p className="text-[0.7rem] uppercase tracking-wider text-muted/70">
+                Profundizar
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {PROFUNDIZAR.filter((x) => x.slug !== nodo.slug).map((x) => (
+                  <button
+                    key={x.slug}
+                    onClick={() =>
+                      empezarBusqueda(async () => {
+                        const n = await nodoPorSlug(x.slug);
+                        if (n) abrirNodo(n);
+                      })
+                    }
+                    className="rounded-full border border-card-border bg-ocean-surface/50 px-3 py-1.5 text-xs text-foreground/85 transition hover:border-ocean-violet/40 hover:text-ocean-violet"
+                  >
+                    {x.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {!verChat && (
               <button

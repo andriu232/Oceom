@@ -41,11 +41,15 @@ export function Ficha({
   nodo,
   mapa,
   sessionId,
+  entrada,
   onSeguir,
 }: {
   nodo: BiocodeNode;
   mapa: Mapa;
   sessionId: string | null;
+  /** Lo que la persona respondió en la puerta por la que entró (§9, §10,
+   *  §12, §13): es su punto de partida y no debería perderse. */
+  entrada?: string | null;
   onSeguir: () => void;
 }) {
   const [reflexion, setReflexion] = useState("");
@@ -75,7 +79,7 @@ export function Ficha({
       sessionId,
       mapa,
       ficha: { ...datos, reflexion },
-      tema: nodo.name,
+      tema: entrada ?? nodo.name,
       completada: true,
     });
     setGuardando(false);
@@ -102,6 +106,9 @@ export function Ficha({
         <Campo etiqueta="Emoción" valor={datos.emocion} />
         <Campo etiqueta="Creencia" valor={datos.creencia} />
         <Campo etiqueta="Patrón" valor={datos.patron} />
+        <div className="sm:col-span-2">
+          <Campo etiqueta="Punto de partida" valor={entrada ?? undefined} />
+        </div>
         <div className="sm:col-span-2">
           <Campo etiqueta="Pregunta principal" valor={datos.pregunta} />
         </div>
