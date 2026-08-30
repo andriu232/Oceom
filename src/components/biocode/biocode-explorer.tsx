@@ -31,6 +31,8 @@ import { SelectorEmocional } from "@/components/biocode/selector-emocional";
 import type { Emocion, ZonaCuerpo } from "@/lib/biocode/emociones";
 import { PuertaGuiada } from "@/components/biocode/puerta-guiada";
 import { PUERTAS, type OpcionPuerta } from "@/lib/biocode/puertas";
+import { MapaParejas } from "@/components/biocode/mapa-parejas";
+import { CICLO, type RespuestasPareja } from "@/lib/biocode/parejas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
@@ -182,6 +184,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
   const [verEmociones, setVerEmociones] = useState(false);
   const [puerta, setPuerta] = useState<string | null>(null);
   const [entrada, setEntrada] = useState<string | null>(null);
+  const [verParejas, setVerParejas] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   /* El id de la exploración vive en dos sitios a propósito: el estado es el
@@ -263,7 +266,10 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
     setNodo(n);
     setEntrada(null);
     setMapa(MAPA_VACIO);
-    setActiva(null);
+    // El manual abre por la información corporal y desde ahí ofrece pasar a
+    // lo emocional (§5). Si el nodo no tiene esa parte, se abre la primera
+    // que sí pueda llenar.
+    setActiva(dimensionesDe(n)[0]?.key ?? null);
     setVerFicha(false);
     setSinNodo(null);
   }
@@ -347,6 +353,28 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
 
   const dims = nodo ? dimensionesDe(nodo) : [];
   const dim = dims.find((d) => d.key === activa) ?? null;
+
+  /* ══════════════ Mapa de parejas (§11) ══════════════ */
+  if (verParejas) {
+    return (
+      <MapaParejas
+        onVolver={() => setVerParejas(false)}
+        onListo={(respuestas: RespuestasPareja, resumen) => {
+          setVerParejas(false);
+          // Cada etapa respondida se queda en el mapa, bajo Relaciones.
+          if (nodo) {
+            let m = mapa;
+            for (const e of CICLO) {
+              const dicho = respuestas[e.key]?.trim();
+              if (dicho) m = alternarEnMapa(m, nodo.slug, "relaciones", `${e.label}: ${dicho}`);
+            }
+            setMapa(m);
+          }
+          send(resumen, "patron");
+        }}
+      />
+    );
+  }
 
   /* ══════════════ Puertas guiadas (§9, §10, §12, §13) ══════════════ */
   if (puerta && PUERTAS[puerta] && !nodo) {
@@ -599,31 +627,20 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 <h2 className="font-display text-xl font-semibold text-foreground">
                   {nodo.name}
                 </h2>
-                <p className="mt-1 text-sm text-muted">¿Qué quieres explorar?</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {dims.map((d) => (
-                    <button
-                      key={d.key}
-                      onClick={() => setActiva(d.key)}
-                      className="rounded-full border px-3.5 py-1.5 text-xs transition hover:brightness-125"
-                      style={{
-                        borderColor: `${d.color}55`,
-                        color: d.color,
-                        background: `${d.color}12`,
-                      }}
-                    >
-                      {d.panel ?? d.label}
-                    </button>
-                  ))}
-                </div>
+                <p className="mt-1 text-sm text-muted">
+                  Toca una dimensión del mapa para empezar.
+                </p>
               </div>
             ) : (
               <div>
-                <div className="flex items-center gap-2">
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  {nodo.name}
+                </h2>
+                <div className="mt-3 flex items-center gap-2 border-t border-card-border pt-3">
                   <span className="size-2 rounded-full" style={{ background: dim.color }} />
-                  <h2 className="font-display text-lg font-semibold text-foreground">
+                  <p className="text-sm font-medium" style={{ color: dim.color }}>
                     {dim.panel ?? dim.label}
-                  </h2>
+                  </p>
                 </div>
                 <p className="mt-1 text-sm text-muted">{dim.pregunta}</p>
 
@@ -654,6 +671,19 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                         <p className="mt-2 text-sm leading-relaxed text-foreground/85">
                           {nodo.complementary_info}
                         </p>
+                      </div>
+                    )}
+                    {dims.some((d) => d.key === "emociones") && (
+                      <div>
+                        <p className="text-sm text-muted">
+                          ¿Quieres explorar también la dimensión emocional?
+                        </p>
+                        <button
+                          onClick={() => setActiva("emociones")}
+                          className="mt-2 rounded-xl bg-ocean-violet px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+                        >
+                          Explorar
+                        </button>
                       </div>
                     )}
                   </div>
@@ -692,16 +722,35 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 )}
 
                 {dim.modo === "conversacion" && (
-                  <button
-                    onClick={() => send(dim.arranque ?? dim.pregunta, dim.key)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-ocean-violet px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
-                  >
-                    <MessageCircle className="size-4" /> Explorar conmigo
-                  </button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => send(dim.arranque ?? dim.pregunta, dim.key)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-ocean-violet px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
+                    >
+                      <MessageCircle className="size-4" /> Explorar conmigo
+                    </button>
+                    {dim.key === "relaciones" && (
+                      <button
+                        onClick={() => setVerParejas(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-ocean-violet/40 bg-ocean-violet/10 px-4 py-2.5 text-sm text-ocean-violet transition hover:bg-ocean-violet/20"
+                      >
+                        <Repeat className="size-4" /> Armar mi mapa de pareja
+                      </button>
+                    )}
+                    {dim.key === "familia" && (
+                      <Link
+                        href="/biocode/arbol"
+                        className="inline-flex items-center gap-2 rounded-xl border border-ocean-violet/40 bg-ocean-violet/10 px-4 py-2.5 text-sm text-ocean-violet transition hover:bg-ocean-violet/20"
+                      >
+                        <TreeDeciduous className="size-4" /> Ir a mi árbol
+                      </Link>
+                    )}
+                  </div>
                 )}
               </div>
             )}
 
+            {mapa.nodos.length > 0 && (
             <div className="mt-6 border-t border-card-border pt-4">
               <p className="text-[0.7rem] uppercase tracking-wider text-muted/70">
                 Profundizar
@@ -723,8 +772,9 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                 ))}
               </div>
             </div>
+            )}
 
-            {!verChat && (
+            {!verChat && dim?.modo !== "conversacion" && (
               <button
                 onClick={() => send(`Quiero explorar ${nodo.name.toLowerCase()}.`)}
                 className="mt-6 inline-flex items-center gap-2 rounded-xl border border-ocean-violet/40 bg-ocean-violet/10 px-4 py-2.5 text-sm text-ocean-violet transition hover:bg-ocean-violet/20"
