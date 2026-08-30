@@ -32,6 +32,7 @@ import type { Emocion, ZonaCuerpo } from "@/lib/biocode/emociones";
 import { PuertaGuiada } from "@/components/biocode/puerta-guiada";
 import { PUERTAS, type OpcionPuerta } from "@/lib/biocode/puertas";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
 import type { BiocodeNode } from "@/lib/biocode/nodes";
 import {
@@ -164,6 +165,7 @@ const MessageBubble = memo(function MessageBubble({
 });
 
 export function BiocodeExplorer({ firstName }: { firstName: string }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -448,6 +450,7 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
                     if (d.key === "cuerpo")
                       bodyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                     else if (d.key === "emocion") setVerEmociones(true);
+                    else if (d.key === "arbol") router.push("/biocode/arbol");
                     else if (PUERTAS[d.key]) setPuerta(d.key);
                     else send(d.question, d.key);
                   }}
@@ -502,6 +505,12 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
             className="inline-flex items-center gap-2 rounded-xl border border-card-border bg-ocean-surface/60 px-4 py-2 text-sm text-foreground/85 transition hover:border-ocean-violet/40 hover:text-ocean-violet"
           >
             <Map className="size-4" /> Ver mi mapa
+          </Link>
+          <Link
+            href="/biocode/arbol"
+            className="inline-flex items-center gap-2 rounded-xl border border-card-border bg-ocean-surface/60 px-4 py-2 text-sm text-foreground/85 transition hover:border-ocean-violet/40 hover:text-ocean-violet"
+          >
+            <TreeDeciduous className="size-4" /> Mi árbol
           </Link>
         </div>
 
