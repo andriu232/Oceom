@@ -11,7 +11,6 @@ import { _roots } from "@react-three/fiber";
 import type * as THREE from "three";
 import { createOfficialHumanAtlas } from "@vixotic/vanatome-atlas";
 import { Loader2, RotateCcw, AlertTriangle, Undo2 } from "lucide-react";
-import { FlorDeLaVida } from "@/components/biocode/flor-de-la-vida";
 import {
   resolveNodeSlug,
   openingMessage,
@@ -330,9 +329,6 @@ export function BodyViewer({
         moveTip();
       }}
     >
-      <div className="relative">
-      <FlorDeLaVida className="top-1/2 h-[155%] -translate-y-1/2 opacity-90 [aspect-ratio:1]" />
-
       {atlas && visible ? (
         <VanatomeViewer
           atlas={atlas}
@@ -379,7 +375,6 @@ export function BodyViewer({
           <p className="text-sm text-muted">Preparando el cuerpo…</p>
         </div>
       )}
-      </div>
 
       {atlas && visible && !modelReady && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3">
