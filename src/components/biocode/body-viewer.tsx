@@ -94,6 +94,17 @@ export function BodyViewer({
     return () => io.disconnect();
   }, []);
 
+  /* Mientras el cuerpo esté a la vista, el fondo de agua se pausa: es una
+     simulación WebGL que quedaría corriendo debajo de una escena 3D que la
+     tapa entera. Se levanta la marca en cuanto el cuerpo sale de pantalla. */
+  useEffect(() => {
+    if (!visible) return undefined;
+    document.documentElement.dataset.escenaPesada = "1";
+    return () => {
+      delete document.documentElement.dataset.escenaPesada;
+    };
+  }, [visible]);
+
   useEffect(() => {
     mounted.current = true;
     if (!catalogUrl) return;
@@ -412,7 +423,7 @@ export function BodyViewer({
       {hovered && modelReady && (
         <div
           ref={tipRef}
-          className="pointer-events-none absolute left-0 top-0 z-10 max-w-[16rem] rounded-xl border border-card-border bg-ocean-surface/90 px-3 py-2 shadow-lg backdrop-blur"
+          className="pointer-events-none absolute left-0 top-0 z-10 max-w-[16rem] rounded-xl border border-card-border bg-ocean-surface/95 px-3 py-2 shadow-lg"
         >
           <p className="text-sm font-medium leading-tight text-foreground">
             {hoveredZone ?? prettyStructureName(hovered.name)}
