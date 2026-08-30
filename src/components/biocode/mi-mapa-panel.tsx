@@ -125,7 +125,7 @@ function Tarjeta({ e, onBorrada }: { e: Exploracion; onBorrada: () => void }) {
           )}
           {!e.ficha && (
             <p className="text-sm text-muted">
-              Esta exploración quedó abierta: no se guardó una ficha.
+              Aquí solo hubo conversación: no llegaste a marcar nada en el mapa.
             </p>
           )}
         </div>
@@ -167,6 +167,10 @@ export function MiMapaPanel({ datos }: { datos: MiMapa }) {
       </div>
     );
   }
+
+  const quitar = (id: string) => setExploraciones((xs) => xs.filter((x) => x.id !== id));
+  const conFicha = exploraciones.filter((e) => e.ficha || e.mapa.nodos.length > 0);
+  const sueltas = exploraciones.filter((e) => !e.ficha && e.mapa.nodos.length === 0);
 
   const repetidos = datos.porDimension
     .map((d) => ({ ...d, temas: d.temas.filter((t) => t.veces > 1) }))
@@ -246,25 +250,42 @@ export function MiMapaPanel({ datos }: { datos: MiMapa }) {
         </section>
       )}
 
-      {/* Historial (§21) */}
-      <section>
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Tus exploraciones
-        </h2>
-        <p className="mt-1 text-sm text-muted">
-          {exploraciones.length}{" "}
-          {exploraciones.length === 1 ? "exploración guardada" : "exploraciones guardadas"}.
-        </p>
-        <div className="mt-4 space-y-2.5">
-          {exploraciones.map((e) => (
-            <Tarjeta
-              key={e.id}
-              e={e}
-              onBorrada={() => setExploraciones((xs) => xs.filter((x) => x.id !== e.id))}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Historial (§21). Se separan las exploraciones que dejaron ficha de
+          las conversaciones sueltas: mezclarlas hacía que el historial se
+          viera lleno de entradas a medias. */}
+      {conFicha.length > 0 && (
+        <section>
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            Tus exploraciones
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            {conFicha.length}{" "}
+            {conFicha.length === 1 ? "exploración guardada" : "exploraciones guardadas"}.
+          </p>
+          <div className="mt-4 space-y-2.5">
+            {conFicha.map((e) => (
+              <Tarjeta key={e.id} e={e} onBorrada={() => quitar(e.id)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {sueltas.length > 0 && (
+        <section>
+          <h2 className="font-display text-base font-semibold text-foreground">
+            Conversaciones sueltas
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Charlas en las que no marcaste nada en el mapa. Se quedan aquí por si
+            quieres releerlas, y puedes borrarlas cuando quieras.
+          </p>
+          <div className="mt-4 space-y-2.5 opacity-80">
+            {sueltas.map((e) => (
+              <Tarjeta key={e.id} e={e} onBorrada={() => quitar(e.id)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Privacidad (§26) */}
       <section className="rounded-[24px] border border-card-border bg-ocean-surface/40 p-6">

@@ -265,16 +265,25 @@ function Formulario({
 
 function Persona({
   p,
+  color,
   onEditar,
   onBorrar,
 }: {
   p: PersonaArbol;
+  color: string;
   onEditar: () => void;
   onBorrar: () => void;
 }) {
   const marcas = HECHOS.filter((h) => p[h.campo]).map((h) => h.label);
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-card-border bg-ocean-surface/40 p-3">
+    <div
+      className="flex items-start gap-3 rounded-2xl border p-3 transition hover:brightness-110"
+      style={{
+        borderColor: `${color}44`,
+        background: `linear-gradient(180deg, ${color}12, rgba(10,17,36,.6))`,
+        boxShadow: `0 0 22px -14px ${color}`,
+      }}
+    >
       <button onClick={onEditar} className="min-w-0 flex-1 text-left">
         <span className="block font-medium text-foreground">{comoSeLlama(p)}</span>
         {p.parentesco && p.nombre && (
@@ -315,6 +324,46 @@ function Persona({
         <Trash2 className="size-3.5" />
       </button>
     </div>
+  );
+}
+
+/** Color por generación: del violeta de quien explora hacia el verde de
+ *  quienes vinieron antes. */
+const TONO: Record<Nivel, string> = {
+  yo: "#818cf8",
+  padres: "#22d3ee",
+  abuelos: "#5eead4",
+  bisabuelos: "#4ade80",
+};
+
+/** La banda de ramas que sube del tronco de una generación a la de arriba.
+ *  Las curvas se calculan por fracciones de la fila —que es una rejilla de
+ *  columnas iguales— así que caen exactamente sobre cada persona sin tener
+ *  que medir nada en el navegador. */
+function Ramas({ cuantas, color }: { cuantas: number; color: string }) {
+  const destinos = Array.from({ length: Math.max(cuantas, 1) }, (_, i) =>
+    ((i + 0.5) / Math.max(cuantas, 1)) * 100,
+  );
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className="pointer-events-none h-10 w-full"
+    >
+      {destinos.map((x, i) => (
+        <path
+          key={i}
+          d={`M 50 100 C 50 55, ${x} 45, ${x} 0`}
+          fill="none"
+          stroke={color}
+          strokeOpacity="0.45"
+          strokeWidth="0.6"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </svg>
   );
 }
 
@@ -388,47 +437,94 @@ export function ArbolPanel({ datos }: { datos: ArbolCargado }) {
         </section>
       )}
 
-      {/* Los cuatro niveles (§14) */}
-      {NIVELES.map((n) => {
-        const suyas = personas.filter((p) => p.nivel === n.key);
-        return (
-          <section key={n.key}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-lg font-semibold text-foreground">{n.label}</h2>
-              <button
-                onClick={() => setEditando(VACIA(n.key))}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-ocean-surface/60 px-3 py-1.5 text-xs text-foreground/85 transition hover:border-ocean-violet/40 hover:text-ocean-violet"
-              >
-                <Plus className="size-3.5" /> Añadir
-              </button>
-            </div>
+      {/* El árbol (§14). Se dibuja de abajo hacia arriba: tú eres el tronco
+          y las generaciones anteriores son las ramas que salen de ahí. */}
+      <section className="glass rounded-[24px] border border-ocean-violet/15 p-4 sm:p-8">
+        <div className="mx-auto flex max-w-[760px] flex-col items-center">
+          {[...NIVELES].reverse().map((n, fila) => {
+            const suyas = personas.filter((p) => p.nivel === n.key);
+            const color = TONO[n.key];
+            const columnas = Math.max(suyas.length, 1);
+            return (
+              <div key={n.key} className="w-full">
+                <div className="mb-2 flex items-center justify-center gap-3">
+                  <span
+                    className="text-[0.68rem] uppercase tracking-[0.18em]"
+                    style={{ color }}
+                  >
+                    {n.label}
+                  </span>
+                  <button
+                    onClick={() => setEditando(VACIA(n.key))}
+                    aria-label={`Añadir a ${n.label}`}
+                    className="grid size-6 place-items-center rounded-full border text-muted transition hover:text-foreground"
+                    style={{ borderColor: `${color}55` }}
+                  >
+                    <Plus className="size-3" />
+                  </button>
+                </div>
 
-            <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
-              {suyas.map((p) => (
-                <Persona
-                  key={p.id}
-                  p={p}
-                  onEditar={() => setEditando(p)}
-                  onBorrar={() => borrar(p.id)}
-                />
-              ))}
-            </div>
-            {suyas.length === 0 && (
-              <p className="mt-2 text-sm text-muted">Todavía no hay nadie en este nivel.</p>
-            )}
+                <div
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }}
+                >
+                  {suyas.length === 0 ? (
+                    <button
+                      onClick={() => setEditando(VACIA(n.key))}
+                      className="mx-auto rounded-2xl border border-dashed px-4 py-3 text-xs text-muted transition hover:text-foreground"
+                      style={{ borderColor: `${color}40` }}
+                    >
+                      Añadir a {n.label.toLowerCase()}
+                    </button>
+                  ) : (
+                    suyas.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className="rama mx-auto w-full max-w-[220px]"
+                        style={{ animationDelay: `${fila * 120 + i * 60}ms` }}
+                      >
+                        <Persona
+                          p={p}
+                          color={color}
+                          onEditar={() => setEditando(p)}
+                          onBorrar={() => borrar(p.id)}
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
 
-            {editando && editando.nivel === n.key && (
-              <div className="mt-3">
-                <Formulario
-                  inicial={editando}
-                  onGuardar={guardar}
-                  onCancelar={() => setEditando(null)}
-                />
+                {/* La banda de ramas hacia la generación de abajo. */}
+                {fila < NIVELES.length - 1 && (
+                  <Ramas
+                    cuantas={Math.max(suyas.length, 1)}
+                    color={TONO[[...NIVELES].reverse()[fila + 1].key]}
+                  />
+                )}
               </div>
-            )}
-          </section>
-        );
-      })}
+            );
+          })}
+        </div>
+
+        {editando && (
+          <div className="mt-6">
+            <Formulario
+              inicial={editando}
+              onGuardar={guardar}
+              onCancelar={() => setEditando(null)}
+            />
+          </div>
+        )}
+
+        <style>{`
+          .rama { animation: crecer .5s cubic-bezier(.2,.8,.3,1) both; }
+          @keyframes crecer {
+            from { opacity: 0; transform: translateY(6px) scale(.96); }
+            to   { opacity: 1; transform: none; }
+          }
+          @media (prefers-reduced-motion: reduce) { .rama { animation: none; } }
+        `}</style>
+      </section>
     </div>
   );
 }

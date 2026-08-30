@@ -35,7 +35,7 @@ import { MapaParejas } from "@/components/biocode/mapa-parejas";
 import { CICLO, type RespuestasPareja } from "@/lib/biocode/parejas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { nodoPorSlug, nodoPorTexto } from "@/lib/actions/biocode";
+import { nodoPorSlug, nodoPorTexto, guardarExploracion } from "@/lib/actions/biocode";
 import type { BiocodeNode } from "@/lib/biocode/nodes";
 import {
   dimensionesDe,
@@ -556,6 +556,24 @@ export function BiocodeExplorer({ firstName }: { firstName: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={() => {
+            // Si hubo elecciones, la exploración se cierra sola: nadie
+            // debería perder su mapa por no haber pulsado "Guardar".
+            if (nodo && sessionId && mapa.nodos.length > 0) {
+              void guardarExploracion({
+                sessionId,
+                mapa,
+                ficha: {
+                  zona: elegidasDe(mapa, "cuerpo")[0] ?? nodo.name,
+                  emocion: elegidasDe(mapa, "emociones")[0],
+                  creencia: elegidasDe(mapa, "creencias")[0],
+                  patron: elegidasDe(mapa, "patrones")[0],
+                  pregunta: elegidasDe(mapa, "reflexion")[0],
+                  ejercicio: elegidasDe(mapa, "ejercicio")[0],
+                },
+                tema: entrada ?? nodo.name,
+                completada: true,
+              });
+            }
             setNodo(null);
             setMessages([]);
             setVerFicha(false);
