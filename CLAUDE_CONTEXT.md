@@ -1,64 +1,187 @@
-# CLAUDE_CONTEXT.md — Handoff de sesión (multi-PC: Mac + Windows)
+# CLAUDE_CONTEXT.md — Handoff entre máquinas (Mac ↔ Windows)
 
-> **Leéme primero** si sos Claude arrancando en este repo desde otra máquina.
-> Concentra el contexto que NO vive en el código (identidades, cuentas, infra,
-> footguns). El detalle de arquitectura está en [CLAUDE.md](./CLAUDE.md) y [AGENTS.md](./AGENTS.md).
+> **Leéme primero** si eres Claude arrancando en este repo desde otra máquina.
+> Aquí está lo que NO vive en el código: identidades, infra, estado real de la
+> base de datos y los footguns que ya costaron caro. La arquitectura está en
+> [CLAUDE.md](./CLAUDE.md) y [AGENTS.md](./AGENTS.md).
 >
-> **Última actualización:** 2026-06-30 · setup de desarrollo paralelo Mac + Windows.
+> **Última actualización:** 2026-08-29 · MAPA BIOCODE completo + reescritura del
+> filtro de seguridad.
 
 ---
 
 ## 🌿 Qué es
-**OCEOM by E-MOTION®** — ecosistema digital premium del método E-MOTION® de **Valeria Rueda Caicedo** (sanación neuroemocional, corporal y energética). NO es academia de cursos: **"santuario digital inmersivo"**. Greenfield arrancado 2026-06-25.
 
-## 👤 Identidades
-- **Usuario (dev):** desarrolla en paralelo **Mac + Windows**. `codigo8enigma@gmail.com`.
-- **Valeria Rueda** — owner del producto (rol `mentor`).
-- Roles del sistema: `super_admin` / `mentor` (Valeria) / `student`.
-- **Credenciales admin/demo:** en el vault Obsidian (`Documents/Obsidian/OCEOM`), NO en este repo (es público hasta pasar a privado).
+**OCEOM by E-MOTION®** — el ecosistema digital del método E-MOTION® de
+**Valeria Rueda Caicedo** (sanación neuroemocional). No es una academia de
+cursos: es un *santuario digital*. La usuaria final son mujeres, en su mayoría
+desde el teléfono.
 
-## 🌿 Git / cómo pushear
+## 👤 Identidades y accesos
+
+- **Dev:** Andrés, desarrolla en paralelo Mac + Windows. `codigo8enigma@gmail.com`.
+- **Valeria Rueda** — dueña del producto, rol `mentor` (`valeriaruedacaicedo@gmail.com`,
+  perfil "Elektra", hoy `super_admin`).
+- Roles: `super_admin` / `mentor` / `student`.
+- **Los commits van como `codigo8enigma <codigo8enigma@gmail.com>`** — es el autor de
+  todo el historial. En el Mac hay que pasarlo explícito:
+  `git -c user.name="codigo8enigma" -c user.email="codigo8enigma@gmail.com" commit`.
+- gh CLI: la cuenta activa suele ser `codigo8enigma` y **conserva push** sobre
+  `andriu232/Oceom`. No hace falta cambiar de cuenta.
+
 ```
 origin → https://github.com/andriu232/Oceom.git   (rama main)
 ```
-- **Vercel auto-deploya desde `git push origin main`** → https://oceom.vercel.app
-  (team "Andres' projects" Pro = asgo1107/andriu232).
-- gh CLI activo: **`codigo8enigma`**, que **conservó push** tras la transferencia del repo
-  (templosolar → andriu232 el 2026-06-26). Push directo: `git push origin main`. No hace falta cambiar de cuenta.
-- Repo era público → pasar a privado (andriu232 es owner).
+
+Vercel auto-despliega con `git push origin main` → **https://oceom.33vertebras.com**
+(`oceom.vercel.app` sigue vivo).
 
 ## 🧱 Stack
-Next.js 16.2.9 (App Router/RSC) · React 19 · TypeScript estricto · Tailwind v4 ·
-Supabase (Auth/Postgres/Storage/Realtime/pgvector) · motion · lucide · zod ·
-three + @react-three/fiber (fondo 3D de geometría sagrada).
 
-## 🎯 Estado actual (HEAD `cc43b1a`, 2026-06-30)
-Avanzado bastante más allá del Sprint 1. Último trabajo:
-- **Círculos en Vivo:** sala de video nativa **LiveKit** + CRUD admin + lista estudiante.
-- **Agenda:** correos vía **Resend** + adjunto `.ics` + botón "Agregar a Google Calendar".
-- **Materiales:** subir/descargar + inscripción de estudiantes.
-- Login pulido + `handle_new_user` captura nombre/foto del proveedor OAuth (Google).
-- Supabase real migrado (programs=2, lessons=24, ~50 RLS).
-- Fondo 3D de **geometría sagrada** (Metatrón / Flor de la Vida / sólidos platónicos).
+Next.js 16 (App Router, RSC) · React 19 · TypeScript estricto · Tailwind **v4** ·
+Supabase (Auth/Postgres/Storage/RLS) · three + @react-three/fiber ·
+`@anthropic-ai/sdk` apuntando a **Moonshot (Kimi K2.6)**.
 
-**Roadmap:** 12 sprints (ver `CLAUDE.md`/`AGENTS.md` del repo + doc Sprint 0).
+Node: el Mac tiene 26, los repos esperaban 24. Corre bien; `npm test` usa el
+runner nativo con TypeScript sin transpilar.
 
-## ♻️ Reúso de Código Enigma
-CE (mismo stack Next16+Supabase+Tailwind v4) está clonado **read-only** en
-`C:\Users\jurid\codigo-enigma-ref` (en el Mac habrá que re-clonarlo o ajustar la ruta).
-Estrategia: **portar y adaptar (cherry-pick), NO fusionar repos**. Tablas compatibles
-(profiles/programs/modules/lessons/lesson_progress/community_*/live_rooms).
-OCEOM mantiene propio: capa emocional, IA **AURA**, integraciones, geometría sagrada.
+## 🗄️ Base de datos — estado verificado (2026-08-29)
 
-## 🔥 Footguns (ver detalle en memoria / Obsidian)
-- **Next 16:** usar el patrón de proxy, NO middleware clásico. `cookies()` es **async**.
-- **Colores:** usar **hex** (mismo bug Lightning CSS oklch→lab que QuanTrade).
-- **RLS es la frontera real** de seguridad — validar siempre.
-- `.env.local` con placeholders para que el build pase; las 3 llaves Supabase van en Vercel.
-- IA AURA: arquitectura provider-agnostic + mock hasta tener crédito (no pagar extra).
+Todas las migraciones hasta la **0031 están aplicadas** en Supabase producción
+(`xcnxlrvchxctxihnwpnb`). Comprobado contra la base, no de memoria:
 
-## 🗂️ Más contexto
-- Repo: `CLAUDE.md`, `AGENTS.md`, `README.md`.
-- Vault Obsidian (sincroniza al Mac): `Documents/Obsidian/OCEOM` (8 índices + bitácora).
-  **Regla: registrar todo cada sesión.**
-- Prod: https://oceom.vercel.app · Supabase Site URL pendiente → oceom.vercel.app
+| tabla | estado |
+|---|---|
+| `biocode_nodes` | 29 nodos, las 7 puertas cubiertas |
+| `biocode_sessions` | con `mapa`, `ficha`, `numero`, `estado` (0030) |
+| `biocode_arbol` | creada (0031), RLS sin excepción para roles |
+| `mail_campaigns` | 4 campañas del centro de correos |
+
+La búsqueda (`match_biocode_nodes`) responde: 26/26 frases del documento caen
+en su nodo.
+
+> ⚠️ **El CLI de Supabase está logueado en otra cuenta y no ve este proyecto.**
+> Las migraciones se aplican pegando el SQL en el editor de Supabase. Andrés
+> las corre él; hay que **pegarle el SQL completo en el chat**, nunca como
+> adjunto.
+
+## 🤖 La IA
+
+Un solo `@anthropic-ai/sdk` sirve para Kimi y para Claude cambiando
+`baseURL`/`model`/`key` — ver `src/lib/omi/provider.ts`. Cuatro puntos la usan:
+chat de OMI, chat de BIOCODE, informes (`omi/analyze.ts`) y Hermes.
+
+**Todos pasan por `modelParams()` y `createModelClient()`.** No instanciar el
+SDK a mano: `modelParams` es lo que desactiva el razonamiento de Kimi, y sin eso
+el modelo se gasta la respuesta pensando (medido: 40 s y 29 caracteres
+truncados en el chat; 86 s y el informe cortado justo por SEÑALES DE ALERTA).
+
+> ⚠️ **La cuenta de Moonshot está topada en 3 peticiones por minuto para toda la
+> organización** (Tier 0). Tres llamadas simultáneas pasan; la cuarta del mismo
+> minuto devuelve 429. **Subir a Tier 1 cuesta $10 de recarga acumulada** —
+> Andrés ya recargó $5, faltan $5; el bono de $5 que regalan NO cuenta para
+> subir de tier. Saldo disponible ~$9,7 y el consumo real ronda **$0,006 por
+> conversación**.
+>
+> ⚠️ Rotar la `MOONSHOT_API_KEY`: quedó pegada en un chat.
+
+## 🧭 MAPA BIOCODE — completo
+
+Vive en `/biocode` dentro del área de la mentora (grupo IA & Datos, etiqueta
+Beta). **Todavía no se le muestra a las estudiantes**: cuando esté listo, mover
+a `(estudiante)` y devolverlo a `studentGroups` en `src/config/navigation.ts`.
+
+Los dos documentos de Valeria (prompt maestro y manual de experiencia, 31
+secciones cada uno) están implementados. Los comentarios del código citan la
+sección: buscar `§` en `src/lib/biocode/` y `src/components/biocode/`.
+
+- **Entrada**: cuerpo 3D (atlas Z-Anatomy auto-hospedado), buscador y 7 puertas.
+- **Constelación**: la zona al centro y sus dimensiones alrededor; se dibuja con
+  los datos del nodo, sin esperar al modelo.
+- **Ficha** "Lo que he descubierto", **Mi Mapa** (`/biocode/mi-mapa`) y
+  **Mi Árbol** (`/biocode/arbol`) con detección de coincidencias.
+- **Privacidad**: borrar una exploración o el mapa entero. El árbol no lo ve
+  nadie más, ni la mentora.
+
+## 🚨 El filtro de seguridad — lo más delicado del repo
+
+`src/lib/biocode/safety.ts` decide, **antes de llamar al modelo**, si un mensaje
+es una urgencia médica o una crisis. Se reescribió entero el 2026-08-29 porque
+detectaba **12 de 175** frases reales de urgencia.
+
+Dos corpus congelados como prueba (`frases-seguridad*.json`, 405 frases). Si
+tocas ese archivo, `npm test` te dice si bajó la cobertura:
+
+| | detecta | falsas alarmas |
+|---|---|---|
+| corpus de casa | 170/175 | 2 (hipérboles aceptadas a conciencia) |
+| corpus independiente | 97/130 | 0 |
+
+**El criterio, que importa más que los patrones:** dispara por ideación, plan y
+autolesión — **no por tristeza**. La respuesta de crisis DETIENE la exploración,
+y hacerle eso a alguien en duelo le cierra la puerta justo cuando vino a que la
+acompañaran. Y los síntomas ambiguos (pecho, aire, garganta) solo disparan si la
+persona no los está atribuyendo ella misma a una emoción.
+
+## 🔥 Footguns que ya costaron caro
+
+- **Tailwind v4** usa la propiedad CSS `translate` para `-translate-x-1/2`, no
+  `transform`. **Las dos se componen**: una animación que repita el translate
+  mueve el elemento media caja. Los keyframes solo deben escalar.
+- **`\b` en JavaScript se define sobre ASCII**: `durmi[oó]\b` no casa nunca
+  cuando la vocal es la acentuada. Misma familia que el `\w` que rompía el
+  detector con "me desmayé".
+- **El fondo de agua es delicado.** Es una simulación WebGL en un iframe
+  (`oceom-water-background.tsx`). Ya se intentó optimizar (pausarlo bajo el
+  cuerpo 3D, bajarle el detalle en móvil) y Andrés pidió revertirlo: **no
+  tocarlo sin que él lo pida**.
+- **`prefers-reduced-motion` y el detalle por dispositivo no se pueden calcular
+  en un `useState` perezoso**: ese inicializador corre en el servidor y la
+  hidratación conserva ese valor. Va con `useSyncExternalStore`.
+- **`curl -I` miente sobre el caché de Supabase Storage**: con HEAD dice
+  `no-cache`, con GET real dice `max-age=31536000, immutable`.
+- **Moonshot ignora `thinking.budget_tokens`**: o razona sin tope o se desactiva.
+- Colores en **hex**, no oklch (bug de Lightning CSS heredado de QuanTrade).
+- **Next 16**: patrón de proxy (`src/proxy.ts`), no middleware clásico.
+
+## 🧪 Cómo verificar en la otra máquina
+
+```bash
+npm install          # el atlas 3D usa overrides para three: no bajar la versión
+npm test             # 31 pruebas: seguridad (2 corpus) + coincidencias del árbol
+npm run build        # tiene que salir sin errores
+npm run dev
+```
+
+`.env.local` (los valores están en Vercel y en el vault, NO en el repo):
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `MOONSHOT_API_KEY`, `NEXT_PUBLIC_SITE_URL`,
+`NEXT_PUBLIC_ANATOMY_CATALOG_URL`, las de LiveKit, Resend, Bold y Hermes.
+
+Para ver una pantalla que pide sesión sin poder entrar, el truco que se usó
+todo el día: una página temporal en `src/app/prueba-<algo>/page.tsx` que renderice
+el componente, abrirla en el proxy (`isPublic`), mirarla con Chrome headless por
+CDP, y **borrar las dos cosas al terminar**.
+
+## 📌 Lo que sigue
+
+1. **Subir el plan de Moonshot** ($5 más) y **rotar la key**. Bloquea abrirle
+   BIOCODE a las estudiantes.
+2. **Panel de la mentora** para que Valeria cree y edite nodos sin SQL. Hoy la
+   red crece solo pasando por un programador.
+3. **Sacar BIOCODE de beta** y devolverlo al menú de estudiante.
+4. **ENTREMANOS®** (§2 del plan): sin empezar. Necesita un modelo con visión —
+   el proveedor actual es Kimi de texto.
+5. **Hermes** (WhatsApp): el código está listo pero no ha enviado un mensaje
+   real. Falta número dedicado y desplegar `hermes-bridge/` en Railway.
+6. El **modelo femenino** del cuerpo no existe en el atlas libre; hoy la figura
+   es andrógina. Paridad real en 3D = licenciar un modelo comercial.
+
+## 🗂️ Dónde está el resto
+
+- Vault Obsidian `~/Obsidian/OCEOM` (en el Mac): bitácora por sesión, pendientes
+  e índices. **Regla: registrar cada sesión ahí.**
+- Los dos PDF de Valeria: `~/Downloads/MAPA BIOCODE*.pdf`.
+- Trabajo en paralelo de otra sesión: **centro de correos** (campañas que
+  configura la mentora, cron horario, baja con un clic) y los fondos del
+  santuario. Ya está en `main`.
