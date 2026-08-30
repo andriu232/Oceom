@@ -94,17 +94,6 @@ export function BodyViewer({
     return () => io.disconnect();
   }, []);
 
-  /* Mientras el cuerpo esté a la vista, el fondo de agua se pausa: es una
-     simulación WebGL que quedaría corriendo debajo de una escena 3D que la
-     tapa entera. Se levanta la marca en cuanto el cuerpo sale de pantalla. */
-  useEffect(() => {
-    if (!visible) return undefined;
-    document.documentElement.dataset.escenaPesada = "1";
-    return () => {
-      delete document.documentElement.dataset.escenaPesada;
-    };
-  }, [visible]);
-
   useEffect(() => {
     mounted.current = true;
     if (!catalogUrl) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import elementalMarksSource from "@/shaders/elements/sources/elemental-marks.html?raw";
 import "@/shaders/threeui.subset.css";
@@ -67,33 +67,7 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-/** ¿Es un equipo modesto? En un teléfono, simular fluido a 2,25x de píxeles
- *  reales es el trabajo más caro de toda la plataforma, y es un fondo que
- *  nadie está mirando. Se mide por lo que de verdad predice el coste: pantalla
- *  táctil, ancho pequeño o pocos núcleos. */
-function equipoModesto(): boolean {
-  if (typeof window === "undefined") return false;
-  const tactil = window.matchMedia("(pointer: coarse)").matches;
-  const angosto = window.innerWidth < 900;
-  const pocosNucleos = (navigator.hardwareConcurrency ?? 8) <= 4;
-  return tactil || angosto || pocosNucleos;
-}
-
-/** El modo se calcula una vez por carga y se cachea a nivel de módulo, para
- *  que `useSyncExternalStore` devuelva siempre la misma referencia. */
-let modoCache: { ligero: boolean; quieto: boolean } | null = null;
-function modoDelCliente() {
-  modoCache ??= {
-    ligero: equipoModesto(),
-    quieto: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  };
-  return modoCache;
-}
-/** En el servidor no hay dispositivo que medir: sin modo, sin iframe. */
-const sinModo = () => null;
-const sinCambios = () => () => {};
-
-function buildDocument(ligero: boolean) {
+function buildDocument() {
   const zoom = BASE_ZOOM / clamp(WATER.size, 0.65, 1.5);
   const particleCount = Math.max(
     0,
@@ -256,20 +230,7 @@ main { display: block; }
     ["this.dropQueue.push({ x: p.x, y: p.y, s: 0.9 });", "this.dropQueue.push({ x: p.x, y: p.y, s: 0.45 });"],
   ] as const;
 
-  // En equipo modesto no se aplican los parches que SUBEN el detalle: se
-  // quedan los valores del autor (SDF 512, DPR tope 1.75) y encima se baja el
-  // tope a 1.25. El agua se ve igual de bien a ese tamaño; lo que cambia es
-  // que el teléfono deja de rasterizar cuatro veces los píxeles necesarios.
-  const detalle = ligero
-    ? ([
-        [
-          "const DPR = Math.min(window.devicePixelRatio || 1, 1.75);",
-          "const DPR = Math.min(window.devicePixelRatio || 1, 1.25);",
-        ],
-      ] as const)
-    : WATER_DETAIL_PATCHES;
-
-  const patched = [...detalle, MARK_PATCH, ...CALM_PATCHES].reduce(
+  const patched = [...WATER_DETAIL_PATCHES, MARK_PATCH, ...CALM_PATCHES].reduce(
     (document, [original, enhanced]) => document.replace(original, enhanced),
     elementalMarksSource,
   );
@@ -292,20 +253,8 @@ export function OceomWaterBackground() {
   const [documentVisible, setDocumentVisible] = useState(
     () => typeof document === "undefined" || !document.hidden,
   );
-  /* Hay pantallas que ponen una escena 3D encima y tapan el agua por
-     completo (el cuerpo de BIOCODE). Seguir simulando fluido debajo de algo
-     que no se ve es gasto puro de GPU justo donde la página más la necesita,
-     así que esas pantallas marcan `data-escena-pesada` y aquí se pausa. */
-  const [escenaPesada, setEscenaPesada] = useState(false);
-  /* El modo se decide en el navegador y una sola vez, DESPUÉS de montar.
-     No sirve calcularlo en el inicializador de useState: eso corre también en
-     el servidor, donde no hay `window`, y la hidratación se queda con el
-     valor del servidor — el equipo modesto nunca se detectaría. Mientras no
-     se sabe, no se monta el iframe: es un fotograma de espera para un fondo,
-     a cambio de no cargar dos veces la simulación en un teléfono. */
-  const modo = useSyncExternalStore(sinCambios, modoDelCliente, sinModo);
-  const source = useMemo(() => (modo ? buildDocument(modo.ligero) : null), [modo]);
-  const paused = !documentVisible || escenaPesada || Boolean(modo?.quieto);
+  const source = useMemo(() => buildDocument(), []);
+  const paused = !documentVisible;
 
   const postControls = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage(
@@ -319,15 +268,6 @@ export function OceomWaterBackground() {
     const update = () => setDocumentVisible(!document.hidden);
     document.addEventListener("visibilitychange", update);
     return () => document.removeEventListener("visibilitychange", update);
-  }, []);
-
-  useEffect(() => {
-    const raiz = document.documentElement;
-    const leer = () => setEscenaPesada(Boolean(raiz.dataset.escenaPesada));
-    leer();
-    const observador = new MutationObserver(leer);
-    observador.observe(raiz, { attributes: true, attributeFilter: ["data-escena-pesada"] });
-    return () => observador.disconnect();
   }, []);
 
   useEffect(() => {
@@ -393,7 +333,6 @@ export function OceomWaterBackground() {
         background: "transparent",
       }}
     >
-      {source && (
       <iframe
         ref={iframeRef}
         title="Fondo de agua"
@@ -415,7 +354,6 @@ export function OceomWaterBackground() {
           filter: `hue-rotate(${clamp(WATER.hue, -180, 180)}deg) saturate(${clamp(WATER.saturation, 0, 2)}) brightness(${clamp(WATER.brightness, 0.35, 1.8)})`,
         }}
       />
-      )}
     </div>
   );
 }
