@@ -5,6 +5,12 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 /** Páginas de autenticación. */
 const AUTH_PATHS = ["/login", "/registro", "/recuperar"];
 
+/** La tienda es pública: vitrina, carrito, checkout y seguimiento del pedido
+ *  funcionan sin sesión. Quien llega desde Instagram a comprar un frasco no
+ *  debería toparse con un login. El pedido se protege con su claim_token, no
+ *  con la sesión. */
+const SHOP_PATHS = ["/tienda", "/carrito", "/checkout", "/pedido"];
+
 /** Proxy de Next 16 (antes "middleware"): refresca la sesión y protege rutas.
  *  Es la primera capa de defensa (UX). RLS en Supabase es la frontera real. */
 export async function proxy(request: NextRequest) {
@@ -18,7 +24,11 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
   // Callback OAuth (Google): debe canjear el código antes de tener sesión.
   const isOAuthCallback = pathname.startsWith("/auth/");
-  const isPublic = isLanding || isAuthPage || isOAuthCallback;
+  // Ojo: /tienda-admin NO es la tienda pública — sigue exigiendo sesión.
+  const isShop = SHOP_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`) || pathname.startsWith(`${p}?`),
+  );
+  const isPublic = isLanding || isAuthPage || isOAuthCallback || isShop;
 
   // No autenticado intentando entrar a zona privada -> login.
   if (!user && !isPublic) {

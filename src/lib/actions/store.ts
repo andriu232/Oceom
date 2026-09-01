@@ -1,17 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { requireRole, requireStudentArea } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import {
-  boldApiKey,
-  boldIntegritySignature,
-  newOrderReference,
-  getBoldPaymentStatus,
-} from "@/lib/bold";
-import { markOrderPaidAndFulfill, type FulfillableOrder } from "@/lib/store/fulfill";
 
 /* ============================================================
    Acciones de la Tienda.
@@ -21,7 +13,11 @@ import { markOrderPaidAndFulfill, type FulfillableOrder } from "@/lib/store/fulf
    ============================================================ */
 
 const BUCKET = "productos";
+/** Los infoproductos NO viven en un bucket público: se sirven firmados desde
+ *  /api/descargas/<token>. */
+const DIGITAL_BUCKET = "infoproductos";
 const IMG_MAX = 6_291_456; // 6 MB
+const DIGITAL_MAX = 209_715_200; // 200 MB
 const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const KINDS = ["program", "session", "pack", "membership", "product"] as const;
 
@@ -47,25 +43,58 @@ async function ensureBucket(svc: ReturnType<typeof createServiceClient>) {
     });
 }
 
+/** Bucket PRIVADO de los archivos que se venden. Si fuera público, la URL de
+ *  un ebook circularía por WhatsApp y no habría nada que vender. */
+async function ensureDigitalBucket(svc: ReturnType<typeof createServiceClient>) {
+  const { data } = await svc.storage.getBucket(DIGITAL_BUCKET);
+  if (!data)
+    await svc.storage.createBucket(DIGITAL_BUCKET, {
+      public: false,
+      fileSizeLimit: DIGITAL_MAX,
+    });
+}
+
+/** Sube una imagen al bucket público y devuelve su URL. */
+async function uploadImage(
+  svc: ReturnType<typeof createServiceClient>,
+  file: File,
+): Promise<{ url?: string; error?: string }> {
+  if (!IMG_TYPES.includes(file.type)) return { error: "Imagen: usa JPG, PNG o WebP." };
+  if (file.size > IMG_MAX) return { error: "La imagen supera los 6 MB." };
+  await ensureBucket(svc);
+  const ext = (file.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+  const path = `${Math.random().toString(36).slice(2, 10)}-${Date.now()}.${ext}`;
+  const { error } = await svc.storage
+    .from(BUCKET)
+    .upload(path, Buffer.from(await file.arrayBuffer()), {
+      contentType: file.type,
+      upsert: false,
+    });
+  if (error) return { error: `No se pudo subir la imagen: ${error.message}` };
+  return { url: svc.storage.from(BUCKET).getPublicUrl(path).data.publicUrl };
+}
+
 /* ── Admin: crear / actualizar producto ── */
 export async function saveProductAction(
   _prev: StoreState,
   formData: FormData,
 ): Promise<StoreState> {
   const profile = await requireRole("mentor", "super_admin");
-  const id = String(formData.get("id") ?? "").trim() || null;
-  const title = String(formData.get("title") ?? "").trim();
-  const kind = String(formData.get("kind") ?? "program");
-  const subtitle = String(formData.get("subtitle") ?? "").trim() || null;
-  const description = String(formData.get("description") ?? "").trim() || null;
-  const priceCop = Math.round(Number(formData.get("price_cop")));
-  const programId = String(formData.get("program_id") ?? "").trim() || null;
-  const membershipDays = Number(formData.get("membership_days")) || null;
-  const benefitsRaw = String(formData.get("benefits") ?? "").trim();
-  const benefits = benefitsRaw
-    ? benefitsRaw.split("\n").map((b) => b.trim()).filter(Boolean)
-    : [];
-  const file = formData.get("image");
+  const svc = createServiceClient();
+
+  const str = (k: string) => String(formData.get(k) ?? "").trim();
+  const num = (k: string) => {
+    const n = Number(formData.get(k));
+    return Number.isFinite(n) ? n : null;
+  };
+  const bool = (k: string) => formData.get(k) === "on" || formData.get(k) === "true";
+
+  const id = str("id") || null;
+  const title = str("title");
+  const kind = str("kind") || "product";
+  const priceCop = Math.round(num("price_cop") ?? NaN);
+  const programId = str("program_id") || null;
+  const membershipDays = num("membership_days");
 
   if (!title) return { error: "Ponle un título." };
   if (!KINDS.includes(kind as (typeof KINDS)[number])) return { error: "Tipo no válido." };
@@ -76,45 +105,108 @@ export async function saveProductAction(
   if (kind === "membership" && (!membershipDays || membershipDays < 1))
     return { error: "Indica los días de acceso de la membresía." };
 
-  // Imagen (opcional).
+  const compareAt = num("compare_at_price_cop");
+  if (compareAt && compareAt <= priceCop)
+    return { error: "El precio tachado debe ser mayor que el precio de venta." };
+
+  // ── Imagen principal ──
   let imageUrl: string | undefined;
-  if (file instanceof File && file.size > 0) {
-    if (!IMG_TYPES.includes(file.type)) return { error: "Imagen: usa JPG, PNG o WebP." };
-    if (file.size > IMG_MAX) return { error: "La imagen supera los 6 MB." };
-    const svc = createServiceClient();
-    await ensureBucket(svc);
-    const ext = (file.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-    const path = `${Math.random().toString(36).slice(2, 10)}-${Date.now()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const { error: upErr } = await svc.storage.from(BUCKET).upload(path, buffer, {
-      contentType: file.type,
-      upsert: false,
-    });
-    if (upErr) return { error: `No se pudo subir la imagen: ${upErr.message}` };
-    imageUrl = svc.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  const main = formData.get("image");
+  if (main instanceof File && main.size > 0) {
+    const up = await uploadImage(svc, main);
+    if (up.error) return { error: up.error };
+    imageUrl = up.url;
   }
 
-  const supabase = await createClient();
+  // ── Galería (varias imágenes) ──
+  const galleryFiles = formData
+    .getAll("gallery")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+  const galleryUrls: string[] = [];
+  for (const file of galleryFiles) {
+    const up = await uploadImage(svc, file);
+    if (up.error) return { error: up.error };
+    if (up.url) galleryUrls.push(up.url);
+  }
+
+  // ── Archivo descargable (infoproducto) ──
+  let digitalPath: string | undefined;
+  let digitalName: string | undefined;
+  const digital = formData.get("digital");
+  if (digital instanceof File && digital.size > 0) {
+    if (digital.size > DIGITAL_MAX) return { error: "El archivo supera los 200 MB." };
+    await ensureDigitalBucket(svc);
+    const safe = digital.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+    const path = `${Math.random().toString(36).slice(2, 10)}-${Date.now()}-${safe}`;
+    const { error } = await svc.storage
+      .from(DIGITAL_BUCKET)
+      .upload(path, Buffer.from(await digital.arrayBuffer()), {
+        contentType: digital.type || "application/octet-stream",
+        upsert: false,
+      });
+    if (error) return { error: `No se pudo subir el archivo: ${error.message}` };
+    digitalPath = path;
+    digitalName = digital.name;
+  }
+
+  const benefitsRaw = str("benefits");
+  const benefits = benefitsRaw
+    ? benefitsRaw.split("\n").map((b) => b.trim()).filter(Boolean)
+    : [];
+  const intentions = formData.getAll("intentions").map(String).filter(Boolean);
+
+  // Un infoproducto o una sesión nunca viajan por transportadora.
+  const requiresShipping = kind === "product" || kind === "pack" ? bool("requires_shipping") : false;
+  const trackStock = requiresShipping && bool("track_stock");
+
   const payload: Record<string, unknown> = {
     kind,
     title: title.slice(0, 160),
-    subtitle,
-    description,
+    subtitle: str("subtitle") || null,
+    short_description: str("short_description") || null,
+    description: str("description") || null,
     price_cop: priceCop,
+    compare_at_price_cop: compareAt || null,
     program_id: kind === "program" ? programId : null,
     membership_days: kind === "membership" ? membershipDays : null,
     benefits,
+    intentions,
+    category_id: str("category_id") || null,
+    requires_shipping: requiresShipping,
+    track_stock: trackStock,
+    stock: trackStock ? Math.max(0, Math.round(num("stock") ?? 0)) : 0,
+    weight_g: num("weight_g") || null,
+    featured: bool("featured"),
+    is_public: !bool("hide_from_shop"),
+    legal_note: str("legal_note") || null,
   };
   if (imageUrl) payload.image_url = imageUrl;
+  if (digitalPath) {
+    payload.digital_path = digitalPath;
+    payload.digital_name = digitalName;
+  }
+
+  const supabase = await createClient();
 
   if (id) {
+    // La galería se acumula: subir una foto nueva no borra las anteriores.
+    if (galleryUrls.length > 0) {
+      const { data: actual } = await supabase
+        .from("store_products")
+        .select("gallery")
+        .eq("id", id)
+        .maybeSingle();
+      const previa = Array.isArray(actual?.gallery) ? (actual!.gallery as string[]) : [];
+      payload.gallery = [...previa, ...galleryUrls].slice(0, 8);
+    }
     const { error } = await supabase.from("store_products").update(payload).eq("id", id);
-    if (error) return { error: "No se pudo guardar." };
+    if (error) return { error: `No se pudo guardar: ${error.message}` };
   } else {
+    if (galleryUrls.length > 0) payload.gallery = galleryUrls.slice(0, 8);
     payload.slug = `${slugify(title)}-${Math.random().toString(36).slice(2, 6)}`;
     payload.created_by = profile.id;
     const { error } = await supabase.from("store_products").insert(payload);
-    if (error) return { error: "No se pudo crear el producto." };
+    if (error) return { error: `No se pudo crear el producto: ${error.message}` };
   }
 
   revalidatePath("/tienda-admin");
@@ -143,104 +235,4 @@ export async function deleteProductAction(id: string): Promise<StoreState> {
   revalidatePath("/tienda-admin");
   revalidatePath("/tienda");
   return { ok: true };
-}
-
-/* ── Comprador: iniciar checkout con Bold ── */
-
-export interface CheckoutParams {
-  ok: boolean;
-  error?: string;
-  apiKey?: string;
-  orderId?: string;
-  amount?: number;
-  currency?: string;
-  signature?: string;
-  description?: string;
-  redirectionUrl?: string;
-}
-
-async function siteOrigin(): Promise<string> {
-  const env = process.env.NEXT_PUBLIC_SITE_URL;
-  if (env) return env.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "oceom.33vertebras.com";
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}`;
-}
-
-/** Crea la orden pendiente y devuelve los parámetros del botón de Bold. */
-export async function startCheckoutAction(productId: string): Promise<CheckoutParams> {
-  const profile = await requireStudentArea();
-  const supabase = await createClient();
-
-  const { data: product } = await supabase
-    .from("store_products")
-    .select("id, title, kind, price_cop, program_id, membership_days, slug, status")
-    .eq("id", productId)
-    .maybeSingle();
-  if (!product || product.status !== "active") return { ok: false, error: "Producto no disponible." };
-
-  const apiKey = boldApiKey();
-  if (!apiKey) return { ok: false, error: "La pasarela de pago no está configurada aún." };
-
-  const amount = product.price_cop as number;
-  const currency = "COP";
-  const reference = newOrderReference(product.slug as string);
-
-  const { error } = await supabase.from("store_orders").insert({
-    buyer_id: profile.id,
-    product_id: product.id,
-    product_title: product.title,
-    product_kind: product.kind,
-    program_id: product.program_id,
-    membership_days: product.membership_days,
-    amount_cop: amount,
-    currency,
-    reference,
-    status: "pending",
-  });
-  if (error) return { ok: false, error: "No se pudo crear la orden." };
-
-  const origin = await siteOrigin();
-  return {
-    ok: true,
-    apiKey,
-    orderId: reference,
-    amount,
-    currency,
-    signature: boldIntegritySignature(reference, amount, currency),
-    description: String(product.title).slice(0, 100),
-    redirectionUrl: `${origin}/tienda/resultado`,
-  };
-}
-
-/** Verificación ACTIVA del pago: consulta el estado en Bold y, si está
- *  aprobado, marca la orden pagada y la cumple (red de seguridad frente a
- *  webhooks que fallan o a PSE que tarda en confirmar). */
-export async function verifyOrderPaymentAction(
-  reference: string,
-): Promise<{ status: "paid" | "pending" | "rejected" | "not_found" }> {
-  const profile = await requireStudentArea();
-  const supabase = await createClient();
-  const { data: order } = await supabase
-    .from("store_orders")
-    .select(
-      "id, buyer_id, product_kind, program_id, membership_days, amount_cop, reference, status, fulfilled",
-    )
-    .eq("reference", reference)
-    .eq("buyer_id", profile.id)
-    .maybeSingle();
-  if (!order) return { status: "not_found" };
-  if (order.status === "paid") return { status: "paid" };
-
-  const bold = await getBoldPaymentStatus(reference);
-  if (bold?.status === "APPROVED") {
-    await markOrderPaidAndFulfill(order as FulfillableOrder, bold.transactionId ?? null);
-    return { status: "paid" };
-  }
-  if (bold && ["REJECTED", "FAILED", "VOIDED"].includes(bold.status)) {
-    await supabase.from("store_orders").update({ status: "rejected" }).eq("id", order.id);
-    return { status: "rejected" };
-  }
-  return { status: "pending" };
 }

@@ -96,6 +96,7 @@ export const studentGroups: NavGroup[] = [
     items: [
       { label: "Mi Evolución", href: "/mi-evolucion", icon: "trending" },
       { label: "Tienda", href: "/tienda", icon: "store" },
+      { label: "Mis pedidos", href: "/mis-pedidos", icon: "clipboard" },
       { label: "Membresía", href: "/membresia", icon: "membership", hidden: true },
       { label: "Referidos", href: "/referidos", icon: "gift" },
       { label: "Mi Portal", href: "/mi-portal", icon: "user", primary: true, short: "Portal" },

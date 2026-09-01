@@ -1,24 +1,33 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { CheckoutParams } from "@/lib/actions/store";
 
-/* Botón de pago de Bold. Renderiza el <script data-bold-button> de Bold con los
-   parámetros firmados en el servidor y carga su librería. Embedded checkout:
-   el pago se hace en un modal sin salir de OCEOM. */
+/* Botón de pago de Bold. Renderiza el <script data-bold-button> con los
+   parámetros firmados en el servidor y carga su librería. Checkout embebido:
+   el pago ocurre en un modal, sin salir de OCEOM. */
 
-export function BoldButton(p: CheckoutParams) {
+export interface BoldButtonProps {
+  apiKey?: string;
+  orderId?: string;
+  amount?: number;
+  currency?: string;
+  signature?: string;
+  description?: string;
+  redirectionUrl?: string;
+}
+
+export function BoldButton(p: BoldButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || !p.ok) return;
+    if (!el || !p.apiKey || !p.orderId) return;
     el.innerHTML = "";
 
     const btn = document.createElement("script");
     btn.setAttribute("data-bold-button", "dark-L");
-    btn.setAttribute("data-api-key", p.apiKey ?? "");
-    btn.setAttribute("data-order-id", p.orderId ?? "");
+    btn.setAttribute("data-api-key", p.apiKey);
+    btn.setAttribute("data-order-id", p.orderId);
     btn.setAttribute("data-amount", String(p.amount ?? 0));
     btn.setAttribute("data-currency", p.currency ?? "COP");
     btn.setAttribute("data-integrity-signature", p.signature ?? "");

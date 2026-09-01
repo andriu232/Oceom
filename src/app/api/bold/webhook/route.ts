@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
   const svc = createServiceClient();
   const { data: order } = await svc
     .from("store_orders")
-    .select("id, buyer_id, product_kind, program_id, membership_days, amount_cop, status, fulfilled, reference")
+    .select(
+      "id, buyer_id, product_kind, program_id, membership_days, amount_cop, status, fulfilled, reference, email, buyer_name",
+    )
     .eq("reference", reference)
     .maybeSingle();
 
